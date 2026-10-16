@@ -10,7 +10,7 @@
 		['show', 'Show them again'],
 		['always', 'Always-hidden icons'],
 		['menu', 'The menu'],
-		['options', 'Options'],
+		['settings', 'Settings'],
 		['questions', 'Questions'],
 		['source', 'Build from source']
 	];
@@ -21,14 +21,16 @@
 	<Install tool={bar}>
 		<li>
 			A chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b> guide. Right-click the
-			chevron and turn on <b>Open at Login</b>.
+			chevron, choose <b>Settings…</b>, and turn on <b>Open at Login</b>.
 		</li>
 	</Install>
 
 	<h2 id="hide">Hide icons</h2>
 	<p>
-		Common Bar puts two things in the menu bar: a chevron, and a thin divider to its left. When the bar is
-		collapsed, the divider stretches and pushes every icon left of it off-screen.
+		Common Bar puts a chevron in the menu bar, with a thin divider to its left and a dotted one further left
+		(see
+		<a href="#always">always-hidden icons</a>). When the bar is collapsed, the divider stretches and pushes
+		every icon left of it off-screen.
 	</p>
 	<ol>
 		<li>Hold <kbd>⌘</kbd> with the pointer over the menu bar. After a moment the divider appears.</li>
@@ -44,9 +46,9 @@
 		<li><b>Scroll down</b> on the menu bar, or <b>click its empty space</b>. Scroll up to hide.</li>
 	</ul>
 	<p>
-		Revealed icons hide again by themselves: after eight seconds for a click, or half a second after the
-		pointer leaves the bar for a hover. They stay while you're still working in the menu bar or a menu from it
-		is open.
+		Revealed icons hide again by themselves: after ten seconds for a click (change it in
+		<a href="#settings">Settings</a>), or half a second after the pointer leaves the bar for a hover. They
+		stay while you're still working in the menu bar or a menu from it is open.
 	</p>
 
 	<h2 id="always">Always-hidden icons</h2>
@@ -64,17 +66,31 @@
 	<h2 id="menu">The menu</h2>
 	<p>
 		Right-click the chevron, or <kbd>⌃</kbd>-click it, for <b>How to Arrange…</b> (the guide again),
-		<b>Open at Login</b>, and <b>Quit Common Bar</b>.
+		<b>Settings…</b> (<kbd>⌘,</kbd>), and <b>Quit Common Bar</b>.
 	</p>
 
-	<h2 id="options">Options</h2>
-	<p>Hover, scroll, and click-to-show are on by default. To turn one off, run any of:</p>
-	<pre><code
-			>defaults write com.oddurs.reasonal showOnHover -bool false
-defaults write com.oddurs.reasonal showOnScroll -bool false
-defaults write com.oddurs.reasonal showOnClick -bool false</code
-		></pre>
-	<p>Then quit and reopen Common Bar. <code>-bool true</code> turns it back on.</p>
+	<h2 id="settings">Settings</h2>
+	<p>
+		Open <b>Settings…</b> from the menu, or open Common Bar again from Finder or Spotlight while it's running.
+	</p>
+	<h3>General</h3>
+	<ul>
+		<li><b>Open at Login</b> starts Common Bar when you log in.</li>
+		<li>
+			<b>Hide Again After</b>: how long icons shown with a click stay out. 5 seconds, 10 seconds (the
+			default), 30 seconds, 1 minute, or Never.
+		</li>
+	</ul>
+	<h3>Show Hidden Icons When</h3>
+	<p>
+		Turn off any way of revealing you don't want: <b>Hovering over empty menu bar space</b>,
+		<b>Scrolling down on the menu bar</b>, or <b>Clicking empty menu bar space</b>. The chevron always works.
+	</p>
+	<p>
+		These are ordinary preferences, so <code>defaults write com.oddurs.reasonal</code> works too. The keys are
+		<code>showOnHover</code>, <code>showOnScroll</code>, and <code>showOnClick</code> (booleans), and
+		<code>autoHide</code> (seconds; <code>0</code> means Never).
+	</p>
 
 	<h2 id="questions">Questions</h2>
 	<h3>I can't see the chevron.</h3>

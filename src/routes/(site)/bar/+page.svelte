@@ -57,8 +57,8 @@
 		<div>
 			<h2>Nothing to grant.</h2>
 			<p>
-				No Accessibility or Screen Recording permission, no network, no account. Right-click the chevron for
-				Open at Login.
+				No Accessibility or Screen Recording permission, no network, no account. A small Settings window picks
+				how icons are revealed and how long they stay.
 			</p>
 		</div>
 	</section>
