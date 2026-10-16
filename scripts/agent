@@ -98,12 +98,20 @@ ship)
     branch="$(current_branch)"
     base="$(default_branch)"
     [ "$branch" != "$base" ] || die "on the default branch; start a branch with 'scripts/agent start'"
-    if [ $# -ge 1 ]; then
+    # ship ["<subject>" ["<why>"]] [--body-file <pr.md> ...]: flags go to gh pr create.
+    if [ $# -ge 1 ] && [ "${1#--}" = "$1" ]; then
+        subject="$1"
+        shift
         git add -A
-        if [ $# -ge 2 ]; then git commit --quiet -m "$1" -m "$2"; else git commit --quiet -m "$1"; fi
+        if [ $# -ge 1 ] && [ "${1#--}" = "$1" ]; then
+            git commit --quiet -m "$subject" -m "$1"
+            shift
+        else
+            git commit --quiet -m "$subject"
+        fi
     fi
     [ -z "$(git status --porcelain)" ] || die "uncommitted changes; pass a commit message or commit them first"
-    "$0" pr
+    "$0" pr "$@"
     echo "==> waiting for $branch to merge"
     while :; do
         state="$(gh pr view "$branch" --json state --jq .state)"
@@ -164,7 +172,7 @@ list)
     done
     ;;
 *)
-    echo "usage: scripts/agent {doctor|start <type>/<slug>|check|commit <msg> [body]|pr [--draft]|ship [<msg> [body]]|sync|done|list}" >&2
+    echo "usage: scripts/agent {doctor|start <type>/<slug>|check|commit <msg> [body]|pr [--draft]|ship [<msg> [body]] [--body-file f]|sync|done|list}" >&2
     exit 2
     ;;
 esac
