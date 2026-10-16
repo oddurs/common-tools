@@ -38,6 +38,17 @@ import Testing
         #expect(spec.edit.style == .silhouette)
     }
 
+    @Test func keepsShowingTextUntilThereIsAnImage() {
+        var spec = Library.starter()
+        spec.show(.image)
+        #expect(spec.kind == .text)
+        spec.setImage(file: "a.png")
+        spec.show(.text)
+        #expect(spec.kind == .text)
+        spec.show(.image)
+        #expect(spec.kind == .image)
+    }
+
     @Test func typingSwitchesToText() {
         var spec = Library.starter()
         spec.setImage(file: "a.png")
@@ -90,6 +101,27 @@ import Testing
         #expect(Library.duplicate(cat, among: [cat, copy], imageFile: nil).name == "Cat copy 2")
     }
 
+    @Test func loadingRepairsAGlyphWaitingOnAMissingImage() {
+        var spec = Library.starter()
+        spec.kind = .image
+        #expect(Library.loaded([spec])[0].kind == .text)
+    }
+
+    @Test func loadingKeepsOneGlyphInTheMenuBar() {
+        var a = Library.starter(), b = Library.starter()
+        a.isVisible = false
+        b.isVisible = false
+        let loaded = Library.loaded([a, b])
+        #expect(loaded[0].isVisible && !loaded[1].isVisible)
+        #expect(Library.loaded([]).count == 1)
+    }
+
+    @Test func loadingLeavesGoodGlyphsAlone() {
+        var a = Library.starter()
+        a.setImage(file: "a.png")
+        #expect(Library.loaded([a]) == [a])
+    }
+
     @Test func theLastVisibleGlyphCannotBeHidden() {
         var a = Library.starter(), b = Library.starter()
         #expect(Library.canHide(a.id, in: [a, b]))
@@ -109,5 +141,21 @@ import Testing
         // A hidden one can go, as long as another is left.
         #expect(Library.canRemove(b.id, from: [a, b]))
         #expect(!Library.canRemove(UUID(), from: [a, b]))
+    }
+}
+
+@Suite struct MenuBarVisibilityTests {
+    @Test func allSeenIsFine() {
+        #expect(MenuBarVisibility(glyphs: [("Star", true), ("Cat", true)]) == .seen)
+        #expect(MenuBarVisibility(glyphs: []) == .seen)
+    }
+
+    @Test func noneSeenMeansTheMenuBarIsHidden() {
+        // A full-screen app hides the whole bar; blaming the glyphs' positions would mislead.
+        #expect(MenuBarVisibility(glyphs: [("Star", false), ("Cat", false)]) == .barHidden)
+    }
+
+    @Test func someSeenNamesTheOthers() {
+        #expect(MenuBarVisibility(glyphs: [("Star", true), ("Cat", false)]) == .hidden(["Cat"]))
     }
 }

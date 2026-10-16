@@ -1,5 +1,6 @@
 import AppKit
 import GlyphKit
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// Keeps one status item for each visible glyph, adding and removing items as glyphs come and go.
@@ -38,9 +39,9 @@ final class MenuBarController: NSObject {
         }
     }
 
-    /// Opens Settings on `glyph`'s editor, or wherever it was last.
+    /// Opens Settings, with `glyph`'s editor on top of it if one is given.
     func showSettings(_ glyph: GlyphModel?) {
-        if let glyph { library.selection = .glyph(glyph.id) }
+        if let glyph { library.editing = glyph.id }
         settings.show()
     }
 
@@ -87,6 +88,11 @@ private final class GlyphItem: NSObject, NSMenuDelegate {
 
         if let button = item.button {
             button.imagePosition = .imageOnly
+            if let window = button.window {
+                NotificationCenter.default.addObserver(
+                    self, selector: #selector(occlusionChanged), name: NSWindow.didChangeOcclusionStateNotification,
+                    object: window)
+            }
             let drop = DropTarget(frame: button.bounds)
             drop.autoresizingMask = [.width, .height]
             drop.onDrop = { [weak self] pasteboard in self?.importImage { try await $0.importImage(from: pasteboard) } }
@@ -115,7 +121,9 @@ private final class GlyphItem: NSObject, NSMenuDelegate {
     func remove() {
         frameTimer?.invalidate()
         model.onRender = nil
+        model.isOnScreen = true
         NSWorkspace.shared.notificationCenter.removeObserver(self)
+        NotificationCenter.default.removeObserver(self)
         NSStatusBar.system.removeStatusItem(item)
     }
 
@@ -154,6 +162,11 @@ private final class GlyphItem: NSObject, NSMenuDelegate {
         frameTimer = timer
     }
 
+    /// Lets Settings say when a glyph is running but can't be seen.
+    @objc private func occlusionChanged() {
+        model.isOnScreen = item.button?.window?.occlusionState.contains(.visible) ?? true
+    }
+
     @objc private func accessibilityChanged() {
         update()
     }
@@ -165,29 +178,65 @@ private final class GlyphItem: NSObject, NSMenuDelegate {
 
     // MARK: Menu
 
-    /// Built on each open, so it reflects the pasteboard and how many glyphs are showing.
+    /// Built on each open, so the card and the actions reflect the glyph, the pasteboard, and how many
+    /// glyphs are showing. The card's view exists only while the menu is open.
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        add(to: menu, "Edit “\(model.spec.name)”…", #selector(edit))
+        item.button?.setAccessibilityLabel(model.spec.name)
+        let others = (controller?.library.visible.count ?? 1) - 1
+        menu.addItem(hosted(GlyphCard(model: model, others: others)))
         menu.addItem(.separator())
-        add(to: menu, "Choose Image…", #selector(chooseImage))
-        add(to: menu, "Paste Image", #selector(pasteImage)).isEnabled = GlyphModel.hasImage(.general)
+
+        add(to: menu, "Edit Glyph…", "slider.horizontal.3", #selector(edit))
+        add(to: menu, "Choose Image…", "photo", #selector(chooseImage))
+        let paste = add(to: menu, "Paste Image", "doc.on.clipboard", #selector(pasteImage))
+        paste.isEnabled = GlyphModel.hasImage(.general)
         menu.addItem(.separator())
-        add(to: menu, "New Glyph", #selector(newGlyph))
-        add(to: menu, "Hide This Glyph", #selector(hide)).isEnabled = controller?.library.canHide(model) ?? false
+
+        add(to: menu, "New Glyph", "plus", #selector(newGlyph))
+        let hide = add(to: menu, "Hide Glyph", "eye.slash", #selector(hide))
+        let canHide = controller?.library.canHide(model) == true
+        hide.isEnabled = canHide
+        if #available(macOS 14.4, *) {
+            hide.subtitle = canHide ? "Show it again in Settings" : "One glyph always stays in the menu bar"
+        }
         menu.addItem(.separator())
-        add(to: menu, "Settings…", #selector(settings), key: ",")
-        menu.addItem(.separator())
-        menu.addItem(
-            NSMenuItem(title: "Quit Common Glyph", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+
+        add(to: menu, "Settings…", "gearshape", #selector(settings), key: ",")
+        let quit = NSMenuItem(
+            title: "Quit Common Glyph", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        quit.image = Self.symbol("power")
+        menu.addItem(quit)
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        // Drop the hosting view; menuNeedsUpdate rebuilds it on the next open.
+        for item in menu.items { item.view = nil }
+    }
+
+    private func hosted(_ view: some View) -> NSMenuItem {
+        let host = NSHostingView(rootView: view)
+        host.frame.size = host.fittingSize
+        let item = NSMenuItem()
+        item.view = host
+        return item
     }
 
     @discardableResult
-    private func add(to menu: NSMenu, _ title: String, _ action: Selector, key: String = "") -> NSMenuItem {
+    private func add(
+        to menu: NSMenu, _ title: String, _ symbol: String, _ action: Selector, key: String = ""
+    ) -> NSMenuItem {
         let menuItem = NSMenuItem(title: title, action: action, keyEquivalent: key)
         menuItem.target = self
+        menuItem.image = Self.symbol(symbol)
         menu.addItem(menuItem)
         return menuItem
+    }
+
+    /// Tahoe gives standard menu items icons; match them. Earlier releases show none.
+    private static func symbol(_ name: String) -> NSImage? {
+        guard #available(macOS 26, *) else { return nil }
+        return NSImage(systemSymbolName: name, accessibilityDescription: nil)
     }
 
     @objc private func edit() { controller?.showSettings(model) }

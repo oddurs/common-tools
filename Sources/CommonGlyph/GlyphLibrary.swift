@@ -2,12 +2,6 @@ import Foundation
 import GlyphKit
 import Observation
 
-/// What Settings shows: one glyph's editor, or the app-wide settings.
-enum Pane: Hashable {
-    case glyph(UUID)
-    case general
-}
-
 /// Every glyph, in the order Settings lists them. Specs are saved together in UserDefaults; images live
 /// in Application Support, one file per glyph.
 @MainActor @Observable
@@ -15,7 +9,8 @@ final class GlyphLibrary {
     private static let key = "glyphs"
 
     private(set) var models: [GlyphModel] = []
-    var selection: Pane?
+    /// The glyph whose editor is open over Settings.
+    var editing: UUID?
     /// Called when a glyph is added, removed, shown, or hidden.
     @ObservationIgnored var onChange: (() -> Void)?
 
@@ -34,9 +29,7 @@ final class GlyphLibrary {
                 defaults.set(data, forKey: "\(Self.key).unreadable")
             }
         }
-        if specs.isEmpty { specs = [Library.starter()] }
-        models = specs.map(makeModel)
-        selection = models.first.map { .glyph($0.id) }
+        models = Library.loaded(specs).map(makeModel)
     }
 
     var specs: [GlyphSpec] { models.map(\.spec) }
@@ -69,9 +62,7 @@ final class GlyphLibrary {
         // Only wasted space if these linger; the glyph itself is already gone.
         if let url = model.imageURL { try? FileManager.default.removeItem(at: url) }
         defaults.removeObject(forKey: "NSStatusItem Preferred Position \(model.spec.autosaveName)")
-        if selection == .glyph(model.id) {
-            selection = .glyph(models[min(index, models.count - 1)].id)
-        }
+        if editing == model.id { editing = nil }
         save()
         onChange?()
     }
@@ -80,7 +71,7 @@ final class GlyphLibrary {
         let model = makeModel(spec)
         let index = neighbour.flatMap { n in models.firstIndex { $0.id == n.id } }.map { $0 + 1 } ?? models.count
         models.insert(model, at: index)
-        selection = .glyph(model.id)
+        editing = model.id
         save()
         onChange?()
         return model

@@ -46,6 +46,13 @@ public struct GlyphSpec: Codable, Equatable, Identifiable, Sendable {
         kind = .text
     }
 
+    /// Shows `kind` if there's something to show: an image glyph with no image yet would leave only a
+    /// placeholder in the menu bar, so it keeps showing its text until one arrives.
+    public mutating func show(_ kind: SourceKind) {
+        guard kind == .text || imageFile != nil else { return }
+        self.kind = kind
+    }
+
     /// Switches to a new image, starting its edit afresh but keeping the size the glyph had.
     public mutating func setImage(file: String) {
         let scale = imageEdit.scale
@@ -77,6 +84,17 @@ public enum Library {
         return "\(base) \(n)"
     }
 
+    /// Saved glyphs made safe to show: never none, at least one in the menu bar, and none waiting on an
+    /// image it doesn't have, which an earlier build could save.
+    public static func loaded(_ specs: [GlyphSpec]) -> [GlyphSpec] {
+        var specs = specs.isEmpty ? [starter()] : specs
+        for i in specs.indices where specs[i].kind == .image && specs[i].imageFile == nil {
+            specs[i].kind = .text
+        }
+        if !specs.contains(where: \.isVisible) { specs[0].isVisible = true }
+        return specs
+    }
+
     /// A copy under a new id and name. `imageFile` is the copy's own image, so deleting one glyph can't
     /// take the other's image with it.
     public static func duplicate(_ spec: GlyphSpec, among specs: [GlyphSpec], imageFile: String?) -> GlyphSpec {
@@ -97,5 +115,25 @@ public enum Library {
     public static func canRemove(_ id: UUID, from specs: [GlyphSpec]) -> Bool {
         guard let spec = specs.first(where: { $0.id == id }) else { return false }
         return specs.count > 1 && (!spec.isVisible || canHide(id, in: specs))
+    }
+}
+
+/// Why glyphs that should be in the menu bar can't be seen, from which of them macOS reports visible.
+public enum MenuBarVisibility: Equatable, Sendable {
+    case seen
+    /// None can be seen: the menu bar itself is hidden, as it is under a full-screen app.
+    case barHidden
+    /// Some can be seen and these can't: they sit behind the camera housing or a menu bar manager.
+    case hidden([String])
+
+    public init(glyphs: [(name: String, onScreen: Bool)]) {
+        let hidden = glyphs.filter { !$0.onScreen }.map(\.name)
+        if hidden.isEmpty {
+            self = .seen
+        } else if hidden.count == glyphs.count {
+            self = .barHidden
+        } else {
+            self = .hidden(hidden)
+        }
     }
 }

@@ -34,11 +34,10 @@ final class GlyphModel: Identifiable {
     private var loadProblem: String?
     private var renderProblem: String?
     var isAnimated: Bool { frames.count > 1 }
+    /// Whether the status item can be seen: false behind the camera housing, under a full-screen app, or
+    /// pushed aside by a menu bar manager. Set by the status item.
+    var isOnScreen = true
 
-    var kind: SourceKind {
-        get { spec.kind }
-        set { spec.kind = newValue }
-    }
     var edit: Edit {
         get { spec.edit }
         set { spec.edit = newValue }
@@ -50,6 +49,9 @@ final class GlyphModel: Identifiable {
 
     @ObservationIgnored private let folder: URL
     @ObservationIgnored private var frames: [Frame] = []
+    /// Each source's decoded frames, keyed by what was decoded, so switching between a glyph's image and
+    /// its text, or adopting an image already decoded, shows at once instead of after a fresh decode.
+    @ObservationIgnored private var decoded: [SourceKind: (source: String, frames: [Frame])] = [:]
     @ObservationIgnored private var lift: Lift?
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var renderTask: Task<Void, Never>?
@@ -116,7 +118,7 @@ final class GlyphModel: Identifiable {
     /// Decodes the copy before switching to it, so a file that isn't an image leaves the glyph alone.
     private func adopt(_ copy: URL) async throws {
         do {
-            _ = try await Self.decode(copy)
+            decoded[.image] = (copy.lastPathComponent, try await Self.decode(copy))
         } catch {
             // The decode error is the one worth reporting; a failed cleanup only leaves a stray file.
             try? FileManager.default.removeItem(at: copy)
@@ -141,30 +143,45 @@ final class GlyphModel: Identifiable {
         render()
     }
 
+    private func source(of kind: SourceKind) -> String {
+        kind == .text ? spec.text : spec.imageFile ?? ""
+    }
+
     private func reload() {
         loadTask?.cancel()
-        let kind = spec.kind, text = spec.text, url = imageURL
+        let kind = spec.kind, source = source(of: kind), url = imageURL
+        if let cached = decoded[kind], cached.source == source {
+            return show(cached.frames, problem: nil)
+        }
         loadTask = Task {
-            var decoded: [Frame] = []
+            var frames: [Frame] = []
             var problem: String?
             switch kind {
             case .text:
-                decoded = await Self.decode(text: text)
+                frames = await Self.decode(text: source)
             case .image:
                 guard let url else { break }
                 do {
-                    decoded = try await Self.decode(url)
+                    frames = try await Self.decode(url)
                 } catch {
                     problem = error.localizedDescription
                 }
             }
             guard !Task.isCancelled else { return }
-            frames = decoded
-            loadProblem = problem
-            lift = nil
-            updateCanvas()
-            render()
+            // A file that failed is read again next time, so its error shows again too.
+            if problem == nil { decoded[kind] = (source, frames) }
+            show(frames, problem: problem)
         }
+    }
+
+    /// Swaps in new frames, the editor's canvas, and, a moment later, the rendered glyph. The old glyph
+    /// stays in the menu bar until then, so nothing flashes empty.
+    private func show(_ frames: [Frame], problem: String?) {
+        self.frames = frames
+        loadProblem = problem
+        lift = nil
+        updateCanvas()
+        render()
     }
 
     private func updateCanvas() {

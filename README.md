@@ -5,13 +5,13 @@
 
 Put your own images in the menu bar: a character, a tattoo design, a sticker, an emoji, or a word. As many as you like.
 
-- **As many glyphs as you want.** Each is its own menu bar item with its own image and look. Add, duplicate, hide, and delete them from the sidebar in Settings.
+- **As many glyphs as you want.** Each is its own menu bar item with its own image and look. Add, duplicate, hide, and delete them in Settings.
 - **Any image, or any text.** PNG, JPEG, HEIC, WebP, GIF, PDF, or SVG. Or type an emoji, a symbol, or a kaomoji such as ᓚᘏᗢ.
 - **Looks like it belongs.** **Silhouette** and **Ink** tint the glyph to match the menu bar, light or dark, the way the system's own icons are. **Colour** keeps the image as it is.
 - **An editor for each glyph.** Crop by dragging a box over the image, rotate, flip, clear a plain background, or lift the subject out of a photo with Vision. A light and a dark menu bar preview every change at real size.
 - **Animated GIFs play.** Animations stop while the display sleeps, and don't play when Reduce Motion is on.
 - **Drop it on the menu bar.** Drag an image from Finder onto a glyph to replace its image, or paste one from the glyph's menu.
-- **Starts where you can see it.** A new glyph appears beside the clock, right of the divider a menu bar manager such as Common Bar uses, instead of off screen at the far left.
+- **Starts where you can see it.** A new glyph appears beside the clock, right of the divider a menu bar manager such as Common Bar uses, instead of off screen at the far left. If one still can't be seen, Settings says so.
 
 Free and open source under the MIT licence. No network access, no analytics, no permission prompts.
 
@@ -30,13 +30,13 @@ Requires macOS 14 or later.
 
 ## Usage
 
-The first glyph is a four-pointed star, ✦. Click any glyph for its menu: **Edit “name”…**, **Choose Image…**, **Paste Image**, **New Glyph**, **Hide This Glyph**, **Settings…** (⌘,), and **Quit Common Glyph**. Opening Common Glyph again while it runs also opens Settings. Hold ⌘ and drag a glyph to move it along the menu bar.
+The first glyph is a four-pointed star, ✦. Click any glyph for its menu: a card showing the glyph and how it's made, then **Edit Glyph…**, **Choose Image…**, **Paste Image**, **New Glyph**, **Hide Glyph**, **Settings…** (⌘,), and **Quit Common Glyph**. Opening Common Glyph again while it runs also opens Settings. Hold ⌘ and drag a glyph to move it along the menu bar.
 
-**Settings** lists every glyph in a sidebar. **+** adds one and **−** deletes the selected one; right-click a glyph to duplicate, hide, or delete it. One glyph always stays in the menu bar, so its menu stays in reach. **General**, at the bottom of the sidebar, holds **Open at login** and the Common Tools apps.
+**Settings** starts with every glyph previewed in a light and a dark menu bar, with a note if any of them can't be seen. **Glyphs** lists them: the switch on each row shows or hides it, clicking a row opens its editor, and right-clicking a row duplicates or deletes it. **Add Glyph** makes a new one. One glyph always stays in the menu bar, so its menu stays in reach. **General** holds **Open at login**, and **Common Tools** lists the other apps in the family.
 
-Each glyph's editor starts with a light and a dark menu bar previewing it at real size, then its **Name** and **Show in menu bar**. **Source** picks what it's drawn from:
+A glyph's editor opens as a sheet: its own preview, its **Name** and **Show in menu bar**, then **Source** and **Look**, with **Delete Glyph…**, **Duplicate**, and **Done** at the bottom. **Source** picks what it's drawn from:
 
-- **Image:** choose, paste, or drop a file. Drag inside the crop box to move it, drag a corner to resize it, and double-click it to take in the whole image again. The buttons beside **Paste** rotate a quarter turn clockwise, flip horizontally, and reset to the whole image the right way up. Each glyph keeps its own copy of its image, so the original can be moved or deleted.
+- **Image:** choose, paste, or drop a file. Until one arrives, the glyph keeps showing its text. Drag inside the crop box to move it, drag a corner to resize it, and double-click it to take in the whole image again. The buttons beside **Paste** rotate a quarter turn clockwise, flip horizontally, and reset to the whole image the right way up. Each glyph keeps its own copy of its image, so the original can be moved or deleted.
 - **Emoji or text:** type in the field, open **Emoji & Symbols** (⌃⌘Space) with the face button, or pick a suggestion. Typing an emoji over plain text switches to **Colour**, and plain text over an emoji switches back to **Silhouette**.
 
 A glyph's image and its text each keep their own edits, so switching between them loses nothing.

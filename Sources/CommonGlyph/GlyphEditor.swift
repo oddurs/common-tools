@@ -1,21 +1,64 @@
 import GlyphKit
 import SwiftUI
 
-/// Everything about one glyph: a live preview, its name, its source, and how it's drawn.
+/// Everything about one glyph, as a sheet over Settings: a live preview, its name, its source, and how
+/// it's drawn.
 struct GlyphEditor: View {
     @Bindable var model: GlyphModel
     let library: GlyphLibrary
-    let delete: () -> Void
+    @Environment(\.dismiss) private var dismiss
     @State private var importError: String?
+    @State private var confirmingDelete = false
+    /// The source being edited. It runs ahead of the glyph's own kind while an image glyph has no image
+    /// yet, so the menu bar keeps the text instead of a placeholder.
+    @State private var pane: SourceKind
     @FocusState private var editingText: Bool
+
+    init(model: GlyphModel, library: GlyphLibrary) {
+        self.model = model
+        self.library = library
+        _pane = State(initialValue: model.spec.kind)
+    }
+
+    private var awaitingImage: Bool { pane == .image && model.spec.imageFile == nil }
 
     /// Ready-made glyphs that look at home in a menu bar, from symbols to kaomoji to emoji.
     private static let suggestions = ["✦", "☾", "☯", "♞", "⚘", "ᓚᘏᗢ", "(◕‿◕)", "( ˘ω˘ )", "👾", "🐈‍⬛", "🔥", "🌸"]
 
     var body: some View {
+        VStack(spacing: 0) {
+            form
+            Divider()
+            HStack {
+                Button("Delete Glyph…", role: .destructive) { confirmingDelete = true }
+                    .disabled(!library.canRemove(model))
+                Spacer()
+                Button("Duplicate") {
+                    do {
+                        try library.duplicate(model)
+                    } catch {
+                        importError = error.localizedDescription
+                    }
+                }
+                Button("Done") { dismiss() }
+                    .keyboardShortcut(.defaultAction)
+            }
+            .padding(16)
+        }
+        .frame(width: 460, height: 660)
+        .confirmationDialog("Delete “\(model.spec.name)”?", isPresented: $confirmingDelete) {
+            Button("Delete", role: .destructive) { library.remove(model) }
+        } message: {
+            Text("It leaves the menu bar, and its copy of the image is deleted.")
+        }
+        .onChange(of: pane) { _, kind in model.spec.show(kind) }
+        .onChange(of: model.spec.kind) { _, kind in pane = kind }
+    }
+
+    private var form: some View {
         Form {
             Section {
-                MenuBarPreview(glyph: model.glyph, animates: model.edit.animates)
+                MenuBarPreview(models: [model])
             }
 
             Section {
@@ -25,19 +68,19 @@ struct GlyphEditor: View {
             } footer: {
                 if model.spec.isVisible && !library.canHide(model) {
                     Text("One glyph always stays in the menu bar, so its menu stays in reach.")
-                        .font(.callout)
+                        .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
             }
 
             Section {
-                Picker("Source", selection: $model.kind) {
+                Picker("Source", selection: $pane) {
                     Label("Image", systemImage: "photo").tag(SourceKind.image)
                     Label("Emoji or text", systemImage: "textformat").tag(SourceKind.text)
                 }
                 .pickerStyle(.segmented)
 
-                switch model.kind {
+                switch pane {
                 case .image: imageControls
                 case .text: textControls
                 }
@@ -49,40 +92,27 @@ struct GlyphEditor: View {
                 }
             }
 
-            Section {
-                look
-            } header: {
-                Text("Look")
-            } footer: {
-                Text(Self.summary(of: model.edit.style))
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-
-            Section {
-                HStack {
-                    Button("Duplicate") {
-                        do {
-                            try library.duplicate(model)
-                        } catch {
-                            importError = error.localizedDescription
-                        }
-                    }
-                    Spacer()
-                    Button("Delete Glyph…", role: .destructive, action: delete)
-                        .disabled(!library.canRemove(model))
+            // Nothing to style until there's an image.
+            if !awaitingImage {
+                Section {
+                    look
+                } header: {
+                    Text("Look")
+                } footer: {
+                    Text(Self.summary(of: model.edit.style))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .formStyle(.grouped)
-        .navigationTitle(model.spec.name)
     }
 
     // MARK: Image
 
     @ViewBuilder private var imageControls: some View {
         Group {
-            if let canvas = model.canvas {
+            if !awaitingImage, let canvas = model.canvas {
                 CropEditor(image: canvas, crop: $model.edit.crop)
                     .frame(height: 260)
             } else {
@@ -95,7 +125,8 @@ struct GlyphEditor: View {
                         .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity, minHeight: 180)
+                // The crop editor's height, so the sheet doesn't jump when the image arrives.
+                .frame(maxWidth: .infinity, minHeight: 260)
                 .background(
                     RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
@@ -112,7 +143,7 @@ struct GlyphEditor: View {
             Button("Choose…", action: chooseImage)
             Button("Paste") { importImage { try await model.importImage(from: .general) } }
             Spacer()
-            if model.canvas != nil {
+            if !awaitingImage && model.canvas != nil {
                 Button {
                     model.edit.rotateClockwise()
                 } label: {
@@ -201,7 +232,7 @@ struct GlyphEditor: View {
             Toggle("Use the light parts", isOn: $model.edit.inverted)
         }
 
-        if model.kind == .image {
+        if model.spec.kind == .image {
             Picker("Background", selection: $model.edit.background) {
                 Text("Keep").tag(Background.keep)
                 Text("Remove solid colour").tag(Background.solid)
