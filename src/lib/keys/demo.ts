@@ -5,6 +5,9 @@
 //
 // The scene is a pure function of time, so the recorder can step through it frame by frame.
 
+import { extrasRight, screen, viewport, wide } from '../mac/geometry';
+import { cameraAt, clampCamera, ramp, type Camera } from '../scene';
+
 export type WindowID = 'notes' | 'chat';
 
 export type Word = {
@@ -29,6 +32,9 @@ export type Frame = {
 	sinceBubble: number;
 	/** 0 to 1, for the words fading out and in between loops. */
 	opacity: number;
+	camera: Camera;
+	/** 0 to 1 as the closing card comes up. */
+	end: number;
 };
 
 type Step =
@@ -37,6 +43,9 @@ type Step =
 	| { kind: 'wait'; ms: number }
 	| { kind: 'caption'; text: string }
 	| { kind: 'front'; window: WindowID; flag: string };
+
+/** How long the closing card holds. */
+const endFor = 2200;
 
 const script: Step[] = [
 	{ kind: 'caption', text: 'Typing Icelandic, but the U.S. layout is on…' },
@@ -75,7 +84,9 @@ const script: Step[] = [
 	{ kind: 'front', window: 'notes', flag: '🇰🇷' },
 	{ kind: 'wait', ms: 1300 },
 	{ kind: 'front', window: 'chat', flag: '🇷🇺' },
-	{ kind: 'wait', ms: 1800 }
+	{ kind: 'wait', ms: 1800 },
+	{ kind: 'caption', text: '' },
+	{ kind: 'wait', ms: endFor }
 ];
 
 const keyInterval = 95;
@@ -108,6 +119,33 @@ const timeline = (() => {
 
 export const duration = timeline.end;
 
+/** When the first step matching `test` happens. */
+const when = (test: (step: Step) => boolean) => timeline.events.find((event) => test(event.step))!.at;
+const captionAt = (text: string) => when((step) => step.kind === 'caption' && step.text.startsWith(text));
+
+// Where the windows sit on the screen, in points; Demo.svelte lays out to the same numbers.
+export const windows = {
+	notes: { x: 440, y: 170, width: 780, height: 470 },
+	chat: { x: 860, y: 300, width: 700, height: 440 }
+} as const;
+export const flagCenter = { x: extrasRight - 18, y: 16 };
+
+/** A medium shot of both windows and the menu bar, pushing in on each fix and up to the flag. */
+const medium = { x: 1000, y: 400, zoom: 1 };
+const onNotes = { x: windows.notes.x + 330, y: windows.notes.y + 150, zoom: 1.55 };
+const onChat = { x: windows.chat.x + 300, y: windows.chat.y + 140, zoom: 1.55 };
+const onFlag = { x: screen.width, y: 0, zoom: 2.1 };
+const endAt = duration - endFor - 400;
+const shots = [
+	{ at: 0, ...wide },
+	{ at: 300, ...medium },
+	{ at: when((step) => step.kind === 'type' && !!step.showKeys) - 400, ...onNotes },
+	{ at: captionAt('Every script') - 200, ...onChat },
+	{ at: captionAt('Korean') - 200, ...onNotes, y: onNotes.y + 40 },
+	{ at: captionAt('And every app'), ...onFlag },
+	{ at: endAt - 500, ...wide }
+];
+
 /** A moment worth a still: the first fix, bubble showing. */
 export const posterTime = timeline.events.find((event) => event.step.kind === 'fix')!.at + 600;
 
@@ -123,7 +161,9 @@ export function frameAt(time: number): Frame {
 		caretOn: true,
 		sinceFlag: Infinity,
 		sinceBubble: Infinity,
-		opacity: Math.min(1, t / fadeFor, (duration - t) / fadeFor)
+		opacity: Math.min(1, t / fadeFor, (duration - t) / fadeFor),
+		camera: clampCamera(cameraAt(shots, t), screen, viewport),
+		end: ramp(t, endAt, 500)
 	};
 	let bubbleAt = -Infinity;
 	let flagAt = -Infinity;

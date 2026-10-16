@@ -20,10 +20,10 @@
 
 	<section class="features ruled">
 		<div>
-			<h2>One line.</h2>
+			<h2>One chevron.</h2>
 			<p>
-				Everything left of the divider is tucked out of sight. Click the chevron to bring it back; it tucks
-				itself away again after a few seconds.
+				Everything left of the chevron is tucked out of sight. Click it to bring them back; they tuck
+				themselves away again after a few seconds.
 			</p>
 		</div>
 		<div>
@@ -36,15 +36,16 @@
 		<div>
 			<h2>Hold ⌘ to arrange.</h2>
 			<p>
-				Hold <kbd>⌘</kbd> over the menu bar and the divider appears. Drag icons across it with the system's own
-				⌘-drag. Let go and they're hidden.
+				Hold <kbd>⌘</kbd> over the menu bar and every icon shows. Drag one past the chevron with the system's own
+				⌘-drag, and it's hidden.
 			</p>
 		</div>
 		<div>
-			<h2>Always hidden.</h2>
+			<h2>Always hidden, if you like.</h2>
 			<p>
-				A second, dotted divider keeps the icons you almost never need out of every reveal. <kbd>⌥</kbd>-click
-				the chevron to see those too.
+				Turn on an always-hidden section for icons you almost never need. They stay out of every reveal until
+				you
+				<kbd>⌥</kbd>-click the chevron.
 			</p>
 		</div>
 		<div>
@@ -66,12 +67,9 @@
 	<section class="steps ruled">
 		<h2>How it works.</h2>
 		<ol>
-			<li><b>Hide.</b> Hold <kbd>⌘</kbd> and drag icons to the left of the line.</li>
+			<li><b>Hide.</b> Hold <kbd>⌘</kbd> and drag an icon past the chevron.</li>
 			<li><b>Show.</b> Click the chevron, hover over empty menu bar space, or scroll down on the bar.</li>
-			<li>
-				<b>Rearrange.</b> Hold <kbd>⌘</kbd> over the menu bar at any time to see the line and move things across
-				it.
-			</li>
+			<li><b>Done.</b> They hide again by themselves once you've moved on.</li>
 		</ol>
 	</section>
 </main>

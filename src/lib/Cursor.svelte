@@ -1,46 +1,41 @@
 <script lang="ts">
-	// The macOS arrow, with a ring that pulses on click.
+	// The system arrow, rendered from NSCursor.arrow, placed by its hot spot.
+	import { asset } from '$app/paths';
+	import { cursor } from './mac/symbols';
+
 	let { x, y, pulse = 0 }: { x: number; y: number; pulse?: number } = $props();
 </script>
 
-<div class="cursor" style:transform="translate({x}px, {y}px)">
+<div class="cursor" style:transform="translate({x - cursor.x}px, {y - cursor.y}px)">
 	{#if pulse > 0}
 		<span
 			class="ring"
-			style:opacity={pulse}
-			style:transform="translate(-50%, -50%) scale({1.6 - pulse * 0.6})"
+			style:left="{cursor.x}px"
+			style:top="{cursor.y}px"
+			style:opacity={pulse * 0.9}
+			style:transform="translate(-50%, -50%) scale({1.5 - pulse * 0.5})"
 		></span>
 	{/if}
-	<svg width="22" height="30" viewBox="0 0 22 30" aria-hidden="true">
-		<path
-			d="M2 2 L2 24 L7.5 18.8 L11.3 27.5 L14.8 26 L11.1 17.6 L18.6 17.6 Z"
-			fill="#000"
-			stroke="#fff"
-			stroke-width="1.6"
-			stroke-linejoin="round"
-		/>
-	</svg>
+	<img src={asset('symbols/cursor.png')} alt="" width={cursor.width} height={cursor.height} />
 </div>
 
 <style>
 	.cursor {
 		position: absolute;
-		left: -2px;
-		top: -2px;
-		z-index: 20;
+		left: 0;
+		top: 0;
+		z-index: 50;
 		pointer-events: none;
-		filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.35));
 	}
-	svg {
+	img {
 		display: block;
+		position: relative;
 	}
 	.ring {
 		position: absolute;
-		left: 2px;
-		top: 2px;
-		width: 34px;
-		height: 34px;
+		width: 30px;
+		height: 30px;
 		border-radius: 50%;
-		background: rgba(0, 113, 227, 0.28);
+		background: rgba(10, 132, 255, 0.3);
 	}
 </style>

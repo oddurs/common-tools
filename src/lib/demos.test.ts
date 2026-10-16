@@ -2,9 +2,10 @@
 import { describe, expect, it } from 'vitest';
 import * as bar from './bar/demo';
 import * as keys from './keys/demo';
+import { screen, viewport } from './mac/geometry';
 import * as stats from './stats/demo';
 
-const shown = (f: bar.Frame) => f.icons.filter((i) => i.opacity > 0.5).map((i) => i.glyph);
+const shown = (f: bar.Frame) => f.icons.filter((i) => i.opacity > 0.5).map((i) => i.symbol);
 
 describe.each([
 	['stats', stats],
@@ -26,21 +27,21 @@ describe('Common Bar demo', () => {
 		const behind = bar.frameAt(1500).icons.filter((i) => i.x < bar.metrics.notch.right);
 		expect(behind.length).toBeGreaterThan(0);
 	});
-	it('keeps only the visible section after the click', () => {
-		expect(shown(bar.frameAt(5000))).toEqual(['cloud', 'bubble', 'note']);
+	it('keeps only the icons right of the chevron after the click', () => {
+		expect(shown(bar.frameAt(5000))).toEqual(['icloud.fill', 'message.fill', 'music.note']);
 	});
-	it('hover shows the hidden section but not the always-hidden one', () => {
-		const icons = shown(bar.frameAt(8000));
-		expect(icons).toContain('drop');
-		expect(icons).not.toContain('cup');
+	it('shows the hidden icons on hover', () => {
+		expect(shown(bar.frameAt(8000))).toContain('drop.fill');
 	});
-	it('hides the icon dragged past the divider', () => {
-		expect(shown(bar.frameAt(13_200))).toEqual(['cloud', 'bubble']);
+	it('hides the icon dragged past the chevron', () => {
+		expect(shown(bar.frameAt(13_400))).toEqual(['icloud.fill', 'message.fill']);
 	});
-	it('⌥-click shows both sections', () => {
-		expect(shown(bar.frameAt(bar.posterTime))).toContain('cup');
+	it('keeps visible icons right of the chevron and hidden ones left of it', () => {
+		const frame = bar.frameAt(1500);
+		const right = frame.icons.filter((i) => i.x > frame.chevron.x).map((i) => i.symbol);
+		expect(right).toEqual(['icloud.fill', 'message.fill', 'music.note']);
 	});
-	it('never pushes the chevron off-screen', () => {
+	it('never pushes the chevron behind the notch', () => {
 		for (let t = 0; t < bar.duration; t += 100) {
 			expect(bar.frameAt(t).chevron.x).toBeGreaterThan(bar.metrics.notch.right);
 		}
@@ -55,7 +56,26 @@ describe('Common Stats demo', () => {
 		expect(frame.hover!).toBeLessThan(stats.historyLength);
 	});
 	it('shows the busy moment', () => {
-		expect(stats.frameAt(13_500).readings.cpu).toBeGreaterThan(60);
+		expect(stats.frameAt(12_500).readings.cpu).toBeGreaterThan(60);
 		expect(stats.frameAt(3000).readings.cpu).toBeLessThan(40);
+	});
+});
+
+describe.each([
+	['stats', stats],
+	['keys', keys],
+	['bar', bar]
+] as const)('%s demo camera', (_, demo) => {
+	it('never shows past the edge of the screen', () => {
+		for (let t = 0; t < demo.duration; t += 50) {
+			const { x, y, zoom } = demo.frameAt(t).camera;
+			expect(x - viewport.width / 2 / zoom).toBeGreaterThanOrEqual(-0.001);
+			expect(y - viewport.height / 2 / zoom).toBeGreaterThanOrEqual(-0.001);
+			expect(x + viewport.width / 2 / zoom).toBeLessThanOrEqual(screen.width + 0.001);
+			expect(y + viewport.height / 2 / zoom).toBeLessThanOrEqual(screen.height + 0.001);
+		}
+	});
+	it('ends on the closing card', () => {
+		expect(demo.frameAt(demo.duration - 700).end).toBe(1);
 	});
 });

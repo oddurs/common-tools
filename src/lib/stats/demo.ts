@@ -1,8 +1,22 @@
-// The Common Stats demo: the menu bar item, its menu of live graphs, hover read-back, and the
-// item's styles. Readings are synthetic but shaped like the real thing: a quiet machine with one
-// busy moment. The scene is a pure function of time, so the recorder can step through it.
+// The Common Stats demo: the menu bar item up close, its menu of live graphs, hover read-back, a
+// busy moment, and the item's styles. Readings are synthetic but shaped like the real thing: a
+// quiet machine with one busy stretch. The scene is a pure function of time, so the recorder can
+// step through it frame by frame.
 
-import { along, captionAt, clamp, clickPulse, loopOpacity, noise, ramp, during, type Point } from '../scene';
+import { extrasRight, menuBarHeight, screen, viewport, wide } from '../mac/geometry';
+import {
+	along,
+	cameraAt,
+	captionAt,
+	clamp,
+	clampCamera,
+	clickPulse,
+	loopOpacity,
+	noise,
+	ramp,
+	type Camera,
+	type Point
+} from '../scene';
 
 export type Metric = 'cpu' | 'gpu' | 'memory' | 'network' | 'disk' | 'storage' | 'battery';
 export type Style = 'value' | 'graph' | 'graphValue' | 'gauge' | 'gaugeValue';
@@ -50,21 +64,22 @@ export type Readings = {
 export type Frame = {
 	opacity: number;
 	caption: string;
+	camera: Camera;
 	cursor: Point;
 	pulse: number;
 	/** 0 closed, 1 open, for the menu's entrance and exit. */
 	menu: number;
 	/** The sample under the pointer in the CPU graph, counted back from now, or null when not hovering. */
 	hover: number | null;
-	/** The magnified view of the bar, and which layout it shows. */
-	lens: number;
 	layout: number;
+	/** 0 to 1 as the closing card comes up. */
+	end: number;
 	readings: Readings;
 };
 
 const sampleEvery = 500;
 export const historyLength = 64;
-const spike = { from: 11_200, to: 14_600 };
+const spike = { from: 10_600, to: 13_400 };
 
 /** CPU load for sample n: quiet, with one busy stretch. */
 function cpuSample(n: number): number {
@@ -100,53 +115,72 @@ function readingsAt(t: number): Readings {
 	};
 }
 
-// Where things sit on the 1280 × 800 stage; Demo.svelte lays out to the same numbers.
+// Where things sit on the screen, in points; Demo.svelte lays out to the same numbers.
+const menuWidth = 320;
 export const stage = {
-	itemCenter: { x: 1094, y: 15 },
-	menu: { x: 850, y: 36, width: 320 },
-	graph: { x: 870, y: 92, width: 280, height: 64 }
+	/** The item's right edge, against the system's own extras. */
+	itemRight: extrasRight,
+	itemCenter: { x: extrasRight - 76, y: menuBarHeight / 2 },
+	menu: { x: extrasRight - menuWidth, y: menuBarHeight + 5, width: menuWidth },
+	// Menu padding 7, card padding 12, header 26 + 8.
+	graph: { x: extrasRight - menuWidth + 19, y: menuBarHeight + 5 + 53, width: 282, height: 64 }
 };
 
-const clicks = [5000, 15_400];
+const times = { open: 4200, hover: 6400, hoverOff: 9400, close: 13_700, styles: 14_400, end: 19_600 };
+export const duration = 21_800;
+
+const clicks = [times.open, times.close];
+const g = stage.graph;
 const path = [
-	{ at: 3900, x: 700, y: 560 },
-	{ at: 4900, ...stage.itemCenter },
-	{ at: 7000, ...stage.itemCenter },
-	{ at: 7800, x: 1120, y: 124 },
-	{ at: 10_200, x: 960, y: 128 },
-	{ at: 11_000, x: 1210, y: 300 },
-	{ at: 14_700, x: 1210, y: 300 },
-	{ at: 15_400, x: 620, y: 480 },
-	{ at: 22_000, x: 620, y: 480 }
+	{ at: 2700, x: 1270, y: 250 },
+	{ at: 4000, ...stage.itemCenter },
+	{ at: 5600, ...stage.itemCenter },
+	{ at: 6400, x: g.x + g.width - 30, y: g.y + 34 },
+	{ at: 9000, x: g.x + 80, y: g.y + 38 },
+	{ at: 9800, x: stage.menu.x + menuWidth + 60, y: 260 },
+	{ at: 13_200, x: stage.menu.x + menuWidth + 60, y: 260 },
+	{ at: 13_700, x: 1250, y: 300 },
+	{ at: duration, x: 1250, y: 300 }
+];
+
+/** Close on the bar, back out for the menu, in again for the styles. */
+const bar = { x: screen.width, y: 0, zoom: 2.3 };
+const menuShot = { x: stage.menu.x + menuWidth / 2, y: 0, zoom: 1.08 };
+const styles = { x: screen.width, y: 0, zoom: 1.85 };
+const shots = [
+	{ at: 0, ...wide },
+	{ at: 700, ...bar },
+	{ at: times.open - 300, ...menuShot },
+	{ at: times.close - 100, ...styles },
+	{ at: times.end - 600, ...wide }
 ];
 
 const captions: [number, string][] = [
-	[600, 'System stats in the menu bar.'],
-	[5000, 'Click for live graphs of everything.'],
-	[7800, 'Hover a graph to read back any moment.'],
-	[11_200, 'Something busy? You see it at once.'],
-	[15_600, 'Each one a value, a graph, or a gauge.']
+	[700, 'System stats, right in the menu bar.'],
+	[times.open, 'Click for live graphs of everything.'],
+	[times.hover, 'Hover a graph to read back any moment.'],
+	[spike.from + 300, 'Something busy? You see it at once.'],
+	[times.styles, 'Each one a value, a graph, or a gauge.']
 ];
 
-export const duration = 21_600;
-
 /** The menu open, the graph under the pointer. */
-export const posterTime = 9000;
+export const posterTime = 8200;
 
 export function frameAt(time: number): Frame {
 	const t = ((time % duration) + duration) % duration;
 	const cursor = along(path, t);
-	const hovering = t >= 7800 && t < 10_700;
-	const graphX = (cursor.x - stage.graph.x) / stage.graph.width;
+	const hovering = t >= times.hover && t < times.hoverOff;
+	const graphX = (cursor.x - g.x) / g.width;
 	return {
 		opacity: loopOpacity(t, duration),
 		caption: captionAt(captions, t),
+		camera: clampCamera(cameraAt(shots, t), screen, viewport),
 		cursor,
 		pulse: clickPulse(clicks, t),
-		menu: Math.min(ramp(t, clicks[0], 160), 1 - ramp(t, clicks[1], 160)),
+		menu: Math.min(ramp(t, times.open, 160), 1 - ramp(t, times.close, 160)),
 		hover: hovering ? Math.round((1 - clamp(graphX)) * (historyLength - 1)) : null,
-		lens: Math.max(during(t, 700, 4200, 300), during(t, 15_800, duration - 500, 300)),
-		layout: t < 17_600 ? 0 : t < 19_400 ? 1 : 2,
+		layout: t < times.styles + 1200 ? 0 : t < times.styles + 3000 ? 1 : 2,
+		end: ramp(t, times.end, 500),
 		readings: readingsAt(t)
 	};
 }

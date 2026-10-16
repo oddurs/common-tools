@@ -1,5 +1,6 @@
 <script lang="ts">
-	// The menu bar item as the app draws it: one template colour, small caps captions, tiny graphs.
+	// The menu bar item as the app draws it: a template image in the menu bar's own colour, small caps
+	// captions, tiny graphs and gauges.
 	import { graph, percent, rate } from './format';
 	import type { BarItem, Readings } from './demo';
 
@@ -62,9 +63,9 @@
 		<span class="item">
 			{#if item.style === 'graph' || item.style === 'graphValue'}
 				{@const h = history(item)}
-				<svg class="graph" width="34" height="16" viewBox="0 0 34 16">
-					<rect width="34" height="16" rx="3" class="well" />
-					<path d={graph(h.values.slice(-34), 34, 16, h.max, true)} class="fill" />
+				<svg class="graph" width="30" height="17" viewBox="0 0 30 17">
+					<rect width="30" height="17" rx="3" class="well" />
+					<path d={graph(h.values.slice(-30), 30, 17, h.max, true)} class="fill" />
 				</svg>
 			{/if}
 			{#if item.style === 'gauge' || item.style === 'gaugeValue'}
@@ -86,11 +87,10 @@
 	.bar {
 		display: flex;
 		align-items: center;
-		gap: 11px;
+		gap: 10px;
 		height: 22px;
-		color: #1d1d1f;
 		font:
-			600 10.5px/1 -apple-system,
+			600 10px/1 -apple-system,
 			BlinkMacSystemFont,
 			sans-serif;
 		font-variant-numeric: tabular-nums;
@@ -103,17 +103,17 @@
 		gap: 4px;
 	}
 	.graph .well {
-		fill: rgba(0, 0, 0, 0.12);
+		fill: color-mix(in srgb, currentColor 16%, transparent);
 	}
 	.graph .fill {
-		fill: #1d1d1f;
+		fill: currentColor;
 	}
 	.gauge {
 		position: relative;
 		width: 5px;
-		height: 16px;
+		height: 17px;
 		border-radius: 3px;
-		background: rgba(0, 0, 0, 0.16);
+		background: color-mix(in srgb, currentColor 20%, transparent);
 		overflow: hidden;
 	}
 	.gauge i {
@@ -121,17 +121,17 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		background: #1d1d1f;
+		background: currentColor;
 	}
 	.value {
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		font-size: 12px;
+		font-size: 11.5px;
 		line-height: 1;
 	}
 	.value small {
-		font-size: 7.5px;
+		font-size: 7px;
 		font-weight: 600;
 		opacity: 0.6;
 		margin-bottom: 1px;
@@ -140,8 +140,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: flex-end;
-		font-size: 9px;
-		line-height: 1.05;
+		font-size: 8.5px;
+		line-height: 1.1;
 	}
 	.rates b {
 		opacity: 0.6;

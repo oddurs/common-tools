@@ -29,7 +29,7 @@ export const tools: Tool[] = [
 		asset: 'CommonStats.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'stats/icon.png',
-		demo: 'Common Stats in the menu bar showing CPU, memory, and network. Its menu opens with live graphs for each, and hovering a graph reads back a past value.'
+		demo: 'Common Stats in the menu bar showing CPU, memory, and network. Its menu opens with live graphs for each, hovering a graph reads back a past value, and the item switches between values, graphs, and gauges.'
 	},
 	{
 		slug: 'keys',
@@ -46,14 +46,14 @@ export const tools: Tool[] = [
 	{
 		slug: 'bar',
 		name: 'Common Bar',
-		tagline: 'A tidy menu bar. Hide what you rarely use behind one line.',
+		tagline: 'A tidy menu bar. The icons you rarely use wait behind the chevron.',
 		summary:
-			'Tucks menu bar icons behind an invisible divider. Click the chevron to show them, hold ⌘ to rearrange.',
+			'Tucks away the menu bar icons you rarely use. Click the chevron to show them; ⌘-drag an icon past it to hide it.',
 		repo: `${github}/common-bar`,
 		asset: 'CommonBar.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'bar/icon.png',
-		demo: 'A crowded menu bar. Clicking the Common Bar chevron hides the icons left of the divider; clicking again brings them back. Holding ⌘ shows the divider, and an icon is dragged past it to hide it.'
+		demo: 'A crowded menu bar on a notched Mac. Clicking the Common Bar chevron hides the icons to its left; hovering brings them back. Holding ⌘ shows every icon, and one is dragged past the chevron to hide it.'
 	}
 ];
 

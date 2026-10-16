@@ -1,193 +1,182 @@
-// The Common Bar demo: a crowded menu bar on a notched display, tidied with one click, revealed by
-// hover, rearranged with ⌘-drag, and its always-hidden section opened with ⌥-click. The scene is a
-// pure function of time, so the recorder can step through it.
+// The Common Bar demo, in the app's default setup: a crowded menu bar on a notched display, tidied
+// with one click on the chevron, revealed by hover, and rearranged by ⌘-dragging an icon past the
+// chevron. Sizes are the app's own (MenuBarController). The optional always-hidden section is off
+// by default, so it isn't shown. The scene is a pure function of time, so the recorder can step
+// through it.
 
-import { along, captionAt, clamp, clickPulse, loopOpacity, ramp, type Point } from '../scene';
+import { extrasRight, menuBarHeight, notch, screen, statusSlot, viewport, wide } from '../mac/geometry';
+import type { SymbolName } from '../mac/symbols';
+import {
+	along,
+	cameraAt,
+	captionAt,
+	clamp,
+	clampCamera,
+	clickPulse,
+	loopOpacity,
+	ramp,
+	type Camera,
+	type Point
+} from '../scene';
 
-export type Glyph =
-	| 'drop'
-	| 'lock'
-	| 'video'
-	| 'note'
-	| 'bubble'
-	| 'cloud'
-	| 'box'
-	| 'bolt'
-	| 'eye'
-	| 'clip'
-	| 'cup'
-	| 'gauge'
-	| 'globe'
-	| 'timer';
-export type Section = 'always' | 'hidden' | 'visible';
+export type Section = 'hidden' | 'visible';
 
-/** Left to right as they start out. */
-const initial: [Glyph, Section][] = [
-	['cup', 'always'],
-	['gauge', 'always'],
-	['timer', 'always'],
-	['globe', 'always'],
-	['drop', 'hidden'],
-	['lock', 'hidden'],
-	['video', 'hidden'],
-	['box', 'hidden'],
-	['bolt', 'hidden'],
+/** Left to right as they start out: other apps' menu bar icons. Hidden ones sit left of the chevron. */
+const initial: [SymbolName, Section][] = [
+	['cup.and.saucer.fill', 'hidden'],
+	['gauge.with.dots.needle.33percent', 'hidden'],
+	['timer', 'hidden'],
+	['globe', 'hidden'],
+	['headphones', 'hidden'],
+	['calendar', 'hidden'],
+	['keyboard', 'hidden'],
+	['drop.fill', 'hidden'],
+	['lock.fill', 'hidden'],
+	['video.fill', 'hidden'],
+	['shippingbox.fill', 'hidden'],
+	['bolt.fill', 'hidden'],
 	['eye', 'hidden'],
-	['clip', 'hidden'],
-	['note', 'visible'],
-	['bubble', 'visible'],
-	['cloud', 'visible']
+	['paperclip', 'hidden'],
+	['music.note', 'visible'],
+	['message.fill', 'visible'],
+	['icloud.fill', 'visible']
 ];
 
-export type Placed = { glyph: Glyph; x: number; opacity: number; lifted?: boolean };
+export type Placed = { symbol: SymbolName; x: number; opacity: number; lifted?: boolean };
 export type Frame = {
 	opacity: number;
 	caption: string;
+	camera: Camera;
 	cursor: Point;
 	pulse: number;
 	icons: Placed[];
-	/** x of each divider, and how visible it is. */
-	divider: { x: number; opacity: number };
-	always: { x: number; opacity: number };
 	chevron: { x: number; open: boolean };
-	keys: string;
+	keys: SymbolName[];
+	end: number;
 };
 
 export const metrics = {
-	right: 1280 - 18 - 70 - 3 * 30 - 6,
-	slot: 30,
-	divider: 14,
-	chevron: 26,
-	/** The camera housing: icons left of its right edge can't be seen. */
-	notch: { left: 560, right: 720 }
+	right: extrasRight,
+	slot: statusSlot,
+	/** MenuBarController.Metric.toggleLength. */
+	chevron: 24,
+	notch
 };
 
-const dragged: Glyph = 'note';
+const dragged: SymbolName = 'music.note';
 const times = {
-	collapse: 3800,
-	hoverIn: 7000,
-	hoverOut: 9100,
-	command: 9900,
-	pickUp: 10_700,
-	drop: 12_000,
-	commandUp: 12_500,
-	optionClick: 13_600,
-	optionClose: 16_000,
-	end: 17_600
+	collapse: 4200,
+	hoverIn: 7200,
+	hoverOut: 9300,
+	command: 10_100,
+	pickUp: 10_900,
+	drop: 12_200,
+	commandUp: 12_700,
+	end: 14_800
 };
+export const duration = 17_400;
 
-/** Each section's reveal, 0 (pushed away) to 1 (in place), at time t. */
-function reveals(t: number): { hidden: number; always: number; divider: number } {
-	const open = (from: number, to: number) => Math.min(ramp(t, from, 260), 1 - ramp(t, to, 260));
-	const hidden = Math.max(
-		1 - ramp(t, times.collapse, 300),
+/** How far the hidden icons are revealed, 0 (pushed away) to 1 (in place), at time t. */
+function reveal(t: number): number {
+	const open = (from: number, to: number) => Math.min(ramp(t, from, 220), 1 - ramp(t, to, 220));
+	return Math.max(
+		1 - ramp(t, times.collapse, 260),
 		open(times.hoverIn, times.hoverOut),
-		open(times.command + 200, times.commandUp),
-		open(times.optionClick, times.optionClose)
+		open(times.command + 200, times.commandUp)
 	);
-	const always = Math.max(
-		1 - ramp(t, times.collapse, 300),
-		open(times.command + 200, times.commandUp),
-		open(times.optionClick, times.optionClose)
-	);
-	return { hidden, always, divider: open(times.command + 200, times.commandUp) };
 }
 
-function order(t: number): [Glyph, Section][] {
+function order(t: number): [SymbolName, Section][] {
 	if (t < times.pickUp) return initial;
-	const rest = initial.filter(([g]) => g !== dragged);
+	const rest = initial.filter(([symbol]) => symbol !== dragged);
 	if (t < times.drop) return rest;
-	// Dropped just left of the divider: hidden from now on.
-	const at = rest.findIndex(([, s]) => s === 'visible');
+	// Dropped just left of the chevron: hidden from now on.
+	const at = rest.findIndex(([, section]) => section === 'visible');
 	return [...rest.slice(0, at), [dragged, 'hidden'], ...rest.slice(at)];
 }
 
 /** Lays the items out from the right edge, as the menu bar does. */
-function layout(t: number, cursor: Point): Omit<Frame, 'opacity' | 'caption' | 'cursor' | 'pulse' | 'keys'> {
-	const r = reveals(t);
+function layout(t: number, cursor: Point): Pick<Frame, 'icons' | 'chevron'> {
+	const r = reveal(t);
 	const m = metrics;
-	let x = m.right - m.chevron;
-	const chevron = { x, open: r.hidden > 0.5 };
-	const items = order(t);
+	let x = m.right;
+	const items = [...order(t)].reverse();
 	const icons: Placed[] = [];
-	const place = (section: Section) => {
-		for (const [glyph, s] of [...items].reverse()) {
-			if (s !== section) continue;
-			x -= m.slot;
-			icons.push({ glyph, x, opacity: 1 });
-		}
-	};
-	place('visible');
-	x -= m.divider * r.divider;
-	const divider = { x, opacity: r.divider };
-	const hiddenStart = icons.length;
-	place('hidden');
-	const hiddenEnd = icons.length;
-	x -= m.divider * r.divider;
-	const always = { x, opacity: r.divider };
-	place('always');
-	// Collapsing stretches the divider, pushing everything left of it away.
-	icons.forEach((icon, i) => {
-		const reveal = i < hiddenStart ? 1 : i < hiddenEnd ? r.hidden : Math.min(r.hidden, r.always);
-		icon.x -= (1 - reveal) * 700;
-		icon.opacity = clamp(reveal * 1.4 - 0.2);
-	});
-	if (t >= times.pickUp && t < times.drop)
-		icons.push({ glyph: dragged, x: cursor.x - 26, opacity: 1, lifted: true });
-	return { icons, divider, always, chevron };
+	for (const [symbol, section] of items) {
+		if (section !== 'visible') continue;
+		x -= m.slot;
+		icons.push({ symbol, x, opacity: 1 });
+	}
+	x -= m.chevron;
+	const chevron = { x, open: r > 0.5 };
+	for (const [symbol, section] of items) {
+		if (section !== 'hidden') continue;
+		x -= m.slot;
+		// Collapsing stretches an invisible divider beside the chevron, pushing these off the screen.
+		icons.push({ symbol, x: x - (1 - r) * 700, opacity: clamp(r * 1.4 - 0.2) });
+	}
+	if (t >= times.pickUp && t < times.drop) {
+		icons.push({ symbol: dragged, x: cursor.x - m.slot / 2 - 6, opacity: 1, lifted: true });
+	}
+	return { icons, chevron };
 }
 
-const chevronAt = { x: metrics.right - metrics.chevron / 2 + 4, y: 21 };
-// Where the dragged icon starts: the rightmost visible slot but two.
-const pickAt = { x: metrics.right - metrics.chevron - 3 * metrics.slot + 14, y: 15 };
-const clicks = [times.collapse, times.optionClick, times.optionClose];
+const y = menuBarHeight / 2;
+const chevronAt = (visible: number) => ({
+	x: metrics.right - visible * metrics.slot - metrics.chevron / 2 + 2,
+	y: y + 3
+});
+// The dragged icon starts as the leftmost visible one, and lands just left of the chevron.
+const pickAt = { x: metrics.right - 2.5 * metrics.slot, y };
+const dropAt = { x: metrics.right - 2 * metrics.slot - metrics.chevron - metrics.slot / 2 - 4, y };
+const clicks = [times.collapse];
 
 const path = [
-	{ at: 2800, x: 960, y: 330 },
-	{ at: 3700, ...chevronAt },
-	{ at: 5600, ...chevronAt },
-	{ at: 6600, x: 820, y: 16 },
-	{ at: 8300, x: 820, y: 16 },
-	{ at: 8900, x: 900, y: 260 },
-	{ at: 9900, x: 980, y: 200 },
-	{ at: 10_600, ...pickAt },
-	{ at: 11_900, x: pickAt.x - 2 * metrics.slot - 10, y: 15 },
-	{ at: 12_500, x: pickAt.x - 2 * metrics.slot - 10, y: 15 },
-	{ at: 13_400, ...chevronAt },
-	{ at: 15_800, ...chevronAt },
-	{ at: 16_800, x: 940, y: 300 }
+	{ at: 3000, x: 1300, y: 300 },
+	{ at: 4100, ...chevronAt(3) },
+	{ at: 6000, ...chevronAt(3) },
+	{ at: 6900, x: 1100, y: y + 2 },
+	{ at: 8800, x: 1100, y: y + 2 },
+	{ at: 9400, x: 1150, y: 260 },
+	{ at: 10_200, x: 1300, y: 200 },
+	{ at: 10_800, ...pickAt },
+	{ at: 12_100, ...dropAt },
+	{ at: 12_700, ...dropAt },
+	{ at: 13_600, x: 1300, y: 280 },
+	{ at: duration, x: 1300, y: 280 }
+];
+
+/** In on the right of the menu bar, wide enough to show the notch at first, closer for the details. */
+const crowded = { x: screen.width, y: 0, zoom: 1.25 };
+const close = { x: screen.width, y: 0, zoom: 2.0 };
+const shots = [
+	{ at: 0, ...wide },
+	{ at: 500, ...crowded },
+	{ at: times.collapse + 500, ...close },
+	{ at: times.end - 600, ...wide }
 ];
 
 const captions: [number, string][] = [
 	[600, 'A full menu bar, and some icons are lost behind the notch.'],
-	[times.collapse, 'One click tucks the extras away.'],
-	[6400, 'Hover, scroll, or click again to bring them back.'],
-	[times.command, 'Hold ⌘ and drag icons past the line to hide them.'],
-	[times.optionClick - 200, '⌥-click for the few you almost never need.']
+	[times.collapse, 'One click on the chevron tucks the extras away.'],
+	[6800, 'Hover, scroll, or click again to bring them back.'],
+	[times.command, 'Hold ⌘ and drag an icon past the chevron to hide it.']
 ];
 
-export const duration = times.end;
-
-/** Everything shown, the always-hidden section included. */
-export const posterTime = 14_800;
+/** Holding ⌘, mid-drag: everything showing, an icon on its way past the chevron. */
+export const posterTime = 11_600;
 
 export function frameAt(time: number): Frame {
 	const t = ((time % duration) + duration) % duration;
 	const cursor = along(path, t);
-	const held = (from: number, to: number) => t >= from && t < to;
-	let keys = '';
-	if (held(times.command, times.commandUp)) keys = '⌘';
-	if (
-		held(times.optionClick - 300, times.optionClick + 500) ||
-		held(times.optionClose - 300, times.optionClose + 500)
-	)
-		keys = '⌥';
 	return {
 		opacity: loopOpacity(t, duration),
 		caption: captionAt(captions, t),
+		camera: clampCamera(cameraAt(shots, t), screen, viewport),
 		cursor,
 		pulse: clickPulse(clicks, t),
-		keys,
+		keys: t >= times.command && t < times.commandUp ? ['command'] : [],
+		end: ramp(t, times.end, 500),
 		...layout(t, cursor)
 	};
 }
