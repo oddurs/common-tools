@@ -20,8 +20,8 @@
 	<h2 id="install">Install</h2>
 	<Install tool={bar} />
 	<p class="callout">
-		On first launch a chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b>
-		guide. Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
+		On first launch a chevron appears beside the system icons, and a short how-to plays right there in
+		the menu bar. Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
 	</p>
 
 	<h2 id="hide">Hide icons</h2>
@@ -37,6 +37,11 @@
 		<li>Let go of <kbd>⌘</kbd>. Everything left of the chevron disappears.</li>
 	</ol>
 	<p>To bring an icon back for good, hold <kbd>⌘</kbd> and drag it to the right of the chevron.</p>
+	<p>
+		To see it done, right-click the chevron and choose <b>How to Arrange…</b>. An icon is picked up, dragged
+		past the chevron, and hidden, three times over, right in the menu bar. Any click, or holding <kbd>⌘</kbd> yourself,
+		stops it. With Reduce Motion on, it shows a still instead.
+	</p>
 
 	<h2 id="show">Show them again</h2>
 	<ul>
@@ -66,7 +71,7 @@
 
 	<h2 id="menu">The menu</h2>
 	<p>
-		Right-click the chevron, or <kbd>⌃</kbd>-click it, for <b>How to Arrange…</b> (the guide again),
+		Right-click the chevron, or <kbd>⌃</kbd>-click it, for <b>How to Arrange…</b> (the how-to again),
 		<b>Settings…</b> (<kbd>⌘,</kbd>), and <b>Quit Common Bar</b>.
 	</p>
 
