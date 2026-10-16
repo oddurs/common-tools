@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { along, captionAt, clickPulse, ease, loopOpacity, noise } from './scene';
+import { along, captionAt, clickPulse, ease, loopOpacity, noise } from './motion';
 
 describe('noise', () => {
 	it('is the same every run, so recordings are reproducible', () => {

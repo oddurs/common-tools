@@ -1,7 +1,7 @@
 <script lang="ts">
 	// The system arrow, rendered from NSCursor.arrow, placed by its hot spot.
 	import { asset } from '$app/paths';
-	import { cursor } from './mac/symbols';
+	import { cursor } from '../mac/symbols';
 
 	let { x, y, pulse = 0 }: { x: number; y: number; pulse?: number } = $props();
 </script>

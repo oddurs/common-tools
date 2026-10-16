@@ -4,7 +4,7 @@
 	import type { Snippet } from 'svelte';
 	import Symbol from './Symbol.svelte';
 	import { clock, extrasRight, menuBarHeight, screen, systemItems, viewport } from './geometry';
-	import type { Camera } from '../scene';
+	import type { Camera } from '../film/motion';
 
 	let {
 		dark,

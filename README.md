@@ -24,16 +24,31 @@ A [SvelteKit](https://svelte.dev/docs/kit) site, prerendered with `adapter-stati
 
 ## Demo videos
 
-Each scene is set on a Mac screen as macOS 26 draws it: a 1728-point display with a 24-point menu bar and no notch (`src/lib/mac/geometry.ts`). The menu bar glyphs and the pointer are the system's own SF Symbols and arrow cursor, rendered by `pnpm glyphs` into `static/symbols/`; run it again after adding a symbol to `scripts/render-glyphs.swift`. A camera pans and zooms across the screen, and every scene draws in light and dark.
+The videos are made by a small film engine in `src/lib/film/`. A film is a script of beats on a clock:
 
-`static/<tool>/demo.mp4`, `demo-dark.mp4`, `poster.jpg`, and `poster-dark.jpg` are recorded from the scenes frame by frame, so every run gives the same video. The site shows the one that matches the viewer's appearance. You need Google Chrome and ffmpeg.
-
-```sh
-pnpm dev                 # http://localhost:5371
-pnpm record stats        # or keys, bar → both appearances
+```ts
+export const film = direct((d) => {
+	d.camera(wide);
+	d.at(700).camera(closeUp).caption('System stats, right in the menu bar.');
+	d.at(2700).point({ x: 1270, y: 250 });
+	d.at(4000).point(item);
+	d.at(4200).click().mark('open').caption('Click for live graphs of everything.');
+	d.at(8200).poster();
+	d.at(19_600).end(2200);
+});
 ```
 
-Open `http://localhost:5371/<tool>/demo/` to watch a scene live while editing it, and add `?dark` for dark mode.
+`direct` turns the script into a pure function of time that draws the camera, the pointer and its clicks, the keys held, the caption, and the closing card. A scene (`src/lib/<tool>/demo.ts` and `Demo.svelte`) adds only what is its own (the app's menu bar item, its menus, its windows), reading the film's marks for timing. `Film.svelte` puts it all on a Mac screen as macOS 26 draws it: a 1728-point display with a 24-point menu bar (`src/lib/mac/`). Menu bar icons and the pointer are the system's own SF Symbols and arrow cursor.
+
+```sh
+pnpm film list                       # each film's length, poster, and marks
+pnpm shot bar collapse poster 9000   # stills into shots/ at a mark, the poster, or a time; add --dark
+pnpm record                          # every film, light and dark → static/<tool>/demo*.mp4 and poster*.jpg
+pnpm record bar --dark               # one film, one appearance
+pnpm glyphs                          # re-render static/symbols/ after adding a symbol to scripts/render-glyphs.swift
+```
+
+`shot` and `record` start their own dev server with file watching off, so editing while a recording runs is safe. They need Google Chrome; `record` also needs ffmpeg. The site shows the video matching the viewer's appearance. Open `http://localhost:5371/<tool>/demo/` (add `?dark`) to watch a film live while editing it.
 
 ## Development
 

@@ -1,19 +1,19 @@
 <script lang="ts">
+	import { asset } from '$app/paths';
 	import { onMount, type Component } from 'svelte';
+	import type { Film } from './director';
 
 	let {
 		scene: Scene,
-		duration,
-		poster,
+		film,
 		title
 	}: {
 		scene: Component<{ time: number; dark?: boolean }>;
-		duration: number;
-		poster: number;
+		film: Film;
 		title: string;
 	} = $props();
 
-	// Plays live, or holds still for the recorder, which steps it with window.__seek.
+	// Plays live, or holds still for `pnpm film`, which steps it with window.__seek.
 	// ?dark draws the scene in dark mode.
 	let time = $state(0);
 	let dark = $state(false);
@@ -24,8 +24,9 @@
 		if (params.has('record')) {
 			Object.assign(window, {
 				__seek: (t: number) => (time = t),
-				__duration: duration,
-				__poster: poster
+				__duration: film.duration,
+				__poster: film.poster,
+				__marks: film.marks
 			});
 			return;
 		}
@@ -43,6 +44,7 @@
 <svelte:head>
 	<title>{title} demo</title>
 	<meta name="robots" content="noindex" />
+	<link rel="icon" href={asset('icon.svg')} />
 </svelte:head>
 
 <div class="center"><div id="stage"><Scene {time} {dark} /></div></div>

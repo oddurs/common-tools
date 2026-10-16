@@ -1,12 +1,9 @@
 <script lang="ts">
-	import Overlay from '../mac/Overlay.svelte';
-	import Screen from '../mac/Screen.svelte';
-	import Stage from '../mac/Stage.svelte';
+	import Film from '../film/Film.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import Window from '../mac/Window.svelte';
 	import { extrasRight, screen, statusSlot } from '../mac/geometry';
 	import type { SymbolName } from '../mac/symbols';
-	import { tool } from '../tools';
 	import { frameAt, windows, type WindowID, type Word } from './demo';
 
 	let { time, dark = false }: { time: number; dark?: boolean } = $props();
@@ -31,58 +28,55 @@
 	}
 </script>
 
-<Stage {dark} opacity={frame.opacity}>
-	<Screen
-		{dark}
-		camera={frame.camera}
-		app={titles[frame.front]}
-		menus={['File', 'Edit', 'Format', 'View', 'Window', 'Help']}
-	>
-		{#snippet extras()}
-			<div class="extras" style:right="{screen.width - extrasRight}px">
-				{#each others as symbol (symbol)}
-					<span class="slot" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
+<Film
+	frame={{ ...frame, keys: [...frame.keys] }}
+	{dark}
+	slug="keys"
+	app={titles[frame.front]}
+	menus={['File', 'Edit', 'Format', 'View', 'Window', 'Help']}
+>
+	{#snippet extras()}
+		<div class="extras" style:right="{screen.width - extrasRight}px">
+			{#each others as symbol (symbol)}
+				<span class="slot" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
+			{/each}
+			<span class="slot flag" style:width="{statusSlot + 4}px" aria-label="Current keyboard"
+				><span style:transform="scale({flagScale})">{frame.flag}</span></span
+			>
+		</div>
+	{/snippet}
+
+	{#each order as id (id)}
+		{@const front = id === frame.front}
+		<Window title={titles[id]} {...windows[id]} {front}>
+			<div class="text">
+				{#each lines(frame.windows[id]) as line, lineIndex (lineIndex)}
+					<p>
+						{#each line as { word, index }, position (index)}
+							{#if position > 0}{' '}{/if}<span class="word" class:fixed={!!word.fixed}
+								>{word.text}{#if frame.bubble?.window === id && frame.bubble.index === index && word.fixed}
+									<span
+										class="bubble"
+										style:opacity={bubbleIn}
+										style:transform="translateY({(1 - bubbleIn) * -3}px)"
+									>
+										<span>{word.fixed.flag}</span>
+										<b>{word.fixed.replacement}</b>
+										<s>{word.fixed.original}</s>
+										<kbd>⌘Z</kbd>
+									</span>
+								{/if}</span
+							>{#if front && index === frame.windows[id].length - 1}<span
+									class="caret"
+									class:on={frame.caretOn}
+								></span>{/if}
+						{/each}
+					</p>
 				{/each}
-				<span class="slot flag" style:width="{statusSlot + 4}px" aria-label="Current keyboard"
-					><span style:transform="scale({flagScale})">{frame.flag}</span></span
-				>
 			</div>
-		{/snippet}
-
-		{#each order as id (id)}
-			{@const front = id === frame.front}
-			<Window title={titles[id]} {...windows[id]} {front}>
-				<div class="text">
-					{#each lines(frame.windows[id]) as line, lineIndex (lineIndex)}
-						<p>
-							{#each line as { word, index }, position (index)}
-								{#if position > 0}{' '}{/if}<span class="word" class:fixed={!!word.fixed}
-									>{word.text}{#if frame.bubble?.window === id && frame.bubble.index === index && word.fixed}
-										<span
-											class="bubble"
-											style:opacity={bubbleIn}
-											style:transform="translateY({(1 - bubbleIn) * -3}px)"
-										>
-											<span>{word.fixed.flag}</span>
-											<b>{word.fixed.replacement}</b>
-											<s>{word.fixed.original}</s>
-											<kbd>⌘Z</kbd>
-										</span>
-									{/if}</span
-								>{#if front && index === frame.windows[id].length - 1}<span
-										class="caret"
-										class:on={frame.caretOn}
-									></span>{/if}
-							{/each}
-						</p>
-					{/each}
-				</div>
-			</Window>
-		{/each}
-	</Screen>
-
-	<Overlay caption={frame.caption} keys={[...frame.keys]} end={frame.end} tool={tool('keys')} />
-</Stage>
+		</Window>
+	{/each}
+</Film>
 
 <style>
 	.extras {
