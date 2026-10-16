@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+
+# The one seam CI and git hooks call. Verbs: fmt fmt:check lint test build check
+
+cd "$(dirname "$0")/.."
+
+# A worktree starts without node_modules; install from the lockfile, never update it.
+[ -d node_modules ] || pnpm install --frozen-lockfile
+
+case "${1:-}" in
+fmt)
+    echo "==> formatting"
+    pnpm exec prettier --write .
+    ;;
+fmt:check)
+    echo "==> checking format"
+    pnpm exec prettier --check .
+    ;;
+lint)
+    "$0" fmt:check
+    echo "==> type-checking with warnings as errors"
+    pnpm run --silent check
+    ;;
+test)
+    echo "==> running tests"
+    pnpm exec vitest run
+    ;;
+build)
+    echo "==> building the static site"
+    pnpm exec vite build
+    ;;
+check)
+    "$0" lint
+    "$0" test
+    "$0" build
+    ;;
+*)
+    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|check}" >&2
+    exit 2
+    ;;
+esac

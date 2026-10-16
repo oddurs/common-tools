@@ -1,0 +1,10 @@
+name: Suggestion
+description: Something the site should explain or show.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Suggestion
+    validations:
+      required: true
