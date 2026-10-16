@@ -6,13 +6,22 @@
 		duration,
 		poster,
 		title
-	}: { scene: Component<{ time: number }>; duration: number; poster: number; title: string } = $props();
+	}: {
+		scene: Component<{ time: number; dark?: boolean }>;
+		duration: number;
+		poster: number;
+		title: string;
+	} = $props();
 
 	// Plays live, or holds still for the recorder, which steps it with window.__seek.
+	// ?dark draws the scene in dark mode.
 	let time = $state(0);
+	let dark = $state(false);
 
 	onMount(() => {
-		if (new URLSearchParams(location.search).has('record')) {
+		const params = new URLSearchParams(location.search);
+		dark = params.has('dark');
+		if (params.has('record')) {
 			Object.assign(window, {
 				__seek: (t: number) => (time = t),
 				__duration: duration,
@@ -36,7 +45,7 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="center"><div id="stage"><Scene {time} /></div></div>
+<div class="center"><div id="stage"><Scene {time} {dark} /></div></div>
 
 <style>
 	:global(body) {

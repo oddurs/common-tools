@@ -23,7 +23,10 @@
 	{#each tools as t (t.slug)}
 		<section class="tool ruled">
 			<a class="poster" href={resolve(`${t.slug}/`)} tabindex="-1">
-				<img src={asset(`${t.slug}/poster.jpg`)} alt="" width="1280" height="800" loading="lazy" />
+				<picture>
+					<source srcset={asset(`${t.slug}/poster-dark.jpg`)} media="(prefers-color-scheme: dark)" />
+					<img src={asset(`${t.slug}/poster.jpg`)} alt="" width="1280" height="800" loading="lazy" />
+				</picture>
 			</a>
 			<div class="about">
 				<img class="icon" src={asset(t.icon)} alt="" width="64" height="64" />
@@ -63,6 +66,7 @@
 	}
 	.poster img {
 		display: block;
+		object-fit: cover;
 		width: 100%;
 		height: 100%;
 	}

@@ -24,14 +24,16 @@ A [SvelteKit](https://svelte.dev/docs/kit) site, prerendered with `adapter-stati
 
 ## Demo videos
 
-`static/<tool>/demo.mp4` and `poster.jpg` are recorded from the scenes, frame by frame, so every run gives the same video. You need Google Chrome and ffmpeg.
+Each scene is set on a real Mac screen: a 16-inch MacBook Pro's 1728-point display, its 33-point menu bar and notch measured on macOS 26 (`src/lib/mac/geometry.ts`). The menu bar glyphs and the pointer are the system's own SF Symbols and arrow cursor, rendered once by `swift scripts/render-symbols.swift` into `static/symbols/`. A camera pans and zooms across the screen, and every scene draws in light and dark.
+
+`static/<tool>/demo.mp4`, `demo-dark.mp4`, `poster.jpg`, and `poster-dark.jpg` are recorded from the scenes frame by frame, so every run gives the same video. The site shows the one that matches the viewer's appearance. You need Google Chrome and ffmpeg.
 
 ```sh
 pnpm dev                 # http://localhost:5371
-pnpm record stats        # or keys, bar → static/<tool>/demo.mp4 and poster.jpg
+pnpm record stats        # or keys, bar → both appearances
 ```
 
-Open `http://localhost:5371/<tool>/demo/` to watch a scene live while editing it.
+Open `http://localhost:5371/<tool>/demo/` to watch a scene live while editing it, and add `?dark` for dark mode.
 
 ## Development
 

@@ -1,0 +1,132 @@
+{
+  "apple.logo" : {
+    "height" : 17,
+    "width" : 13
+  },
+  "arrow.up.arrow.down" : {
+    "height" : 14,
+    "width" : 18
+  },
+  "battery.75percent" : {
+    "height" : 11,
+    "width" : 21
+  },
+  "battery.100percent" : {
+    "height" : 12,
+    "width" : 26
+  },
+  "bolt.fill" : {
+    "height" : 18,
+    "width" : 14
+  },
+  "calendar" : {
+    "height" : 15,
+    "width" : 17
+  },
+  "command" : {
+    "height" : 24,
+    "width" : 26
+  },
+  "cpu" : {
+    "height" : 15,
+    "width" : 16
+  },
+  "cup.and.saucer.fill" : {
+    "height" : 15,
+    "width" : 20
+  },
+  "cursor" : {
+    "height" : 40,
+    "width" : 28,
+    "x" : 5,
+    "y" : 5
+  },
+  "drop.fill" : {
+    "height" : 16,
+    "width" : 12
+  },
+  "eye" : {
+    "height" : 13,
+    "width" : 21
+  },
+  "gauge.with.dots.needle.33percent" : {
+    "height" : 16,
+    "width" : 16
+  },
+  "globe" : {
+    "height" : 16,
+    "width" : 16
+  },
+  "headphones" : {
+    "height" : 17,
+    "width" : 17
+  },
+  "icloud.fill" : {
+    "height" : 14,
+    "width" : 20
+  },
+  "internaldrive" : {
+    "height" : 13,
+    "width" : 18
+  },
+  "keyboard" : {
+    "height" : 13,
+    "width" : 19
+  },
+  "lock.fill" : {
+    "height" : 16,
+    "width" : 14
+  },
+  "magnifyingglass" : {
+    "height" : 16,
+    "width" : 17
+  },
+  "memorychip" : {
+    "height" : 14,
+    "width" : 17
+  },
+  "message.fill" : {
+    "height" : 16,
+    "width" : 18
+  },
+  "music.note" : {
+    "height" : 16,
+    "width" : 12
+  },
+  "network" : {
+    "height" : 16,
+    "width" : 16
+  },
+  "option" : {
+    "height" : 23,
+    "width" : 27
+  },
+  "paperclip" : {
+    "height" : 18,
+    "width" : 16
+  },
+  "shippingbox.fill" : {
+    "height" : 17,
+    "width" : 17
+  },
+  "square.stack.3d.up" : {
+    "height" : 18,
+    "width" : 17
+  },
+  "switch.2" : {
+    "height" : 15,
+    "width" : 16
+  },
+  "timer" : {
+    "height" : 16,
+    "width" : 16
+  },
+  "video.fill" : {
+    "height" : 13,
+    "width" : 19
+  },
+  "wifi" : {
+    "height" : 14,
+    "width" : 18
+  }
+}

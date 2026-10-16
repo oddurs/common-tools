@@ -12,6 +12,7 @@
 		['apps', 'Per-app layouts'],
 		['learning', 'What it learns'],
 		['menu', 'The menu'],
+		['settings', 'Settings'],
 		['limits', 'Limits'],
 		['worldkey', 'WorldKey CLI'],
 		['source', 'Build from source']
@@ -82,8 +83,8 @@
 	</p>
 	<p>
 		Everything stays on your Mac, in <code>~/Library/Application Support/LangSmart/memory.json</code> (the
-		folder keeps its original name so nothing is lost). <b>Settings › Forget Everything…</b> clears it. No network,
-		no telemetry, no account.
+		folder keeps its original name so nothing is lost). <b>Settings › Learning › Forget Everything…</b> clears it.
+		No network, no telemetry, no account.
 	</p>
 
 	<h2 id="menu">The menu</h2>
@@ -101,6 +102,16 @@
 		width="2112"
 		height="856"
 	/>
+
+	<h2 id="settings">Settings</h2>
+	<p>Choose <b>Settings…</b> from the menu, or open Common Keys again while it's running. In order:</p>
+	<ul>
+		<li><b>Shortcuts</b>: the next-layout shortcut, and how to convert the last word.</li>
+		<li><b>Exceptions</b>: apps pinned to one layout or paused. Only installed apps are listed.</li>
+		<li><b>Learning</b>: what it has learned so far, and <b>Forget Everything…</b>.</li>
+		<li><b>General</b>: <b>Open at login</b>.</li>
+		<li><b>Common Tools</b>: the other Common Tools apps, and the version you're running.</li>
+	</ul>
 
 	<h2 id="limits">Limits</h2>
 	<ul>

@@ -71,6 +71,10 @@
 	</p>
 
 	<h2 id="settings">Settings</h2>
+	<p>
+		Choose <b>Settings…</b> from the menu, press <kbd>⌘,</kbd> while it's open, or open Common Stats again from
+		Finder or Spotlight. A live preview of the bar sits at the top.
+	</p>
 	<h3>Items</h3>
 	<p>
 		Each metric gets a style: <b>Value</b>, <b>Graph</b>, <b>Graph and Value</b>, <b>Gauge</b>,
@@ -83,7 +87,9 @@
 		<b>Show labels</b> turns the small CPU / MEM captions on or off. <b>Density</b> is Compact, Regular, or Spacious.
 	</p>
 	<h3>General</h3>
-	<p><b>Update every</b> 0.5, 1, 2, 3, or 5 seconds, and <b>Open at login</b>.</p>
+	<p><b>Open at login</b>, and <b>Update every</b> 0.5, 1, 2, 3, or 5 seconds.</p>
+	<h3>Common Tools</h3>
+	<p>The other Common Tools apps, to open or get, and the version of Common Stats you're running.</p>
 
 	<h2 id="accuracy">Accuracy</h2>
 	<p>

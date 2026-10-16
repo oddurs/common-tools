@@ -57,3 +57,38 @@ export function clickPulse(clicks: number[], t: number, over = 260): number {
 	for (const at of clicks) if (t >= at && t < at + over) return 1 - (t - at) / over;
 	return 0;
 }
+
+/** Where the camera looks, in screen points, and how far in it is zoomed. */
+export type Camera = Point & { zoom: number };
+export type Shot = Camera & { at: number };
+
+/** The camera at time t: each shot starts moving at `at` and settles `over` ms later. */
+export function cameraAt(shots: Shot[], t: number, over = 1100): Camera {
+	let camera: Camera = shots[0];
+	for (let i = 1; i < shots.length; i++) {
+		const shot = shots[i];
+		if (t < shot.at) break;
+		const k = ease((t - shot.at) / over);
+		camera = {
+			x: camera.x + (shot.x - camera.x) * k,
+			y: camera.y + (shot.y - camera.y) * k,
+			zoom: camera.zoom + (shot.zoom - camera.zoom) * k
+		};
+	}
+	return camera;
+}
+
+/** Keeps the camera inside the screen, so no edge of it ever shows. */
+export function clampCamera(
+	camera: Camera,
+	screen: { width: number; height: number },
+	viewport: { width: number; height: number }
+): Camera {
+	const halfW = viewport.width / 2 / camera.zoom;
+	const halfH = viewport.height / 2 / camera.zoom;
+	return {
+		zoom: camera.zoom,
+		x: clamp(camera.x, halfW, screen.width - halfW),
+		y: clamp(camera.y, halfH, screen.height - halfH)
+	};
+}
