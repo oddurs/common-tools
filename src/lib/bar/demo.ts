@@ -1,10 +1,10 @@
-// The Common Bar demo, in the app's default setup: a crowded menu bar on a notched display, tidied
+// The Common Bar demo, in the app's default setup: a crowded menu bar, tidied
 // with one click on the chevron, revealed by hover, and rearranged by ⌘-dragging an icon past the
 // chevron. Sizes and glyphs are the app's own (Glyphs.swift, MenuBarController). The optional always-hidden section is off
 // by default, so it isn't shown. The scene is a pure function of time, so the recorder can step
 // through it.
 
-import { extrasRight, menuBarHeight, notch, screen, statusSlot, viewport, wide } from '../mac/geometry';
+import { extrasRight, menuBarHeight, screen, statusSlot, viewport, wide } from '../mac/geometry';
 import type { SymbolName } from '../mac/symbols';
 import {
 	along,
@@ -59,8 +59,7 @@ export const metrics = {
 	right: extrasRight,
 	slot: statusSlot,
 	/** The chevron item: 10 pt long (Glyphs.swift), 26 pt on screen with the menu bar's padding. */
-	chevron: 26,
-	notch
+	chevron: 26
 };
 
 const dragged: SymbolName = 'music.note';
@@ -146,7 +145,7 @@ const path = [
 	{ at: duration, x: 1300, y: 280 }
 ];
 
-/** In on the right of the menu bar, wide enough to show the notch at first, closer for the details. */
+/** In on the right of the menu bar, wide enough to show the crowd at first, closer for the details. */
 const crowded = { x: screen.width, y: 0, zoom: 1.25 };
 const close = { x: screen.width, y: 0, zoom: 2.0 };
 const shots = [
@@ -157,7 +156,7 @@ const shots = [
 ];
 
 const captions: [number, string][] = [
-	[600, 'A full menu bar, and some icons are lost behind the notch.'],
+	[600, 'A full menu bar: every app wants a spot.'],
 	[times.collapse, 'One click on the chevron tucks the extras away.'],
 	[6800, 'Hover, scroll, or click again to bring them back.'],
 	[times.command, 'Hold ⌘ and drag an icon past the chevron to hide it.']

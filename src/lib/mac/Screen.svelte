@@ -1,9 +1,9 @@
 <script lang="ts">
 	// A Mac screen as macOS 26 draws it: wallpaper, the transparent menu bar with the app's menus on
-	// the left and the system's extras on the right, and the camera housing between them.
+	// the left and the system's extras on the right.
 	import type { Snippet } from 'svelte';
 	import Symbol from './Symbol.svelte';
-	import { clock, extrasRight, menuBarHeight, notch, screen, systemItems, viewport } from './geometry';
+	import { clock, extrasRight, menuBarHeight, screen, systemItems, viewport } from './geometry';
 	import type { Camera } from '../scene';
 
 	let {
@@ -49,9 +49,7 @@
 			{#each menus as menu (menu)}<span class="item">{menu}</span>{/each}
 		</div>
 
-		<div class="extras" style:left="{notch.right}px" style:width="{extrasRight - notch.right}px">
-			<div class="track" style:left="{-notch.right}px">{@render extras?.()}</div>
-		</div>
+		<div class="extras" style:width="{extrasRight}px">{@render extras?.()}</div>
 
 		<div class="system" style:left="{extrasRight}px">
 			{#each [...systemItems].reverse() as item (item.symbol)}
@@ -60,13 +58,6 @@
 			<span class="clock" style:width="{clock.width}px">{clock.text}</span>
 		</div>
 	</div>
-
-	<div
-		class="notch"
-		style:left="{notch.left}px"
-		style:width="{notch.right - notch.left}px"
-		style:height="{menuBarHeight}px"
-	></div>
 
 	{@render top?.()}
 </div>
@@ -147,15 +138,10 @@
 	}
 	.extras {
 		position: absolute;
+		left: 0;
 		top: 0;
 		height: 100%;
 		overflow: hidden;
-	}
-	.track {
-		position: absolute;
-		top: 0;
-		height: 100%;
-		width: 1728px;
 	}
 	.system {
 		position: absolute;
@@ -172,11 +158,5 @@
 		text-align: right;
 		font-variant-numeric: tabular-nums;
 		white-space: pre;
-	}
-	.notch {
-		position: absolute;
-		top: 0;
-		background: #000;
-		border-radius: 0 0 11px 11px;
 	}
 </style>

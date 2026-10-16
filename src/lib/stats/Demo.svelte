@@ -194,7 +194,7 @@
 		align-items: center;
 	}
 	.item {
-		height: 25px;
+		height: 21px;
 		padding: 0 8px;
 		display: flex;
 		align-items: center;

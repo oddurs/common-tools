@@ -5,7 +5,7 @@
 //
 // The scene is a pure function of time, so the recorder can step through it frame by frame.
 
-import { extrasRight, screen, viewport, wide } from '../mac/geometry';
+import { screen, viewport, wide } from '../mac/geometry';
 import { cameraAt, clampCamera, ramp, type Camera } from '../scene';
 
 export type WindowID = 'notes' | 'chat';
@@ -128,7 +128,6 @@ export const windows = {
 	notes: { x: 440, y: 170, width: 780, height: 470 },
 	chat: { x: 860, y: 300, width: 700, height: 440 }
 } as const;
-export const flagCenter = { x: extrasRight - 18, y: 16 };
 
 /** A medium shot of both windows and the menu bar, pushing in on each fix and up to the flag. */
 const medium = { x: 1000, y: 400, zoom: 1 };
