@@ -1,0 +1,81 @@
+# Common Glyph
+
+[![CI](https://github.com/oddurs/common-glyph/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-glyph/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Put your own images in the menu bar: a character, a tattoo design, a sticker, an emoji, or a word. As many as you like.
+
+- **As many glyphs as you want.** Each is its own menu bar item with its own image and look. Add, duplicate, hide, and delete them from the sidebar in Settings.
+- **Any image, or any text.** PNG, JPEG, HEIC, WebP, GIF, PDF, or SVG. Or type an emoji, a symbol, or a kaomoji such as ᓚᘏᗢ.
+- **Looks like it belongs.** **Silhouette** and **Ink** tint the glyph to match the menu bar, light or dark, the way the system's own icons are. **Colour** keeps the image as it is.
+- **An editor for each glyph.** Crop by dragging a box over the image, rotate, flip, clear a plain background, or lift the subject out of a photo with Vision. A light and a dark menu bar preview every change at real size.
+- **Animated GIFs play.** Animations stop while the display sleeps, and don't play when Reduce Motion is on.
+- **Drop it on the menu bar.** Drag an image from Finder onto a glyph to replace its image, or paste one from the glyph's menu.
+- **Starts where you can see it.** A new glyph appears beside the clock, right of the divider a menu bar manager such as Common Bar uses, instead of off screen at the far left.
+
+Free and open source under the MIT licence. No network access, no analytics, no permission prompts.
+
+## Install
+
+Requires macOS 14 or later.
+
+1. Download [CommonGlyph.zip](https://github.com/oddurs/common-glyph/releases/latest/download/CommonGlyph.zip) from the latest release, unzip it, and move **Common Glyph** to Applications.
+2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
+
+   ```sh
+   xattr -dr com.apple.quarantine "/Applications/Common Glyph.app"
+   ```
+
+3. Settings opens on first launch. Turn on **Open at login** there.
+
+## Usage
+
+The first glyph is a four-pointed star, ✦. Click any glyph for its menu: **Edit “name”…**, **Choose Image…**, **Paste Image**, **New Glyph**, **Hide This Glyph**, **Settings…** (⌘,), and **Quit Common Glyph**. Opening Common Glyph again while it runs also opens Settings. Hold ⌘ and drag a glyph to move it along the menu bar.
+
+**Settings** lists every glyph in a sidebar. **+** adds one and **−** deletes the selected one; right-click a glyph to duplicate, hide, or delete it. One glyph always stays in the menu bar, so its menu stays in reach. **General**, at the bottom of the sidebar, holds **Open at login** and the Common Tools apps.
+
+Each glyph's editor starts with a light and a dark menu bar previewing it at real size, then its **Name** and **Show in menu bar**. **Source** picks what it's drawn from:
+
+- **Image:** choose, paste, or drop a file. Drag inside the crop box to move it, drag a corner to resize it, and double-click it to take in the whole image again. The buttons beside **Paste** rotate a quarter turn clockwise, flip horizontally, and reset to the whole image the right way up. Each glyph keeps its own copy of its image, so the original can be moved or deleted.
+- **Emoji or text:** type in the field, open **Emoji & Symbols** (⌃⌘Space) with the face button, or pick a suggestion. Typing an emoji over plain text switches to **Colour**, and plain text over an emoji switches back to **Silhouette**.
+
+A glyph's image and its text each keep their own edits, so switching between them loses nothing.
+
+**Look** decides how the glyph is drawn:
+
+- **Style:** **Colour** keeps the image's colours. **Silhouette** draws its shape in the menu bar's colour. **Ink** keeps only its dark lines, which suits line art, tattoo flash, and scans. Raise or lower **Threshold** to keep more or less, and turn on **Use the light parts** for light lines on a dark image.
+- **Background** (images only): **Keep** the image as it is, **Remove solid colour** for clip art or a drawing on white, or **Lift subject** for a photo. **Remove solid colour** clears the colour most corners share, working inwards from the edges, so enclosed areas of that colour, such as the whites of a character's eyes, stay. **Tolerance** sets how far a colour can stray and still be cleared.
+- **Size:** from half to the full height of the menu bar. The glyph is trimmed to its visible pixels first, so it fills that height however much margin the image had. Very wide images are capped at 180 points.
+- **Animate** (animated images only): play the animation or show its first frame.
+
+## Build from source
+
+The Command Line Tools are enough; Xcode is not required.
+
+```sh
+scripts/task build                          # universal build → build/Common Glyph.app
+mv "build/Common Glyph.app" /Applications/
+```
+
+## Development
+
+```sh
+scripts/setup           # once: wire the git hooks
+scripts/agent doctor    # check tools and repository state
+```
+
+| Command | Does |
+| --- | --- |
+| `scripts/task check` | lint + test + build, exactly what CI runs |
+| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
+| `scripts/agent commit "<type>: subject"` | Conventional Commit, checked by the hook |
+| `scripts/agent pr` | full check, push, open the pull request |
+| `scripts/agent sync` | rebase onto `origin/main` |
+| `scripts/agent done` | after merge: remove the worktree and branch |
+| `scripts/agent list` | worktrees, branches, and pull request state |
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
