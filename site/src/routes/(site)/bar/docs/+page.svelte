@@ -9,6 +9,7 @@
 		['hide', 'Hide icons'],
 		['show', 'Show them again'],
 		['always', 'Always-hidden icons'],
+		['spacers', 'Spacers'],
 		['menu', 'The menu'],
 		['settings', 'Settings'],
 		['questions', 'Questions'],
@@ -69,6 +70,15 @@
 		<li>Holding <kbd>⌘</kbd> shows the dotted line too, so you can drag icons into either section.</li>
 	</ul>
 
+	<h2 id="spacers">Spacers</h2>
+	<p>
+		Spacers are blank gaps you can put between icons to group them. Add up to five in
+		<a href="#settings">Settings</a>. Each is an empty 24-point slot that shows a dashed outline only while
+		you hold <kbd>⌘</kbd> over the menu bar, so you can find it and drag it into place. New spacers appear just
+		right of the chevron; drag one past the chevron and it hides like any icon. Removing a spacer remembers where
+		it was for when you add it back.
+	</p>
+
 	<h2 id="menu">The menu</h2>
 	<p>
 		Right-click the chevron, or <kbd>⌃</kbd>-click it, for <b>How to Arrange…</b> (the how-to again),
@@ -85,6 +95,8 @@
 		<b>Scrolling down on the menu bar</b>, or <b>Clicking empty menu bar space</b>. The chevron always
 		works.
 	</p>
+	<h3>Spacers</h3>
+	<p>How many spacers to show, from none (the default) to five.</p>
 	<h3>General</h3>
 	<ul>
 		<li><b>Open at login</b> starts Common Bar when you log in.</li>
@@ -100,7 +112,7 @@
 		These are ordinary preferences, so <code>defaults write com.oddurs.reasonal</code> works too. The keys
 		are
 		<code>showOnHover</code>, <code>showOnScroll</code>, and <code>showOnClick</code> (booleans), and
-		<code>autoHide</code> (seconds; <code>0</code> means Never).
+		<code>autoHide</code> (seconds; <code>0</code> means Never), and <code>spacers</code> (0 to 5).
 	</p>
 
 	<h2 id="questions">Questions</h2>
