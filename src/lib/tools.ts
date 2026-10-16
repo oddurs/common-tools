@@ -53,7 +53,7 @@ export const tools: Tool[] = [
 		asset: 'CommonBar.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'bar/icon.png',
-		demo: 'A crowded menu bar on a notched Mac. Clicking the Common Bar chevron hides the icons to its left; hovering brings them back. Holding ⌘ shows every icon, and one is dragged past the chevron to hide it.'
+		demo: 'A crowded menu bar. Clicking the Common Bar chevron hides the icons to its left; hovering brings them back. Holding ⌘ shows every icon, and one is dragged past the chevron to hide it.'
 	}
 ];
 

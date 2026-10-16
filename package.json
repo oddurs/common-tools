@@ -12,7 +12,8 @@
 		"fmt": "prettier --write .",
 		"fmt:check": "prettier --check .",
 		"test": "vitest run",
-		"record": "node scripts/record-demo.js"
+		"record": "node scripts/record-demo.js",
+		"glyphs": "swift scripts/render-glyphs.swift"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-static": "^4.0.0",

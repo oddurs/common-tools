@@ -1,13 +1,11 @@
-// The screen every scene is set on: a 16-inch MacBook Pro, measured on one running macOS 26.
-// Sizes are in points. The scene is cropped to 16:10 at the bottom, which only loses Dock space.
+// The screen every scene is set on: a 1728-point-wide display with no camera housing, as macOS 26
+// draws it. Sizes are in points. The scene is cropped to 16:10 at the bottom, which only loses Dock
+// space.
 
 export const screen = { width: 1728, height: 1080 };
 
-/** The menu bar on a notched display is taller than the 24 pt one on other screens. */
-export const menuBarHeight = 33;
-
-/** The camera housing, from NSScreen.auxiliaryTopLeftArea and auxiliaryTopRightArea. */
-export const notch = { left: 771, right: 957 };
+/** The menu bar on a display without a notch. Notched displays use a taller one. */
+export const menuBarHeight = 24;
 
 /** System extras, right to left: the clock, then each item's slot width. */
 export const clock = { text: 'Thu Oct 16  9:41 AM', width: 140, margin: 12 };

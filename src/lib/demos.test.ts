@@ -23,9 +23,8 @@ describe.each([
 });
 
 describe('Common Bar demo', () => {
-	it('starts crowded, with icons lost behind the notch', () => {
-		const behind = bar.frameAt(1500).icons.filter((i) => i.x < bar.metrics.notch.right);
-		expect(behind.length).toBeGreaterThan(0);
+	it('starts crowded, every icon showing', () => {
+		expect(shown(bar.frameAt(1500))).toHaveLength(17);
 	});
 	it('keeps only the icons right of the chevron after the click', () => {
 		expect(shown(bar.frameAt(5000))).toEqual(['icloud.fill', 'message.fill', 'music.note']);
@@ -41,9 +40,9 @@ describe('Common Bar demo', () => {
 		const right = frame.icons.filter((i) => i.x > frame.chevron.x).map((i) => i.symbol);
 		expect(right).toEqual(['icloud.fill', 'message.fill', 'music.note']);
 	});
-	it('never pushes the chevron behind the notch', () => {
+	it('never moves the chevron off the right side of the menu bar', () => {
 		for (let t = 0; t < bar.duration; t += 100) {
-			expect(bar.frameAt(t).chevron.x).toBeGreaterThan(bar.metrics.notch.right);
+			expect(bar.frameAt(t).chevron.x).toBeGreaterThan(screen.width / 2);
 		}
 	});
 });
