@@ -31,7 +31,17 @@
 				>
 			{/each}
 			<span class="icon" style:left="{frame.chevron.x}px" style:width="{metrics.chevron}px">
-				<Symbol name={frame.chevron.open ? 'chevron.compact.right' : 'chevron.compact.left'} />
+				<!-- Glyphs.swift: a 6 × 9 pt canvas, right-angled arms 3.5 pt from a tip inset 1 pt, 1.25 pt stroke. -->
+				<svg width="6" height="9" viewBox="0 0 6 9" aria-hidden="true">
+					<path
+						d={frame.chevron.open ? 'M1.5 1 L5 4.5 L1.5 8' : 'M4.5 1 L1 4.5 L4.5 8'}
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.25"
+						stroke-linejoin="miter"
+						stroke-linecap="butt"
+					/>
+				</svg>
 			</span>
 		{/snippet}
 

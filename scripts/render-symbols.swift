@@ -9,8 +9,7 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     // The system's own menu bar extras.
     "apple.logo": (15, .regular), "wifi": (14, .medium), "battery.100percent": (15, .regular),
     "magnifyingglass": (13.5, .medium), "switch.2": (13.5, .medium),
-    // Common Bar's chevron, and stand-ins for other apps' menu bar icons.
-    "chevron.compact.left": (14, .semibold), "chevron.compact.right": (14, .semibold),
+    // Stand-ins for other apps' menu bar icons.
     "drop.fill": (14, .regular), "lock.fill": (14, .regular), "video.fill": (13, .regular),
     "music.note": (14, .regular), "message.fill": (14, .regular), "icloud.fill": (14, .regular),
     "shippingbox.fill": (14, .regular), "bolt.fill": (14, .regular), "eye": (13, .regular),

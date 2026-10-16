@@ -1,6 +1,6 @@
 // The Common Bar demo, in the app's default setup: a crowded menu bar on a notched display, tidied
 // with one click on the chevron, revealed by hover, and rearranged by ⌘-dragging an icon past the
-// chevron. Sizes are the app's own (MenuBarController). The optional always-hidden section is off
+// chevron. Sizes and glyphs are the app's own (Glyphs.swift, MenuBarController). The optional always-hidden section is off
 // by default, so it isn't shown. The scene is a pure function of time, so the recorder can step
 // through it.
 
@@ -58,8 +58,8 @@ export type Frame = {
 export const metrics = {
 	right: extrasRight,
 	slot: statusSlot,
-	/** MenuBarController.Metric.toggleLength. */
-	chevron: 24,
+	/** The chevron item: 10 pt long (Glyphs.swift), 26 pt on screen with the menu bar's padding. */
+	chevron: 26,
 	notch
 };
 
