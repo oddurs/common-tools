@@ -25,7 +25,7 @@ cd ../.worktrees/common-tools/docs/keys-shortcuts
 scripts/agent ship "docs(keys): list every convert shortcut"   # commit, check, open the PR, merge it when CI passes, clean up
 ```
 
-`ship` turns on auto-merge, so the pull request squash-merges itself once the `required` check passes. While it waits, it rebases onto `main` whenever `main` moves and checks again. If a check fails or the rebase conflicts, it stops and says so: fix it, then run `scripts/agent ship` again. `commit`, `pr`, and `done` still work one step at a time.
+`ship` turns on auto-merge, so the pull request squash-merges itself once the `required` check passes. While it waits, it rebases onto `main` whenever `main` moves and checks again. If a check fails or the rebase conflicts, it stops and says so: fix it, then run `scripts/agent ship` again. `commit`, `pr`, and `done` still work one step at a time. The pull request takes its title from the branch's first commit, and that title becomes the squash commit on `main`, so make the first commit the one that names the change.
 
 Branch names are `<type>/<slug>`, where type is one of `feat fix chore docs perf refactor test`.
 
