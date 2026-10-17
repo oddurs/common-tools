@@ -27,13 +27,10 @@
 
 <Docs tool={keys} {sections}>
 	<h2 id="install">Install</h2>
-	<Install tool={keys}>
-		<li>
-			Allow Accessibility access when asked, or choose <b>Allow Accessibility Access…</b> from the menu. It's
-			needed to see what you type and to fix it. Each update needs this allowed again, because the build's
-			signature changes.
-		</li>
-	</Install>
+	<Install tool={keys} />
+	<p class="callout">
+		Missed the prompt? Choose <b>Allow Accessibility Access…</b> from the menu; it opens the right pane.
+	</p>
 
 	<h2 id="fixing">How fixing works</h2>
 	<p>

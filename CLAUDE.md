@@ -28,7 +28,7 @@ Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors)
 - Branch types: `feat fix chore docs perf refactor test`. The branch's first commit names the pull request and the squash commit on `main`. Scope commits and branches to one area where you can: `feat(bar): …`, `fix(site): …`, `refactor(kit): …`.
 - Never use `--no-verify`.
 - User-facing changes to an app go under `## [Unreleased]` in `apps/<slug>/CHANGELOG.md` in the same pull request. The site shows each release's section as "What's new".
-- Release one app with `scripts/release <slug> <version>`; it tags `<slug>-v<version>` from the merged version bump. Never tag by hand.
+- Release one app with `scripts/release <slug> <version>`; it tags `<slug>-v<version>` from the merged version bump. Never tag by hand. The Release workflow publishes the zip and disk image (`scripts/dmg`), notarizes when the secrets exist (`scripts/notarize`, `docs/signing.md`), and writes the Homebrew cask (`scripts/cask`, `docs/install.md`).
 - Several agents work here at once, one per app, each in its own worktree. Stay inside your area unless the change is shared; a change to `packages/CommonKit` or `shared/` affects every app, so say so in the pull request.
 
 ## Commits
@@ -38,7 +38,8 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 ## Code
 
 - Every app keeps its bundle identifier, executable name, status-item autosave names, and preference keys forever, so existing installs keep their settings, positions, and permission grants. Only user-visible names change.
-- Every reading an app shows comes from a public, unprivileged API. Nothing leaves the Mac: no network, no analytics, no account.
+- Every reading an app shows comes from a public, unprivileged API. Nothing leaves the Mac: no network, no analytics, no account. The one exception is CommonKit's `UpdateCheck`: off until the user turns it on in Settings, then a plain GET of the public release list with nothing about the Mac in it (`docs/first-run.md`).
+- First run is CommonKit's `Welcome` window, driven by data the app passes (`docs/first-run.md`); nothing app-specific goes into CommonKit.
 - Settings follow one layout: the app's own sections first, then **General** starting with "Open at login", then `CommonToolsSection()` from CommonKit last. Labels are sentence case, section headers Title Case. CommonKit's `CommonUI` product has the pieces (`import CommonUI`): `SettingsWindowHost`, `.settingsForm()`, `OpenAtLoginToggle`, `SettingsFootnote`, `LabeledRow`, `Card`, `IconBadge`.
 - Common UI: colours, spacing, radii, and motion come from `packages/common-ui/tokens.json`, rendered into `Tokens.swift` and the site's `tokens.css` by `node packages/common-ui/build.mjs`; tests fail when an output is stale. In an app, use the system text styles and controls, and a token only where macOS has nothing (see `packages/common-ui/README.md`).
 - The family list (`CommonTool.all` in CommonKit) and the icons in `shared/CommonTools/` are what every app's Settings shows. Adding an app: `apps.json`, its `apps/<slug>/`, `CommonTool.all`, `scripts/make-icon <slug>`, and its page in `site/`.

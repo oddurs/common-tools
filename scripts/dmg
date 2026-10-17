@@ -1,0 +1,26 @@
+#!/bin/sh
+set -eu
+
+# Makes the disk image of one app:  scripts/dmg <Name.app> <out.dmg>
+#
+# The image holds the app and a link to /Applications, so Finder opens it as the usual "drag this
+# there" window. scripts/task package calls it for every release; the zip stays the source for the
+# install script and the Homebrew casks, this is for people who download by hand.
+
+app="${1:-}"
+out="${2:-}"
+[ -d "$app" ] && [ -n "$out" ] || {
+    echo "usage: scripts/dmg <Name.app> <out.dmg>" >&2
+    exit 2
+}
+
+name="$(basename "$app" .app)"
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT
+
+# ditto keeps the signature, the notarization ticket, and the extended attributes intact.
+ditto "$app" "$stage/$name.app"
+ln -s /Applications "$stage/Applications"
+rm -f "$out"
+hdiutil create -quiet -volname "$name" -srcfolder "$stage" -fs HFS+ -format UDZO -imagekey zlib-level=9 "$out"
+echo "==> $out"

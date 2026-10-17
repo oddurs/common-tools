@@ -67,6 +67,8 @@ scripts/release bar 0.4.0
 
 Add user-facing changes under `## [Unreleased]` in the app's `CHANGELOG.md` as you make them. `scripts/release` moves them under the new version with today's date, bumps the version in the app's `Info.plist`, merges that through a pull request, tags the merge `bar-v0.4.0`, and waits until the download is live. The release notes are that CHANGELOG section. Don't tag by hand.
 
+The Release workflow publishes the zip, a disk image, the command-line tools, and checksums, then writes the app's Homebrew cask to the tap. It signs with a Developer ID and notarizes once the secrets in [docs/signing.md](docs/signing.md) exist; until then `scripts/notarize` says so and the build's ad-hoc signature stays. [docs/install.md](docs/install.md) has the whole picture.
+
 ## Review
 
 This is a solo-maintained project, so branch protection requires zero approvals, and pull requests merge themselves once the `required` check is green. Branches don't have to be up to date with `main` to merge; `ship` keeps them current instead.

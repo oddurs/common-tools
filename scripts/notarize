@@ -1,0 +1,96 @@
+#!/bin/sh
+set -eu
+
+# Signs with a Developer ID and notarizes:  scripts/notarize <Name.app | tool | image.dmg> ...
+#
+# Does nothing, and says so, until the environment has a Developer ID; the build's own signature
+# (the development identity, or ad-hoc) stays in place, and macOS asks the user to allow the app in
+# Privacy & Security on first open. docs/signing.md says how to get the identity and what it costs.
+#
+#   DEVELOPER_ID_APPLICATION   the identity, "Developer ID Application: Name (TEAMID)"
+#   APPLE_ID                   the Apple Account that holds the Developer Program membership
+#   APPLE_TEAM_ID              the ten-character team identifier
+#   APPLE_APP_PASSWORD         an app-specific password for that account, for notarytool
+#   APPLE_CERTIFICATE          CI only: the identity's .p12, base64; imported into a keychain
+#   APPLE_CERTIFICATE_PASSWORD CI only: that file's password
+#
+# Each path is signed, submitted, and stapled: an app or a disk image gets the ticket attached, a
+# bare command-line tool is signed and notarized only, since a single file can't carry a ticket.
+# scripts/task package runs this on the app and its tools before zipping, and on the disk image after.
+
+die() {
+    echo "notarize: $*" >&2
+    exit 1
+}
+
+[ $# -gt 0 ] || die "usage: scripts/notarize <Name.app | tool | image.dmg> ..."
+
+if [ -z "${DEVELOPER_ID_APPLICATION:-}" ]; then
+    echo "==> not notarizing: no DEVELOPER_ID_APPLICATION in the environment (docs/signing.md)"
+    exit 0
+fi
+for var in APPLE_ID APPLE_TEAM_ID APPLE_APP_PASSWORD; do
+    eval "[ -n \"\${$var:-}\" ]" || die "DEVELOPER_ID_APPLICATION is set but $var isn't"
+done
+
+# In CI the certificate arrives as base64; it goes into a keychain of its own, once per job.
+if [ -n "${APPLE_CERTIFICATE:-}" ]; then
+    keychain="${RUNNER_TEMP:-${TMPDIR:-/tmp}}/notarize.keychain-db"
+    if [ ! -f "$keychain" ]; then
+        echo "==> importing the Developer ID certificate into $keychain"
+        p12="$(mktemp)"
+        echo "$APPLE_CERTIFICATE" | base64 -d >"$p12"
+        security create-keychain -p "" "$keychain"
+        security set-keychain-settings -lut 3600 "$keychain"
+        security unlock-keychain -p "" "$keychain"
+        security import "$p12" -k "$keychain" -P "${APPLE_CERTIFICATE_PASSWORD:-}" -T /usr/bin/codesign
+        rm -f "$p12"
+        security set-key-partition-list -S apple-tool:,apple: -s -k "" "$keychain" >/dev/null
+        # shellcheck disable=SC2046
+        security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '" ')
+    fi
+fi
+security find-identity -v -p codesigning | grep -q "\"$DEVELOPER_ID_APPLICATION\"" ||
+    die "no valid identity '$DEVELOPER_ID_APPLICATION' in the keychain"
+
+submit() {
+    echo "==> notarizing $(basename "$1")"
+    result="$(xcrun notarytool submit "$1" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+        --password "$APPLE_APP_PASSWORD" --wait)"
+    echo "$result" | sed 's/^/    /'
+    echo "$result" | grep -q "status: Accepted" && return 0
+    id="$(echo "$result" | sed -n 's/^ *id: //p' | head -n 1)"
+    [ -z "$id" ] || xcrun notarytool log "$id" --apple-id "$APPLE_ID" --team-id "$APPLE_TEAM_ID" \
+        --password "$APPLE_APP_PASSWORD" >&2 || :
+    die "Apple didn't accept $(basename "$1")"
+}
+
+for path in "$@"; do
+    [ -e "$path" ] || die "no such file: $path"
+    echo "==> signing $path with '$DEVELOPER_ID_APPLICATION'"
+    # The build set the identifier and the hardened runtime; --preserve-metadata keeps both.
+    codesign --force --timestamp --options runtime --sign "$DEVELOPER_ID_APPLICATION" \
+        --preserve-metadata=identifier,entitlements "$path"
+    case "$path" in
+    *.dmg)
+        submit "$path"
+        xcrun stapler staple -q "$path"
+        spctl --assess --type open --context context:primary-signature "$path" || die "$path doesn't pass Gatekeeper"
+        ;;
+    *.app)
+        zip="$(mktemp -d)/$(basename "$path" .app).zip"
+        ditto -c -k --keepParent "$path" "$zip"
+        submit "$zip"
+        rm -rf "$(dirname "$zip")"
+        xcrun stapler staple -q "$path"
+        spctl --assess --type execute "$path" || die "$path doesn't pass Gatekeeper"
+        ;;
+    *)
+        zip="$(mktemp -d)/$(basename "$path").zip"
+        ditto -c -k "$path" "$zip"
+        submit "$zip"
+        rm -rf "$(dirname "$zip")"
+        ;;
+    esac
+    echo "==> notarized $path"
+done

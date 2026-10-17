@@ -19,9 +19,7 @@
 
 <Docs tool={stats} {sections}>
 	<h2 id="install">Install</h2>
-	<Install tool={stats}>
-		<li>Turn on <b>Open at login</b> in Settings.</li>
-	</Install>
+	<Install tool={stats} />
 	<p class="callout">
 		Upgrading from StatBar 0.1? Quit it and move <b>StatBar</b> from Applications to the Trash first. Common
 		Stats is the same app under a new name and keeps your settings, but the two can't run side by side. If Open

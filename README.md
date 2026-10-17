@@ -17,6 +17,17 @@ Small, native utilities for the Mac. Each does one thing and gets out of the way
 
 **Free forever.** No trial, no subscription, no paid tier. **Open source** under the MIT licence: every line is here to read, build, and change. **Private:** no network access, no analytics, no crash reports, no account. Nothing you do is ever reported, and nothing leaves your Mac.
 
+## Install
+
+Download from an app's page, or from a terminal:
+
+```sh
+brew install --cask oddurs/common-tools/common-bar                               # Homebrew, from the oddurs/homebrew-common-tools tap
+curl -fsSL https://oddurs.github.io/common-tools/install.sh | sh -s -- stats bar   # or one line; no names lists the apps
+```
+
+Both check the download against its published checksum and leave no "can't verify the developer" step. The builds are signed but not yet notarized; [docs/signing.md](docs/signing.md) is the path to a Developer ID, and [docs/install.md](docs/install.md) is how the pieces fit.
+
 ## This repository
 
 Every app lives here, with its history, as a separate app bundle and a separate release:
@@ -51,6 +62,9 @@ scripts/task check        # everything: the site, CommonKit, every app
 | `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
 | `scripts/agent list` | worktrees, branches, and pull request state |
 | `scripts/release <app> <version>` | a release: dated notes, version bump, tag, published download, checked |
+| `scripts/cask <app> <version> [--push]` | the app's Homebrew cask for that release; `--push` commits it to the tap |
+| `scripts/dmg <Name.app> <out.dmg>` | the drag-to-Applications disk image `package` publishes beside the zip |
+| `scripts/notarize <path ...>` | Developer ID signing and notarization when the secrets exist; a no-op otherwise |
 | `scripts/make-icon <app>` | render an app's icon from `shared/icon-lib.swift` and its `icon.swift` |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [docs/testing.md](docs/testing.md) for what the tests cover and how to run one.

@@ -1,0 +1,112 @@
+#!/bin/sh
+set -eu
+
+# Writes the Homebrew cask of one release:  scripts/cask <app> <version> [--push] [<download base>]
+#
+# The cask lives in the tap, github.com/oddurs/homebrew-common-tools, so Mac users can
+# `brew install --cask oddurs/common-tools/common-bar`. This prints the cask for the release, with
+# the checksum read from the published .sha256; with --push it also commits it to the tap. The
+# Release workflow runs it after publishing, and it works by hand for an older release too. The
+# download base defaults to the monorepo release of that version; an app released before the move
+# takes its old repository's, e.g. https://github.com/oddurs/common-bar/releases/download/v0.3.0.
+#
+# TAP_TOKEN, when set, pushes over HTTPS with it (CI); otherwise git uses your own credentials.
+
+die() {
+    echo "cask: $*" >&2
+    exit 1
+}
+
+cd "$(dirname "$0")/.."
+slug="${1:-}"
+version="${2:-}"
+shift 2 2>/dev/null || die "usage: scripts/cask <app> <version> [--push] [<download base>]"
+push=0
+base=""
+for arg in "$@"; do
+    case "$arg" in
+    --push) push=1 ;;
+    https://*) base="$arg" ;;
+    *) die "usage: scripts/cask <app> <version> [--push] [<download base>]" ;;
+    esac
+done
+[ -d "apps/$slug" ] || die "no app '$slug'"
+echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || die "'$version' isn't major.minor.patch"
+
+field() { plutil -extract "$slug.$1" raw -o - apps.json; }
+name="$(field NAME)"
+asset="$(field ASSET)"
+bundle="$(field BUNDLE)"
+# The one-line summary from the family list, which every app's Settings shows: short, and without
+# the platform, as brew's description rules want.
+description="$(sed -n "/id: \"$slug\"/,/summary:/ s/.*summary: \"\([^\"]*\)\".*/\1/p" \
+    packages/CommonKit/Sources/CommonKit/CommonTool.swift | head -n 1)"
+[ -n "$description" ] || die "no summary for '$slug' in CommonTool.swift"
+token="$(echo "$name" | tr 'A-Z ' 'a-z-')"
+tap="oddurs/homebrew-common-tools"
+[ -n "$base" ] || base="https://github.com/oddurs/common-tools/releases/download/$slug-v$version"
+# The version is interpolated, the way brew expects, and the checksum is the published one.
+url="$(echo "$base/$asset.zip" | sed "s/$version/#{version}/")"
+sha="$(curl -fsSL "$base/$asset.zip.sha256")" || die "can't read $base/$asset.zip.sha256"
+sha="${sha%% *}"
+echo "$sha" | grep -Eq '^[0-9a-f]{64}$' || die "$base/$asset.zip.sha256 doesn't hold a checksum"
+
+cask="$(
+    cat <<EOF
+cask "$token" do
+  version "$version"
+  sha256 "$sha"
+
+  url "$url",
+      verified: "github.com/oddurs/"
+  name "$name"
+  desc "$description"
+  homepage "https://oddurs.github.io/common-tools/$slug/"
+
+  livecheck do
+    skip "Written by the Release workflow of oddurs/common-tools"
+  end
+
+  depends_on macos: :sonoma
+
+  app "$name.app"
+
+  # The build is signed but not notarized; without this macOS would ask you to allow it in
+  # Privacy & Security before the first open.
+  postflight_steps do
+    run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "{{appdir}}/$name.app"]
+  end
+
+  uninstall quit: "$bundle"
+
+  zap trash: "~/Library/Preferences/$bundle.plist"
+end
+EOF
+)"
+
+if [ "$push" -eq 0 ]; then
+    echo "$cask"
+    exit 0
+fi
+
+work="$(mktemp -d)"
+trap 'rm -rf "$work"' EXIT
+if [ -n "${TAP_TOKEN:-}" ]; then
+    remote="https://x-access-token:$TAP_TOKEN@github.com/$tap.git"
+else
+    remote="git@github.com:$tap.git"
+fi
+echo "==> updating $tap: $token $version"
+git clone --quiet --depth 1 "$remote" "$work"
+mkdir -p "$work/Casks"
+echo "$cask" >"$work/Casks/$token.rb"
+cd "$work"
+git add "Casks/$token.rb"
+if git diff --quiet --cached; then
+    echo "==> $token is already at $version"
+    exit 0
+fi
+# CI sets GIT_AUTHOR_NAME and the other three; by hand, git uses your own identity.
+git commit --quiet -m "$token $version"
+git push --quiet origin HEAD
+echo "==> pushed https://github.com/$tap/blob/main/Casks/$token.rb"
