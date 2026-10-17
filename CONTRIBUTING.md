@@ -17,7 +17,8 @@ You need macOS 14 or later and Swift 6 or later for the apps (the Command Line T
 | Path | Holds |
 | --- | --- |
 | `apps/<slug>/` | one app: `Package.swift`, `Sources`, `Tests`, `Resources`, `docs`, `README.md`, `CHANGELOG.md`, `CLAUDE.md`, `icon.swift` |
-| `packages/CommonKit/` | what the apps share: the family list and the Common Tools section of Settings |
+| `packages/CommonKit/` | what the apps share: the family list, the Common Tools section of Settings, the Settings window and form, cards, rows |
+| `packages/common-ui/` | Common UI: the design tokens (`tokens.json`) and the generator that renders them for CommonKit's `CommonUI` product and the site |
 | `shared/` | the family icons every app bundles, and the icon body |
 | `site/` | the website, a SvelteKit site deployed to GitHub Pages |
 | `apps.json` | every app's name, bundle identifier, deployment target, extra tools, and permissions |

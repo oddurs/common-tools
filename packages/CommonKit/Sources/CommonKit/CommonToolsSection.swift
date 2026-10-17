@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import SwiftUI
 
 /// The last section of every Common Tools app's Settings: the family, and this app's version.
@@ -29,23 +30,13 @@ private struct CommonToolRow: View {
     let tool: CommonTool
 
     var body: some View {
-        HStack(spacing: 10) {
-            Group {
-                if let icon = tool.icon {
-                    Image(nsImage: icon).resizable()
-                } else {
-                    RoundedRectangle(cornerRadius: 7).fill(.quaternary)
-                }
+        LabeledRow(tool.name, subtitle: tool.summary) {
+            if let icon = tool.icon {
+                Image(nsImage: icon).resizable()
+            } else {
+                RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous).fill(.quaternary)
             }
-            .frame(width: 32, height: 32)
-
-            VStack(alignment: .leading, spacing: 1) {
-                Text(tool.name)
-                Text(tool.summary).font(.footnote).foregroundStyle(.secondary)
-            }
-
-            Spacer()
-
+        } trailing: {
             if tool.isThisApp {
                 Text("This app").foregroundStyle(.secondary)
             } else if let url = tool.installedURL {
@@ -54,6 +45,5 @@ private struct CommonToolRow: View {
                 Button("Get…") { NSWorkspace.shared.open(tool.page) }
             }
         }
-        .accessibilityElement(children: .combine)
     }
 }

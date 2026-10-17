@@ -40,98 +40,94 @@
 <style>
 	.crumb {
 		margin: 0;
-		font-size: 14px;
-		color: var(--secondary);
+		font: var(--type-footnote);
+		letter-spacing: var(--type-footnote-tracking);
+		color: var(--text-secondary);
 	}
 	h1 {
-		font-size: 40px;
+		font: var(--type-title);
+		letter-spacing: var(--type-title-tracking);
 	}
 	.layout {
 		display: grid;
 		grid-template-columns: 200px 1fr;
-		gap: 48px;
-		margin-top: 40px;
+		gap: var(--space-xxl);
+		margin-top: var(--space-xxl);
 	}
 	nav {
 		position: sticky;
-		top: 72px;
+		top: var(--space-section);
 		align-self: start;
-		font-size: 14px;
+		font: var(--type-footnote);
+		letter-spacing: var(--type-footnote-tracking);
 	}
 	nav ul {
-		margin: 0 0 20px;
+		margin: 0 0 var(--space-lg);
 		padding: 0;
 		list-style: none;
 	}
 	nav li {
-		margin: 0 0 8px;
+		margin: 0 0 var(--space-xs);
 	}
 	nav li a {
-		color: var(--secondary);
+		color: var(--text-secondary);
 	}
 	nav li a:hover {
-		color: var(--text);
+		color: var(--text-primary);
 		text-decoration: none;
 	}
 	nav .button {
-		padding: 7px 16px;
-		font-size: 14px;
+		padding: var(--space-xs) var(--space-md);
 	}
 	article {
 		min-width: 0;
-		max-width: 680px;
+		max-width: var(--layout-prose);
 	}
 	article :global(h2) {
-		margin: 48px 0 10px;
-		font-size: 26px;
-		scroll-margin-top: 72px;
+		margin: var(--space-xxl) 0 var(--space-xs);
+		font: var(--type-title2);
+		letter-spacing: var(--type-title2-tracking);
+		scroll-margin-top: var(--space-section);
 	}
 	article :global(h2:first-child) {
 		margin-top: 0;
 	}
 	article :global(h3) {
-		margin: 28px 0 6px;
-		font-size: 18px;
-		font-weight: 600;
+		margin: var(--space-lg) 0 var(--space-xxs);
+		font: var(--type-body);
+		font-weight: var(--weight-semibold);
+		letter-spacing: var(--type-body-tracking);
 	}
 	article :global(p),
 	article :global(li) {
 		font-size: 16px;
 	}
 	article :global(p) {
-		margin: 0 0 12px;
+		margin: 0 0 var(--space-sm);
 	}
 	article :global(ol),
 	article :global(ul) {
-		margin: 0 0 12px;
-		padding-left: 22px;
+		margin: 0 0 var(--space-sm);
+		padding-left: var(--space-lg);
 	}
 	article :global(li) {
-		margin-bottom: 6px;
+		margin-bottom: var(--space-xxs);
 	}
-	article :global(pre) {
-		margin: 8px 0 16px;
-	}
+	article :global(pre),
 	article :global(table) {
-		margin: 8px 0 16px;
+		margin: var(--space-xs) 0 var(--space-md);
 	}
 	article :global(img) {
 		display: block;
 		max-width: 100%;
 		height: auto;
-		margin: 8px 0 16px;
-	}
-	article :global(.note) {
-		padding: 14px 16px;
-		border-radius: 12px;
-		background: var(--panel);
-		font-size: 15px;
+		margin: var(--space-xs) 0 var(--space-md);
 	}
 	@media (max-width: 760px) {
 		.layout {
 			grid-template-columns: 1fr;
-			gap: 24px;
-			margin-top: 24px;
+			gap: var(--space-lg);
+			margin-top: var(--space-lg);
 		}
 		nav {
 			position: static;

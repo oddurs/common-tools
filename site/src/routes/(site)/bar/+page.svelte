@@ -100,7 +100,7 @@
 	li {
 		counter-increment: step;
 		font-size: 15px;
-		color: var(--secondary);
+		color: var(--text-secondary);
 	}
 	li::before {
 		content: counter(step);
@@ -110,12 +110,12 @@
 		height: 28px;
 		margin-bottom: 10px;
 		border-radius: 50%;
-		background: var(--panel);
-		color: var(--text);
+		background: var(--surface-card);
+		color: var(--text-primary);
 		font-weight: 600;
 	}
 	li b {
-		color: var(--text);
+		color: var(--text-primary);
 		font-weight: 600;
 	}
 	@media (max-width: 760px) {

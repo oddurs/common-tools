@@ -12,6 +12,7 @@
 		"fmt": "prettier --write .",
 		"fmt:check": "prettier --check .",
 		"test": "vitest run",
+		"tokens": "node ../packages/common-ui/build.mjs",
 		"film": "node scripts/film.js",
 		"record": "node scripts/film.js record",
 		"shot": "node scripts/film.js shot",
