@@ -234,17 +234,8 @@ export function settings(app) {
 			squash_merge_commit_title: 'PR_TITLE',
 			squash_merge_commit_message: 'PR_BODY'
 		},
-		topics: [
-			'macos',
-			'menu-bar',
-			'menubar-app',
-			'swift',
-			'swiftui',
-			'appkit',
-			'apple-silicon',
-			'common-tools',
-			...app.topics
-		].sort(),
+		// What every app is; what kind of app it is (menu bar, launcher…) comes from apps.json.
+		topics: ['macos', 'swift', 'swiftui', 'appkit', 'apple-silicon', 'common-tools', ...app.topics].sort(),
 		protection: {
 			required_status_checks: { strict: false, contexts: ['required'] },
 			enforce_admins: true,

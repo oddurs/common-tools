@@ -10,8 +10,9 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "System stats in the macOS menu bar: CPU, GPU, memory, network, disk, storage, and battery.",
-		"topics": ["system-monitor"],
-		"published": true
+		"topics": ["menu-bar", "menubar-app", "system-monitor"],
+		"published": true,
+		"PERMISSIONS": ""
 	},
 	"keys": {
 		"NAME": "Common Keys",
@@ -24,8 +25,9 @@
 		"MIN_MACOS": "14.4",
 		"TOOLS": "worldkey",
 		"description": "Fixes words typed on the wrong keyboard layout, for every keyboard macOS has.",
-		"topics": ["keyboard-layout", "input-method"],
-		"published": true
+		"topics": ["menu-bar", "menubar-app", "keyboard-layout", "input-method"],
+		"published": true,
+		"PERMISSIONS": "Accessibility"
 	},
 	"bar": {
 		"NAME": "Common Bar",
@@ -38,8 +40,9 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them.",
-		"topics": ["menu-bar-manager"],
-		"published": true
+		"topics": ["menu-bar", "menubar-app", "menu-bar-manager"],
+		"published": true,
+		"PERMISSIONS": ""
 	},
 	"battery": {
 		"NAME": "Common Battery",
@@ -52,8 +55,9 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "The battery in the macOS menu bar: level, time left, what it's doing, and alerts at the levels you choose.",
-		"topics": ["battery"],
-		"published": false
+		"topics": ["menu-bar", "menubar-app", "battery"],
+		"published": false,
+		"PERMISSIONS": ""
 	},
 	"command": {
 		"NAME": "Common Command",
@@ -66,8 +70,9 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "A small, fast launcher for macOS: apps, System Settings, files, sums, and web searches from one quiet panel.",
-		"topics": ["launcher"],
-		"published": true
+		"topics": ["launcher", "productivity", "spotlight"],
+		"published": true,
+		"PERMISSIONS": ""
 	},
 	"glyph": {
 		"NAME": "Common Glyph",
@@ -80,8 +85,9 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "Put your own images in the macOS menu bar: a character, a sticker, an emoji, or a word.",
-		"topics": ["menu-bar-icons"],
-		"published": false
+		"topics": ["menu-bar", "menubar-app", "menu-bar-icons"],
+		"published": false,
+		"PERMISSIONS": ""
 	},
 	"shot": {
 		"NAME": "Common Shot",
@@ -94,7 +100,8 @@
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
 		"description": "Screenshots straight to the clipboard on macOS: press ⇧⌘2, drag, paste.",
-		"topics": ["screenshot"],
-		"published": false
+		"topics": ["screenshot", "clipboard"],
+		"published": false,
+		"PERMISSIONS": "ScreenCapture"
 	}
 }
