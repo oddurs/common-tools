@@ -83,6 +83,9 @@ pr)
     [ "$branch" != "$(default_branch)" ] || die "on the default branch; start a branch with 'scripts/agent start'"
     echo "==> checking"
     "$root/scripts/task" check
+    state="$(gh pr view "$branch" --json state --jq .state 2>/dev/null || :)"
+    [ "$state" = "MERGED" ] &&
+        die "the pull request for $branch already merged; put new commits on a new branch ('scripts/agent start'), then run 'scripts/agent done' here"
     echo "==> pushing $branch"
     git push --quiet --force-with-lease -u origin "$branch"
     if gh pr view "$branch" --json number >/dev/null 2>&1; then
@@ -137,9 +140,10 @@ ship)
             merged && continue
             git push --quiet --force-with-lease origin "$branch" || merged || die "could not push $branch"
         fi
+        # Only the checks that gate the merge: auto-merge goes ahead past any other failure.
         # gh pr checks exits 1 on a failure, 8 while pending; "no checks reported" means not started yet.
         checks=0
-        report="$(gh pr checks "$branch" 2>&1)" || checks=$?
+        report="$(gh pr checks "$branch" --required 2>&1)" || checks=$?
         case "$report" in *"no checks reported"*) checks=8 ;; esac
         [ "$checks" -eq 1 ] && die "a check failed: $(gh pr view "$branch" --json url --jq .url)/checks"
         sleep 15
