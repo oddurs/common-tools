@@ -1,0 +1,41 @@
+{
+	"stats": {
+		"NAME": "Common Stats",
+		"REPO": "common-stats",
+		"DIR": "statbar",
+		"ASSET": "CommonStats",
+		"TARGET": "StatBar",
+		"KIT": "StatKit",
+		"BUNDLE": "io.github.oddurs.StatBar",
+		"MIN_MACOS": "14.0",
+		"TOOLS": "",
+		"description": "System stats in the macOS menu bar: CPU, GPU, memory, network, disk, storage, and battery.",
+		"topics": ["system-monitor"]
+	},
+	"keys": {
+		"NAME": "Common Keys",
+		"REPO": "common-keys",
+		"DIR": "langsmart",
+		"ASSET": "CommonKeys",
+		"TARGET": "LangSmart",
+		"KIT": "WorldKey",
+		"BUNDLE": "com.oddurs.langsmart",
+		"MIN_MACOS": "14.4",
+		"TOOLS": "worldkey",
+		"description": "Fixes words typed on the wrong keyboard layout, for every keyboard macOS has.",
+		"topics": ["keyboard-layout", "input-method"]
+	},
+	"bar": {
+		"NAME": "Common Bar",
+		"REPO": "common-bar",
+		"DIR": "reasonal",
+		"ASSET": "CommonBar",
+		"TARGET": "Reasonal",
+		"KIT": "BarKit",
+		"BUNDLE": "com.oddurs.reasonal",
+		"MIN_MACOS": "14.0",
+		"TOOLS": "",
+		"description": "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them.",
+		"topics": ["menu-bar-manager"]
+	}
+}

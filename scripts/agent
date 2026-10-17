@@ -5,8 +5,12 @@ set -eu
 # Commands: doctor start check commit pr ship sync done list
 
 root="$(git rev-parse --show-toplevel)"
-repo="$(basename "$(git -C "$root" rev-parse --path-format=absolute --git-common-dir | xargs dirname)")"
-worktrees="$(dirname "$(git -C "$root" rev-parse --path-format=absolute --git-common-dir | xargs dirname)")/.worktrees/$repo"
+main_checkout="$(git -C "$root" rev-parse --path-format=absolute --git-common-dir | xargs dirname)"
+# Worktrees are named after the GitHub repository, not the local folder, so paths match the docs
+# on every machine. Without an origin, the folder name will do.
+origin_url="$(git -C "$root" remote get-url origin 2>/dev/null || :)"
+repo="$(basename "${origin_url:-$main_checkout}" .git)"
+worktrees="$(dirname "$main_checkout")/.worktrees/$repo"
 
 die() {
     echo "agent: $*" >&2

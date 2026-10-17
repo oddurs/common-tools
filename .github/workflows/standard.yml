@@ -1,0 +1,40 @@
+name: Standard
+
+# Checks that Common Stats, Common Keys, and Common Bar still follow the app standard in standard/.
+# It can't block their pull requests, so it runs daily and on any change to the standard, and a
+# failure here is the signal to re-apply.
+
+on:
+  push:
+    branches: [main]
+    paths: ['standard/**', 'scripts/standard.js', '.github/workflows/standard.yml']
+  pull_request:
+    paths: ['standard/**', 'scripts/standard.js', '.github/workflows/standard.yml']
+  schedule:
+    - cron: '41 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: oddurs/common-stats
+          path: apps/common-stats
+      - uses: actions/checkout@v4
+        with:
+          repository: oddurs/common-keys
+          path: apps/common-keys
+      - uses: actions/checkout@v4
+        with:
+          repository: oddurs/common-bar
+          path: apps/common-bar
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+      - run: node scripts/standard.js check --from apps

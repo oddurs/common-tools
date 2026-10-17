@@ -27,6 +27,11 @@ scripts/task check      # lint + test + build
 
 Conventional Commits: `type(scope): subject`. Write the subject in the imperative, at most 72 characters, with no trailing period. The body says why. Never add assistant or tool attribution: no co-author trailers, no "generated with" footers. The `commit-msg` hook rejects them.
 
+## The app standard
+
+- `standard/` is the source of truth for the three app repositories' shared files, scripts, and GitHub settings. Change a shared file here, then `node scripts/standard.js apply <app> <worktree>` in each app and ship it there. Never edit a managed file in one app alone; `check` will report it as drift.
+- Text between `standard:begin`/`standard:end` markers belongs to the app; keep shared wording outside them.
+
 ## Code
 
 - `src/lib/tools.ts` is the single source of names, repositories, and release asset names. Download links use `releases/latest/download/<asset>`; if an app renames its asset, change it here and in that app's `release.yml` together.

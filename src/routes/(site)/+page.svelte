@@ -17,7 +17,7 @@
 			'Private.',
 			'No network access, no analytics, no account. What an app learns stays in one file on your Mac.'
 		],
-		['Small.', 'Each one does a single job, downloads in under 3 MB, and stays out of the way.'],
+		['Small.', 'Each one does a single job, downloads in seconds, and stays out of the way.'],
 		[
 			'Open.',
 			'MIT licensed and built in the open on GitHub, every change checked by its tests before it merges.'
