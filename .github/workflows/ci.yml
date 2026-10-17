@@ -13,24 +13,81 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  plan:
+    # Which areas a change touches: the site, CommonKit, and each app. A pull request checks only
+    # those (CommonKit counts for every app); a push to main checks everything.
+    runs-on: ubuntu-latest
+    outputs:
+      site: ${{ steps.areas.outputs.site }}
+      kit: ${{ steps.areas.outputs.kit }}
+      apps: ${{ steps.areas.outputs.apps }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: areas
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            git fetch --quiet origin "$GITHUB_BASE_REF"
+            areas="$(scripts/task areas "origin/$GITHUB_BASE_REF")"
+          else
+            areas="$(scripts/task areas --all)"
+          fi
+          echo "areas: $areas"
+          echo "site=$(echo "$areas" | grep -qx site && echo true || echo false)" >>"$GITHUB_OUTPUT"
+          echo "kit=$(echo "$areas" | grep -qx kit && echo true || echo false)" >>"$GITHUB_OUTPUT"
+          echo "apps=$(echo "$areas" | grep -vx 'site\|kit' | jq -R . | jq -sc .)" >>"$GITHUB_OUTPUT"
+
+  site:
+    needs: plan
+    if: needs.plan.outputs.site == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: site/package.json
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .node-version
+          node-version-file: site/.node-version
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: scripts/task check
+          cache-dependency-path: site/pnpm-lock.yaml
+      - run: scripts/task check site
         env:
-          # The build reads each app's latest release from the GitHub API.
+          # The site reads each app's latest release from the GitHub API.
           GITHUB_TOKEN: ${{ github.token }}
 
+  kit:
+    needs: plan
+    if: needs.plan.outputs.kit == 'true'
+    # Pinned to the image whose Swift matches development; swift-format's output changes between
+    # releases, so a drifting runner fails lint.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/task check kit
+
+  app:
+    needs: plan
+    if: needs.plan.outputs.apps != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        app: ${{ fromJSON(needs.plan.outputs.apps) }}
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: scripts/task check ${{ matrix.app }}
+
   required:
-    # The single status check branch protection requires.
-    needs: [check]
+    # The single status check branch protection requires. It passes when every job that ran passed.
+    needs: [plan, site, kit, app]
+    if: always()
     runs-on: ubuntu-latest
     steps:
-      - run: echo "all checks passed"
+      - run: |
+          echo "site: ${{ needs.site.result }}, kit: ${{ needs.kit.result }}, apps: ${{ needs.app.result }}"
+          case "${{ needs.site.result }}${{ needs.kit.result }}${{ needs.app.result }}" in
+          *failure* | *cancelled*) exit 1 ;;
+          esac

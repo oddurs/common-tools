@@ -1,18 +1,52 @@
-name: Site problem
-description: Something on the site is wrong, broken, or out of date.
+name: Bug report
+description: Something shows the wrong thing, looks wrong, or misbehaves.
 labels: [bug]
 body:
-  - type: input
-    id: page
+  - type: dropdown
+    id: app
     attributes:
-      label: Page
-      placeholder: 'https://oddurs.github.io/common-tools/stats/docs/'
+      label: App
+      options:
+        - Common Stats
+        - Common Keys
+        - Common Bar
+        - Common Glyph
+        - Common Command
+        - Common Shot
+        - Common Battery
+        - The website
     validations:
       required: true
   - type: textarea
     id: what
     attributes:
-      label: What's wrong
-      description: For a problem with an app itself, open the issue in that app's repository instead.
+      label: What happened
+      description: Include what the app showed or did, and what you expected.
     validations:
       required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown at the foot of the app's Settings.
+      placeholder: '0.3.0'
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac model
+      placeholder: 'macOS 26.5, MacBook Pro M4 Pro'
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Optional, but helpful for anything visual.

@@ -1,3 +1,5 @@
+# The apps have no Swift package dependencies, so there are two ecosystems to watch: GitHub Actions
+# and the site's npm packages.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -8,7 +10,7 @@ updates:
       actions:
         update-types: [minor, patch]
   - package-ecosystem: npm
-    directory: /
+    directory: /site
     schedule:
       interval: weekly
     groups:

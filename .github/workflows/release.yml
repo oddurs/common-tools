@@ -1,0 +1,44 @@
+name: Release
+
+# A tag <app>-v<version> releases one app: scripts/release makes the tag once the version bump
+# has merged.
+on:
+  push:
+    tags: ['*-v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: macos-26
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the tag
+        id: tag
+        run: |
+          app="${GITHUB_REF_NAME%-v*}"
+          version="${GITHUB_REF_NAME##*-v}"
+          [ -d "apps/$app" ] || { echo "no app '$app' for tag $GITHUB_REF_NAME"; exit 1; }
+          plist="apps/$app/Resources/Info.plist"
+          built="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist")"
+          [ "$built" = "$version" ] || { echo "$plist says $built, the tag says $version"; exit 1; }
+          echo "app=$app" >>"$GITHUB_OUTPUT"
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "name=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleDisplayName' "$plist")" >>"$GITHUB_OUTPUT"
+      - run: scripts/task check kit ${{ steps.tag.outputs.app }}
+      - run: scripts/task package ${{ steps.tag.outputs.app }}
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APP: ${{ steps.tag.outputs.app }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          NAME: ${{ steps.tag.outputs.name }}
+        run: |
+          # The notes are this version's CHANGELOG section, the same text the site shows.
+          awk -v v="$VERSION" 'index($0, "## [" v "]") == 1 { on = 1; next } on && (/^## / || /^\[/) { exit } on { print }' \
+            "apps/$APP/CHANGELOG.md" >notes.md
+          [ -s notes.md ] || { echo "apps/$APP/CHANGELOG.md has no section for $VERSION"; exit 1; }
+          gh release create "$GITHUB_REF_NAME" --verify-tag --title "$NAME $VERSION" --notes-file notes.md "dist/$APP"/*

@@ -1,42 +1,233 @@
 #!/bin/sh
 set -eu
 
-# The one seam CI and git hooks call. Verbs: fmt fmt:check lint test build check
+# The one seam CI and the git hooks call, for every part of the monorepo.
+#
+#   scripts/task <verb> [area ...] [--changed]
+#
+# Verbs: fmt fmt:check lint test build package run check. Areas: site, kit (packages/CommonKit),
+# or an app by its slug (apps/<slug>); none means all of them, and --changed means only what
+# differs from origin/main (CommonKit changes count for every app, since they all depend on it).
 
 cd "$(dirname "$0")/.."
+root="$(pwd)"
 
-# A worktree starts without node_modules; install from the lockfile, never update it.
-[ -d node_modules ] || pnpm install --frozen-lockfile
+verb="${1:-}"
+[ $# -gt 0 ] && shift
 
-case "${1:-}" in
-fmt)
-    echo "==> formatting"
-    pnpm exec prettier --write .
+all_apps() { ls "$root/apps" 2>/dev/null || :; }
+
+# A field of one app from apps.json. plutil reads JSON, so no other tool is needed.
+app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
+
+changed_areas() {
+    base="${changed_base:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)}"
+    { git diff --name-only "$base"; git diff --name-only; git ls-files --others --exclude-standard; } | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
+        # Workflows and root documents change nothing a local check can test.
+        /^\.github\//        { next }
+        /^[^\/]+\.md$/       { next }
+        /^LICENSE$/          { next }
+        /^site\//            { site = 1; next }
+        /^packages\//        { kit = 1; everyapp = 1; next }
+        /^apps\/[^\/]+\//    { split($0, p, "/"); app[p[2]] = 1; next }
+        /^shared\//          { everyapp = 1; next }
+                             { site = 1; kit = 1; everyapp = 1 }
+        END {
+            if (site) print "site"
+            if (kit) print "kit"
+            n = split(apps, list, " ")
+            for (i = 1; i <= n; i++) if (everyapp || app[list[i]]) print list[i]
+        }'
+}
+
+existing_areas() {
+    while read -r area; do
+        if [ "$area" = site ]; then
+            echo site
+        elif [ "$area" = kit ]; then
+            if [ -d packages/CommonKit ]; then echo kit; fi
+        elif [ -d "apps/$area" ]; then
+            echo "$area"
+        fi
+    done
+}
+
+areas=""
+changed=0
+filter=""
+for arg in "$@"; do
+    case "$arg" in
+    --changed) changed=1 ;;
+    --filter=*) filter="${arg#--filter=}" ;;
+    *) areas="$areas $arg" ;;
+    esac
+done
+if [ "$changed" -eq 1 ]; then
+    # Only areas that exist: a change at the root names every area, present or not.
+    areas="$(changed_areas | existing_areas | tr '\n' ' ')"
+    [ -n "$areas" ] || { echo "==> nothing changed"; exit 0; }
+elif [ -z "$areas" ]; then
+    areas="site $([ -d packages/CommonKit ] && echo kit) $(all_apps | tr '\n' ' ')"
+fi
+
+# Command Line Tools ship Swift Testing outside the default search paths; Xcode does not need this.
+test_flags() {
+    dev="$(xcode-select -p)"
+    case "$dev" in
+    */CommandLineTools)
+        fw="$dev/Library/Developer/Frameworks"
+        lib="$dev/Library/Developer/usr/lib"
+        printf '%s\n' -Xswiftc -F -Xswiftc "$fw" -Xlinker -F -Xlinker "$fw" \
+            -Xlinker -rpath -Xlinker "$fw" -Xlinker -rpath -Xlinker "$lib"
+        ;;
+    esac
+}
+
+# macOS ties permissions and login items to the signature. The shared development identity keeps
+# them across rebuilds; scripts/dev-cert makes it. An identity that exists but isn't trusted makes
+# codesign fail, so only a valid one is used.
+sign() {
+    identity="Common Tools Development"
+    if security find-identity -v -p codesigning | grep -q "\"$identity\""; then
+        echo "==> signing $1 with '$identity'"
+        codesign --force --sign "$identity" --identifier "$2" --options runtime "$1"
+    else
+        echo "==> signing $1 ad-hoc; run scripts/dev-cert to keep permissions across rebuilds"
+        codesign --force --sign - --identifier "$2" --options runtime "$1"
+    fi
+}
+
+swift_package() {
+    # $1 = verb, in a package directory
+    case "$1" in
+    fmt) swift format --in-place --recursive Package.swift Sources Tests ;;
+    fmt:check) swift format lint --strict --recursive Package.swift Sources Tests ;;
+    lint)
+        swift format lint --strict --recursive Package.swift Sources Tests
+        swift build -Xswiftc -warnings-as-errors
+        ;;
+    # shellcheck disable=SC2046
+    test) swift test $(test_flags) ${filter:+--filter "$filter"} ;;
+    esac
+}
+
+site() {
+    cd "$root/site"
+    [ -d node_modules ] || pnpm install --frozen-lockfile
+    case "$1" in
+    fmt) pnpm exec prettier --write . ;;
+    fmt:check) pnpm exec prettier --check . ;;
+    lint)
+        pnpm exec prettier --check .
+        pnpm run --silent check
+        ;;
+    test) pnpm exec vitest run ;;
+    build) pnpm exec vite build ;;
+    package | run) echo "    (nothing to $1 for the site)" ;;
+    check) site lint && site test && site build ;;
+    esac
+}
+
+kit() {
+    cd "$root/packages/CommonKit"
+    case "$1" in
+    fmt | fmt:check | lint | test) swift_package "$1" ;;
+    build) swift build -c release ;;
+    package | run) echo "    (nothing to $1 for CommonKit)" ;;
+    check) kit lint && kit test ;;
+    esac
+}
+
+app() {
+    # $1 = slug, $2 = verb
+    slug="$1"
+    name="$(app_field "$slug" NAME)"
+    executable="$(app_field "$slug" TARGET)"
+    bundle_id="$(app_field "$slug" BUNDLE)"
+    asset="$(app_field "$slug" ASSET)"
+    tools="$(app_field "$slug" TOOLS)"
+    out="$root/build/$slug"
+    bundle="$out/$name.app"
+    cd "$root/apps/$slug"
+    min_macos="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' Resources/Info.plist)"
+    case "$2" in
+    fmt | fmt:check | lint | test) swift_package "$2" ;;
+    build)
+        # One build per architecture, joined with lipo: `--arch a --arch b` needs Xcode's build
+        # system, which Command Line Tools lack.
+        dirs=""
+        for arch in arm64 x86_64; do
+            triple="$arch-apple-macosx$min_macos"
+            echo "==> building $name for $arch"
+            swift build -c release --triple "$triple"
+            dirs="$dirs $(swift build -c release --triple "$triple" --show-bin-path)"
+        done
+        echo "==> assembling $bundle"
+        rm -rf "$bundle"
+        mkdir -p "$bundle/Contents/MacOS" "$bundle/Contents/Resources"
+        # shellcheck disable=SC2086
+        lipo -create $(for dir in $dirs; do echo "$dir/$executable"; done) -output "$bundle/Contents/MacOS/$executable"
+        cp Resources/Info.plist "$bundle/Contents/"
+        cp Resources/AppIcon.icns "$bundle/Contents/Resources/"
+        # The Common Tools section of Settings shows every app's icon from here.
+        cp -R "$root/shared/CommonTools" "$bundle/Contents/Resources/"
+        sign "$bundle" "$bundle_id"
+        for tool in $tools; do
+            # shellcheck disable=SC2046
+            lipo -create $(for dir in $dirs; do echo "$dir/$tool"; done) -output "$out/$tool"
+            sign "$out/$tool" "$tool"
+        done
+        ;;
+    package)
+        # What a release publishes. The names carry no version; the site links each release's tag.
+        [ -d "$bundle" ] || app "$slug" build
+        echo "==> packaging $name into dist/$slug/"
+        rm -rf "$root/dist/$slug"
+        mkdir -p "$root/dist/$slug"
+        # ditto keeps the bundle's signature and extended attributes intact.
+        ditto -c -k --keepParent "$bundle" "$root/dist/$slug/$asset.zip"
+        for tool in $tools; do ditto -c -k "$out/$tool" "$root/dist/$slug/$tool.zip"; done
+        (cd "$root/dist/$slug" && for zip in *.zip; do shasum -a 256 "$zip" >"$zip.sha256"; done && ls -l)
+        ;;
+    run)
+        app "$slug" build
+        echo "==> relaunching $name"
+        # By process name: a fresh build isn't registered with Launch Services yet.
+        if pgrep -x "$executable" >/dev/null; then
+            pkill -x "$executable"
+            while pgrep -x "$executable" >/dev/null; do sleep 0.2; done
+        fi
+        open "$bundle"
+        ;;
+    check) app "$slug" lint && app "$slug" test && app "$slug" build ;;
+    esac
+}
+
+case "$verb" in
+areas)
+    # The areas a change touches, for CI: `areas <base>` against a ref, or `areas --all`.
+    if [ "${1:-}" = "--all" ]; then
+        printf '%s\n' site kit $(all_apps)
+    else
+        changed_base="$(git merge-base "${1:-origin/main}" HEAD)" changed_areas | existing_areas
+    fi
+    exit 0
     ;;
-fmt:check)
-    echo "==> checking format"
-    pnpm exec prettier --check .
-    ;;
-lint)
-    "$0" fmt:check
-    echo "==> type-checking with warnings as errors"
-    pnpm run --silent check
-    ;;
-test)
-    echo "==> running tests"
-    pnpm exec vitest run
-    ;;
-build)
-    echo "==> building the static site"
-    pnpm exec vite build
-    ;;
-check)
-    "$0" lint
-    "$0" test
-    "$0" build
-    ;;
+fmt | fmt:check | lint | test | build | package | run | check) ;;
 *)
-    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|check}" >&2
+    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|check} [site|kit|<app> ...] [--changed] [--filter=<test>]" >&2
     exit 2
     ;;
 esac
+
+for area in $areas; do
+    echo "==> $verb $area"
+    case "$area" in
+    site) (site "$verb") ;;
+    kit) (kit "$verb") ;;
+    *)
+        [ -d "apps/$area" ] || { echo "task: no area '$area'" >&2; exit 2; }
+        (app "$area" "$verb")
+        ;;
+    esac
+done

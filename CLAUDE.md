@@ -1,45 +1,36 @@
 # Working in this repository
 
-The Common Tools website: a prerendered SvelteKit site for three macOS menu bar apps (Common Stats, Common Keys, Common Bar), deployed to GitHub Pages. The apps live in their own repositories; this repository never builds them.
+Common Tools is a family of small, native macOS apps, built here as one repository: each app under `apps/<slug>/` (Swift, AppKit plus SwiftUI, no package dependencies), what they share in `packages/CommonKit/`, and the website in `site/`. `apps.json` names every app with what differs between them. Each app has its own `CLAUDE.md` with what is specific to it; this file is the contract for all of them.
 
 ## The seam
 
 Do all automation through `scripts/task`. CI and the git hooks call nothing else.
 
 ```sh
-scripts/task fmt        # prettier, in place
-scripts/task fmt:check  # prettier --check
-scripts/task lint       # fmt:check + svelte-check --fail-on-warnings
-scripts/task test       # vitest
-scripts/task build      # static site → build/
-scripts/task check      # lint + test + build
+scripts/task <verb> [area ...] [--changed] [--filter=<test>]
 ```
+
+Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors), `test`, `build` (a universal, signed `build/<app>/<Name>.app`), `package` (`dist/<app>/`, what a release publishes), `run` (build, quit the running copy, open the new one), `check` (lint + test + build). Areas: `site`, `kit`, or an app's slug; none means all, `--changed` means what differs from `origin/main`, and CommonKit changes count for every app. CI runs `check` on the changed areas of a pull request and on everything for `main`.
 
 ## Workflow
 
 - Never commit to `main`. It only moves forward when a pull request is merged; the `pre-push` hook and branch protection both enforce this.
-- One unit of work gets one worktree, one branch, and one pull request: `scripts/agent start <type>/<slug>`, then work in the printed path and finish with `scripts/agent ship "<type>(scope): subject" "<why>" --body-file <pr.md>`, where the body states the problem, the approach, and where a reviewer should be sceptical. It commits, checks, opens the pull request with auto-merge, keeps it rebased while CI runs, and cleans up after the merge. If it stops on a failed check or a conflict, fix the cause and run it again.
-- Branch types: `feat fix chore docs perf refactor test`.
-- Run `scripts/task check` until it is green before opening a pull request. Never use `--no-verify`.
-- In the pull request description, state the problem, the approach, and where a reviewer should be sceptical.
+- One unit of work gets one worktree, one branch, and one pull request: `scripts/agent start <type>/<slug>`, then work in the printed path and finish with `scripts/agent ship "<type>(scope): subject" "<why>" --body-file <pr.md>`, where the body states the problem, the approach, and where a reviewer should be sceptical. It commits, checks what changed, opens the pull request with auto-merge, keeps it rebased while CI runs, and cleans up after the merge. If it stops on a failed check or a conflict, fix the cause and run it again.
+- Branch types: `feat fix chore docs perf refactor test`. The branch's first commit names the pull request and the squash commit on `main`. Scope commits and branches to one area where you can: `feat(bar): …`, `fix(site): …`, `refactor(kit): …`.
+- Never use `--no-verify`.
+- User-facing changes to an app go under `## [Unreleased]` in `apps/<slug>/CHANGELOG.md` in the same pull request. The site shows each release's section as "What's new".
+- Release one app with `scripts/release <slug> <version>`; it tags `<slug>-v<version>` from the merged version bump. Never tag by hand.
+- Several agents work here at once, one per app, each in its own worktree. Stay inside your area unless the change is shared; a change to `packages/CommonKit` or `shared/` affects every app, so say so in the pull request.
 
 ## Commits
 
 Conventional Commits: `type(scope): subject`. Write the subject in the imperative, at most 72 characters, with no trailing period. The body says why. Never add assistant or tool attribution: no co-author trailers, no "generated with" footers. The `commit-msg` hook rejects them.
 
-## The app standard
-
-- `standard/` is the source of truth for every Common Tools app repository's shared files, scripts, and GitHub settings (the apps are listed in `standard/apps.json`). Change a shared file here, then `node scripts/standard.js apply <app> <worktree>` in each app and ship it there. Never edit a managed file in one app alone; `check` will report it as drift.
-- Text between `standard:begin`/`standard:end` markers belongs to the app; keep shared wording outside them.
-
 ## Code
 
-- `src/lib/tools.ts` is the single source of names, repositories, and release asset names. Download links use `releases/latest/download/<asset>`; if an app renames its asset, change it here and in that app's `release.yml` together.
-- Each app's CHANGELOG section for its latest release appears on its page as "What's new", so those notes are user-facing copy.
-- Every claim on a page must be true of the app's code. Read the app's source before writing about a feature; don't describe unmerged work.
-- Links go through `resolve()` with relative paths (`'stats/'`), and assets through `asset()`, so the `/common-tools` base path works.
-- Demo videos are films made with `src/lib/film/`. Write timing as a `direct((d) => …)` script (camera, point, click, hold/release, caption, mark, poster, end); never hand-roll timelines in a scene. Scene state reads `film.marks`. Draw entrances from the frame's time, never CSS animations, or recorded frames won't match. `src/lib/demos.test.ts` pins what each caption promises; update it with the script.
-- Scenes are drawn with `Film.svelte` on `src/lib/mac/` (Screen, Window, Symbol) and the geometry in `geometry.ts`. Don't invent menu bar sizes or glyphs: add an SF Symbol to `scripts/render-glyphs.swift` and run `pnpm glyphs`.
-- Every film takes `dark`; check both with `pnpm shot <tool> <moment> [--dark]`. Camera shots must stay inside the screen (`clampCamera`); the tests check this.
-- After changing a film, `pnpm record <tool>` (light and dark) and look at both posters before committing the videos.
-- The dev server runs on port 5371 (`--strictPort`), so it never collides with other projects.
+- Every app keeps its bundle identifier, executable name, status-item autosave names, and preference keys forever, so existing installs keep their settings, positions, and permission grants. Only user-visible names change.
+- Every reading an app shows comes from a public, unprivileged API. Nothing leaves the Mac: no network, no analytics, no account.
+- Settings follow one layout: the app's own sections first, then **General** starting with "Open at login", then `CommonToolsSection()` from CommonKit last. Labels are sentence case, section headers Title Case.
+- The family list (`CommonTool.all` in CommonKit) and the icons in `shared/CommonTools/` are what every app's Settings shows. Adding an app: `apps.json`, its `apps/<slug>/`, `CommonTool.all`, `scripts/make-icon <slug>`, and its page in `site/`.
+- Icons are drawn by `scripts/make-icon <slug>`: the body in `shared/icon-lib.swift`, the app's glyph in `apps/<slug>/icon.swift`.
+- `scripts/dev-cert` makes the shared "Common Tools Development" signing identity and resets the permission grants of the apps that need any (`PERMISSIONS` in `apps.json`). Builds sign with it when it's valid and ad-hoc otherwise.

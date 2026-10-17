@@ -1,0 +1,102 @@
+#!/bin/sh
+set -eu
+
+# Cuts a release of one app:  scripts/release <app> <major.minor.patch>
+#
+# 1. In a new worktree, moves the app's CHANGELOG Unreleased notes under the version with today's
+#    date, updates the compare links, and bumps the version in its Info.plist.
+# 2. Ships that through a pull request, which merges itself (scripts/agent ship).
+# 3. Tags the merge commit <app>-v<version> and waits for the Release workflow to publish it.
+# 4. Downloads the published zip and checks it is the new version.
+
+die() {
+    echo "release: $*" >&2
+    exit 1
+}
+
+slug="${1:-}"
+version="${2:-}"
+[ -n "$slug" ] && [ -d "$(dirname "$0")/../apps/$slug" ] || die "usage: scripts/release <app> <major.minor.patch>"
+echo "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || die "usage: scripts/release <app> <major.minor.patch>"
+
+root="$(git rev-parse --show-toplevel)"
+cd "$root"
+tag="$slug-v$version"
+git fetch --quiet --tags origin
+git rev-parse --quiet --verify "refs/tags/$tag" >/dev/null && die "$tag already exists"
+previous="$(git tag --list "$slug-v*" --sort=-v:refname | head -n 1)"
+url="$(git remote get-url origin | sed -E 's#^git@github.com:#https://github.com/#; s#\.git$##')"
+name="$(plutil -extract "$slug.NAME" raw -o - apps.json)"
+asset="$(plutil -extract "$slug.ASSET" raw -o - apps.json)"
+changelog="apps/$slug/CHANGELOG.md"
+plist="apps/$slug/Resources/Info.plist"
+
+# Refuse an empty release: the notes are what the site and the release page show.
+notes="$(git show "origin/main:$changelog" | awk '
+    index($0, "## [Unreleased]") == 1 { on = 1; next }
+    on && (/^## / || /^\[/) { exit }
+    on && /^- / { n++ }
+    END { print n + 0 }')"
+[ "$notes" -gt 0 ] || die "nothing under ## [Unreleased] in $changelog on main; write the release notes first"
+
+echo "==> preparing $name $version (previous: ${previous:-none})"
+path="$("$root/scripts/agent" start "chore/release-$slug-$version" | sed -n 's/^cd //p')"
+cd "$path"
+awk -v v="$version" -v d="$(date +%Y-%m-%d)" -v url="$url" -v prev="$previous" -v tag="$tag" -v slug="$slug" '
+    index($0, "## [Unreleased]") == 1 { print; print ""; print "## [" v "] - " d; next }
+    index($0, "[Unreleased]: ") == 1 {
+        print "[Unreleased]: " url "/commits/main/apps/" slug
+        if (prev != "") print "[" v "]: " url "/compare/" prev "..." tag
+        else print "[" v "]: " url "/releases/tag/" tag
+        next
+    }
+    { print }' "$changelog" >"$changelog.new"
+mv "$changelog.new" "$changelog"
+build="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$plist")"
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $version" -c "Set :CFBundleVersion $((build + 1))" "$plist"
+
+body="$(mktemp)"
+trap 'rm -f "$body"' EXIT
+cat >"$body" <<EOF
+## Problem
+
+The changes under \`[Unreleased]\` in \`$changelog\` are ready to ship as $name $version.
+
+## Approach
+
+Made by \`scripts/release $slug $version\`: moves the Unreleased notes under $version with today's date, updates the compare links, and bumps \`CFBundleShortVersionString\` to $version and \`CFBundleVersion\` to $((build + 1)). Once this merges, the script tags the merge commit \`$tag\` and the Release workflow publishes it.
+
+## Look at sceptically
+
+- The notes under $version become the release page and the site's "What's new"; read them as a user would.
+EOF
+"$root/scripts/agent" ship "chore($slug): release $version" \
+    "Dates the unreleased notes as $version and bumps the version, so the tag can be cut from this merge." \
+    --body-file "$body"
+
+cd "$root"
+sha="$(gh pr list --state merged --head "chore/release-$slug-$version" --json mergeCommit --jq ".[0].mergeCommit.oid // empty")"
+[ -n "$sha" ] || die "can't find the merge commit of chore/release-$slug-$version"
+echo "==> tagging $sha as $tag"
+git fetch --quiet origin
+git tag -a "$tag" "$sha" -m "$name $version"
+git push --quiet origin "$tag"
+
+echo "==> waiting for the Release workflow"
+run=""
+for _ in $(seq 1 30); do
+    run="$(gh run list --workflow Release --branch "$tag" --limit 1 --json databaseId --jq '.[0].databaseId // empty')"
+    [ -n "$run" ] && break
+    sleep 5
+done
+[ -n "$run" ] || die "the Release workflow didn't start for $tag"
+gh run watch "$run" --exit-status >/dev/null || die "the Release workflow failed: $url/actions/runs/$run"
+
+echo "==> checking the published download"
+check="$(mktemp -d)"
+trap 'rm -rf "$check" "$body"' EXIT
+curl -fsSL -o "$check/$asset.zip" "$url/releases/download/$tag/$asset.zip"
+(cd "$check" && ditto -x -k "$asset.zip" .)
+published="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$check/$name.app/Contents/Info.plist")"
+[ "$published" = "$version" ] || die "the published download is $published, not $version"
+echo "==> released $name $version: $url/releases/tag/$tag"

@@ -1,10 +1,32 @@
-name: Suggestion
-description: Something the site should explain or show.
+name: Feature request
+description: Suggest something an app should do, or a new app.
 labels: [enhancement]
 body:
+  - type: dropdown
+    id: app
+    attributes:
+      label: App
+      options:
+        - Common Stats
+        - Common Keys
+        - Common Bar
+        - Common Glyph
+        - Common Command
+        - Common Shot
+        - Common Battery
+        - The website
+        - A new app
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that the app doesn't support?
+    validations:
+      required: true
   - type: textarea
     id: idea
     attributes:
-      label: Suggestion
-    validations:
-      required: true
+      label: Suggested approach
+      description: Optional. The apps only use public, unprivileged APIs and send nothing off the Mac.

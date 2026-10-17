@@ -1,7 +1,14 @@
+# Swift
+.build/
+build/
+dist/
+*.xcodeproj
+.swiftpm/
+# Site
 node_modules/
 .svelte-kit/
-build/
-.worktrees/
-.DS_Store
 .vite/
 shots/
+# Local
+.worktrees/
+.DS_Store

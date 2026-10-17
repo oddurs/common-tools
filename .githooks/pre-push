@@ -35,5 +35,5 @@ if [ "$unchecked" -eq 0 ]; then
     exit 0
 fi
 
-echo "pre-push: full check"
-exec scripts/task check
+echo "pre-push: checking what changed"
+exec scripts/task check --changed
