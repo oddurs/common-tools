@@ -41,7 +41,7 @@ jobs:
           BASE_PATH: /common-tools
           # The build reads each app's latest release from the GitHub API.
           GITHUB_TOKEN: ${{ github.token }}
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site/build
       - id: deployment
