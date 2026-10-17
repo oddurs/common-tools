@@ -1,5 +1,6 @@
 import AppKit
 import CommonKit
+import CommonUI
 import ShotKit
 import SwiftUI
 
@@ -8,32 +9,33 @@ import SwiftUI
 struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
-    @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
     @State private var hasAccess = Capture.hasAccess
     @State private var historyCount = 0
 
+    /// Fits a 13-inch screen with the menu bar and the title bar above it.
+    private static let maxHeight: CGFloat = 720
+
     var body: some View {
         Form {
             Section {
-                LabeledContent("Take a screenshot") {
+                LabeledRow("Take a screenshot") {
                     ShortcutRecorder(controller: controller, combo: $preferences.hotKey)
                 }
             } header: {
                 Text("Shortcut")
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if let problem = controller.hotKeyProblem {
-                        Text(problem).foregroundStyle(.red)
+                        Text(problem).font(.callout).foregroundStyle(Tokens.Color.danger.color)
                     }
-                    Text("Drag for an area, click for a window, Return for the whole screen, Escape to cancel.")
-                        .foregroundStyle(.secondary)
+                    SettingsFootnote(
+                        "Drag for an area, click for a window, Return for the whole screen, Escape to cancel.")
                 }
-                .font(.callout)
             }
 
             Section {
-                LabeledContent("Screen Recording") {
+                LabeledRow("Screen Recording") {
                     if hasAccess {
                         Label("Allowed", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
@@ -45,11 +47,9 @@ struct SettingsView: View {
                 Text("Access")
             } footer: {
                 if !hasAccess {
-                    Text(
+                    SettingsFootnote(
                         "Turn on Common Shot under Screen & System Audio Recording, then quit and reopen it. If it's already on, remove it with − and add it again: that switch is for an earlier copy."
                     )
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
                 }
             }
 
@@ -63,13 +63,11 @@ struct SettingsView: View {
             } header: {
                 Text("Image")
             } footer: {
-                Text(
+                SettingsFootnote(
                     preferences.imageSize == .prompt
                         ? "Every shot is copied as PNG with its long edge at most \(ImageSize.promptLongEdge) px. A full screen costs Claude about 2,100 tokens instead of 4,800, and smaller crops are untouched."
                         : "Every shot is copied as PNG at the display's full resolution."
                 )
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             Section {
@@ -89,31 +87,29 @@ struct SettingsView: View {
             } header: {
                 Text("History")
             } footer: {
-                Text("Recent shots appear in the menu bar menu. Click one to copy it again.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                SettingsFootnote("Recent shots appear in the menu bar menu. Click one to copy it again.")
             }
 
             Section {
                 Toggle("Show in menu bar", isOn: $preferences.showsMenuBarItem)
-                Toggle("Open at login", isOn: $openAtLogin)
+                OpenAtLoginToggle(error: $loginError)
             } header: {
                 Text("General")
             } footer: {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                     if !preferences.showsMenuBarItem {
-                        Text("Open Common Shot from Finder again to get back to Settings.")
+                        SettingsFootnote("Open Common Shot from Finder again to get back to Settings.")
                     }
-                    if let loginError { Text(loginError) }
+                    if let loginError { SettingsFootnote(loginError) }
                 }
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             CommonToolsSection()
         }
-        .formStyle(.grouped)
-        .frame(width: 460, height: 720)
+        // Six sections and the family list run to about 1,280 points, taller than a 16-inch screen, and
+        // the window can't be resized; capped here, the form scrolls past this height as it did before.
+        .frame(maxHeight: Self.maxHeight)
+        .settingsForm()
         .onChange(of: preferences.showsMenuBarItem) { controller.preferencesChanged() }
         .onChange(of: preferences.historyLimit) {
             controller.historyLimitChanged()
@@ -122,16 +118,6 @@ struct SettingsView: View {
         .onAppear { historyCount = controller.history.shots.count }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             hasAccess = Capture.hasAccess
-        }
-        .onChange(of: openAtLogin) { _, enabled in
-            guard enabled != LoginItem.isEnabled else { return }
-            do {
-                try LoginItem.setEnabled(enabled)
-                loginError = nil
-            } catch {
-                loginError = error.localizedDescription
-                openAtLogin = LoginItem.isEnabled
-            }
         }
     }
 }
@@ -145,13 +131,14 @@ struct ShortcutRecorder: View {
     @State private var hint: String?
 
     var body: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: Tokens.Space.xs) {
             if let hint { Text(hint).font(.callout).foregroundStyle(.secondary) }
             Button {
                 recording ? stop() : start()
             } label: {
                 Text(recording ? "Type Shortcut…" : combo.displayName)
                     .monospacedDigit()
+                    // Wide enough for "Type Shortcut…", so the button holds still while it records.
                     .frame(minWidth: 110)
             }
         }

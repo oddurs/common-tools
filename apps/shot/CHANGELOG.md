@@ -14,4 +14,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Recent shots as thumbnails in the menu bar menu, the newest 6 at the top and the rest in a submenu; click one to copy it again. Keeps the last 10 by default, from none to 100.
 - Settings: shortcut, Screen Recording status, image size, preview, history depth, menu bar item, and open at login.
 
+### Changed
+
+- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
+
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/shot
