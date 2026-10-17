@@ -115,9 +115,15 @@ pr)
         # The first commit names the unit of work; later ones are fixes along the way.
         gh pr create --fill-first "$@"
     fi
-    # Only ever merge what is checked out here.
-    head="$(gh pr view "$branch" --json headRefOid --jq .headRefOid)"
-    [ "$head" = "$(git rev-parse HEAD)" ] || die "the pull request's head is $head, not this branch's HEAD; push again"
+    # Only ever merge what is checked out here. The API can report the old head for a few seconds
+    # after a push, so a mismatch is read again before it counts.
+    want="$(git rev-parse HEAD)"
+    tries=0
+    while [ "$(gh pr view "$branch" --json headRefOid --jq .headRefOid)" != "$want" ]; do
+        tries=$((tries + 1))
+        [ "$tries" -lt 10 ] || die "the pull request's head is not this branch's HEAD ($want) after $tries reads; push again"
+        sleep 3
+    done
     title="$(gh pr view "$branch" --json title --jq .title)"
     echo "$title" | grep -Eq '^(feat|fix|chore|docs|perf|refactor|test|build|ci|style|revert)(\([a-z0-9._/-]+\))?!?: [^ ].*[^.]$' ||
         die "pull request title '$title' is not a Conventional Commit; fix it with gh pr edit --title"
