@@ -77,6 +77,48 @@ public struct AppContract {
         for tool in CommonTool.all {
             exists("shared/CommonTools/\(tool.id).png", in: repository)
         }
+        found += try designViolations(target: entry["TARGET"] as? String ?? "")
+        return found
+    }
+
+    /// Common UI governs the app target's views. Settings is built from the family's primitives,
+    /// and no view picks a colour by hand; in Settings, no view sets a text size or draws a shadow
+    /// either, since the system text styles and the tokens decide those. Panels and menus keep
+    /// their own metrics, and the library target (status-item renderers, image processing) is
+    /// not a view at all, so neither is held to the Settings rules.
+    private func designViolations(target: String) throws -> [String] {
+        let sources = app.appending(path: "Sources/\(target)")
+        guard let files = FileManager.default.enumerator(at: sources, includingPropertiesForKeys: nil) else {
+            return []
+        }
+        var found: [String] = []
+        var everything = ""
+        for case let file as URL in files where file.pathExtension == "swift" {
+            // Code only: a comment that names a primitive, or explains why one isn't used, is not use.
+            let text = try String(contentsOf: file, encoding: .utf8).split(
+                separator: "\n", omittingEmptySubsequences: false
+            )
+            .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("//") }
+            .joined(separator: "\n")
+            everything += text
+            let name = file.lastPathComponent
+            for literal in [
+                "Color(red:", "NSColor(red:", "NSColor(srgbRed:", "NSColor(calibratedRed:", "#colorLiteral",
+                "Color(hex:",
+            ]
+            where text.contains(literal) {
+                found.append("\(name) picks a colour by hand (\(literal)); use a token or a system colour")
+            }
+            if name.contains("Settings") {
+                for styling in [".system(size:", ".shadow("] where text.contains(styling) {
+                    found.append("\(name) uses \(styling); Settings takes its text styles and depth from Common UI")
+                }
+            }
+        }
+        for primitive in ["SettingsWindowHost(", ".settingsForm()", "OpenAtLoginToggle(", "CommonToolsSection()"]
+        where !everything.contains(primitive) {
+            found.append("Sources/\(target) does not use \(primitive) from Common UI for its Settings")
+        }
         return found
     }
 
