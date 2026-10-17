@@ -29,7 +29,7 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 
 ## The app standard
 
-- `standard/` is the source of truth for the three app repositories' shared files, scripts, and GitHub settings. Change a shared file here, then `node scripts/standard.js apply <app> <worktree>` in each app and ship it there. Never edit a managed file in one app alone; `check` will report it as drift.
+- `standard/` is the source of truth for every Common Tools app repository's shared files, scripts, and GitHub settings (the apps are listed in `standard/apps.json`). Change a shared file here, then `node scripts/standard.js apply <app> <worktree>` in each app and ship it there. Never edit a managed file in one app alone; `check` will report it as drift.
 - Text between `standard:begin`/`standard:end` markers belongs to the app; keep shared wording outside them.
 
 ## Code

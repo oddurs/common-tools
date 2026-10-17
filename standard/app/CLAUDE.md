@@ -26,7 +26,7 @@ scripts/task check        # lint + test + build: what CI runs
 - Never use `--no-verify`.
 - User-facing changes go under `## [Unreleased]` in `CHANGELOG.md` in the same pull request. The site shows each release's section as "What's new".
 - Release with `scripts/release <version>`. Never tag by hand.
-- This repository follows the Common Tools app standard (`standard/` in oddurs/common-tools). Change shared files there and apply them to all three apps; only the regions between `standard:begin` and `standard:end` belong to this app.
+- This repository follows the Common Tools app standard (`standard/` in oddurs/common-tools). Change shared files there and apply them to every app; only the regions between `standard:begin` and `standard:end` belong to this app.
 
 ## Commits
 

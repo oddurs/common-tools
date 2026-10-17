@@ -21,19 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: oddurs/common-stats
-          path: apps/common-stats
-      - uses: actions/checkout@v4
-        with:
-          repository: oddurs/common-keys
-          path: apps/common-keys
-      - uses: actions/checkout@v4
-        with:
-          repository: oddurs/common-bar
-          path: apps/common-bar
       - uses: actions/setup-node@v4
         with:
           node-version-file: .node-version
+      - name: Clone the published apps
+        run: for repo in $(node scripts/standard.js repos); do git clone --quiet --depth 1 "https://github.com/oddurs/$repo" "apps/$repo"; done
       - run: node scripts/standard.js check --from apps

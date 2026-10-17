@@ -60,7 +60,7 @@ Add user-facing changes under `## [Unreleased]` in `CHANGELOG.md` as you make th
 
 ## The standard
 
-{{NAME}} follows the Common Tools app standard, kept in [oddurs/common-tools](https://github.com/oddurs/common-tools/tree/main/standard). The repository files, scripts, and settings are the same in every app. Only the parts between `standard:begin` and `standard:end` markers belong to this app. Change shared files there and apply them to all three apps, rather than editing one copy.
+{{NAME}} follows the Common Tools app standard, kept in [oddurs/common-tools](https://github.com/oddurs/common-tools/tree/main/standard). The repository files, scripts, and settings are the same in every app. Only the parts between `standard:begin` and `standard:end` markers belong to this app. Change shared files there and apply them to every app, rather than editing one copy.
 
 ## Review
 

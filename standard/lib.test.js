@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compare, merge, owned, regions, render, settings } from './lib.js';
+import { adopt, compare, merge, owned, regions, render, settings } from './lib.js';
 
 const app = {
 	NAME: 'Common Bar',
@@ -100,4 +100,25 @@ it('gives every app the shared topics plus its own', () => {
 	expect(settings(app).topics).toContain('common-tools');
 	expect(settings(app).topics).toContain('menu-bar-manager');
 	expect(settings(app).repo.homepage).toBe('https://oddurs.github.io/common-tools/bar/');
+});
+
+describe('adopt', () => {
+	it("finds an app's own text in files from before the standard", () => {
+		const claude =
+			'# Working in this repository\n\nOur app does one thing.\n\n## The seam\n\nx\n\n## Code\n\n- Keep it small.\n';
+		expect(adopt('CLAUDE.md', claude, '')).toEqual({
+			about: 'Our app does one thing.',
+			code: '- Keep it small.'
+		});
+		const contributing =
+			'A bug fix comes with the test that would have caught it. Detector changes need numbers.\n\n## Review';
+		expect(adopt('CONTRIBUTING.md', contributing, '').checks).toBe('Detector changes need numbers.');
+		const pr = '- [ ] `scripts/task check` passes locally\n- [ ] Screenshots attached';
+		expect(
+			adopt('.github/PULL_REQUEST_TEMPLATE.md', pr, '- [ ] `scripts/task check` passes locally').checklist
+		).toBe('- [ ] Screenshots attached');
+		expect(adopt('SECURITY.md', 'Shared.\n\nIt reads the battery.\n', 'Shared.').surface).toBe(
+			'It reads the battery.'
+		);
+	});
 });
