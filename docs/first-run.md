@@ -20,7 +20,7 @@ Welcome.showIfFirstLaunch(WelcomeInfo(
 - `permission` is `.accessibility(reason:)`, `.screenRecording(reason:)`, or left out. The reason finishes the sentence "*App* needs *Permission* access …". Only Common Keys and Common Shot need one.
 - The window shows once per Mac (`CommonKit.welcomed` in UserDefaults) and never again. `Welcome.show(info)` shows it on demand, for a **Welcome…** menu item or a button in Settings.
 - **Open System Settings** calls the system's own prompt (which puts the app in the pane's list) and opens the pane. The window polls every second while open, so "Granted" appears without a relaunch.
-- **Open at login** uses `SMAppService.mainApp`, the same as every app's Settings toggle; `OpenAtLogin.isEnabled` and `OpenAtLogin.set(_:)` are public, so the Settings toggle can share them.
+- **Open at login** uses CommonKit's `LoginItem` (`SMAppService.mainApp`), the same wrapper behind `OpenAtLoginToggle` in Settings, so the two switches never disagree.
 - Common Bar has its own animated how-to; it can show Welcome first and its guide after, or skip Welcome. Its call.
 
 To look at it without building an app:
