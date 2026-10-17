@@ -160,7 +160,8 @@ public struct WelcomeView: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                Text(detail).font(.footnote).foregroundStyle(.secondary)
+                // Wraps instead of truncating beside the trailing control.
+                Text(detail).font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
             trailing()
