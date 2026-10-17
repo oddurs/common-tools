@@ -5,7 +5,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var model: AppModel
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
 
     var body: some View {
         Form {
@@ -13,14 +13,10 @@ struct SettingsView: View {
                 BarEditor(model: model)
             } footer: {
                 if !model.barVisible {
-                    Label {
-                        SettingsFootnote(
-                            "Common Stats is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Show fewer items, choose Compact density, or hold ⌘ and drag other menu bar items out of the way."
-                        )
-                    } icon: {
-                        Image(systemName: "eye.slash").foregroundStyle(.secondary)
-                    }
-                    .font(.callout)
+                    SettingsFootnote(
+                        "Common Stats is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Show fewer items, choose Compact density, or hold ⌘ and drag other menu bar items out of the way.",
+                        symbol: "eye.slash"
+                    )
                 }
             }
 
@@ -42,7 +38,7 @@ struct SettingsView: View {
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
                 Picker("Update every", selection: $model.layout.interval) {
                     ForEach(BarLayout.intervals, id: \.self) { s in
                         Text(s == 1 ? "1 second" : "\(s.formatted()) seconds")
@@ -55,9 +51,9 @@ struct SettingsView: View {
                 Text("General")
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
                     SettingsFootnote(
                         "Averaging steadies the menu bar’s numbers and graphs. The menu always shows exact readings.")
-                    if let loginError { SettingsFootnote(loginError) }
                 }
             }
 

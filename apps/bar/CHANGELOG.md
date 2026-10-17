@@ -14,6 +14,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 - Clicking empty menu bar space no longer reveals hidden icons unless you turn it on in Settings. A stray click on blank bar space used to open or close the bar.
 - Smoother opening and closing. Hidden icons glide in from just past the screen's edge instead of from thousands of points away, the chevron turns with a gentle spring to point the way they go, and the ⌘ hairline fades in.

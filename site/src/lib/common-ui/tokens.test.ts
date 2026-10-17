@@ -93,7 +93,8 @@ describe('colour', () => {
 			'color.accent-fill',
 			'color.border',
 			'color.focus',
-			'color.danger'
+			'color.danger',
+			'color.success'
 		]);
 	});
 });

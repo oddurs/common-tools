@@ -9,12 +9,9 @@ import SwiftUI
 struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
     @State private var hasAccess = Capture.hasAccess
     @State private var historyCount = 0
-
-    /// Fits a 13-inch screen with the menu bar and the title bar above it.
-    private static let maxHeight: CGFloat = 720
 
     var body: some View {
         Form {
@@ -27,7 +24,7 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if let problem = controller.hotKeyProblem {
-                        Text(problem).font(.callout).foregroundStyle(Tokens.Color.danger.color)
+                        SettingsFootnote(problem, tone: .danger)
                     }
                     SettingsFootnote(
                         "Drag for an area, click for a window, Return for the whole screen, Escape to cancel.")
@@ -38,7 +35,7 @@ struct SettingsView: View {
                 LabeledRow("Screen Recording") {
                     if hasAccess {
                         Label("Allowed", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(Tokens.Color.success.color)
                     } else {
                         Button("Open Privacy & Security…") { controller.openScreenRecordingSettings() }
                     }
@@ -92,23 +89,20 @@ struct SettingsView: View {
 
             Section {
                 Toggle("Show in menu bar", isOn: $preferences.showsMenuBarItem)
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
             } header: {
                 Text("General")
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
                     if !preferences.showsMenuBarItem {
                         SettingsFootnote("Open Common Shot from Finder again to get back to Settings.")
                     }
-                    if let loginError { SettingsFootnote(loginError) }
                 }
             }
 
             CommonToolsSection()
         }
-        // Six sections and the family list run to about 1,280 points, taller than a 16-inch screen, and
-        // the window can't be resized; capped here, the form scrolls past this height as it did before.
-        .frame(maxHeight: Self.maxHeight)
         .settingsForm()
         .onChange(of: preferences.showsMenuBarItem) { controller.preferencesChanged() }
         .onChange(of: preferences.historyLimit) {

@@ -2,10 +2,14 @@ import AppKit
 import CommonUI
 import SwiftUI
 
-/// The last section of every Common Tools app's Settings: the family, and this app's version.
+/// The last section of every Common Tools app's Settings: the family, its promise, and this app's version.
 public struct CommonToolsSection: View {
     private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? ""
     private let name = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? ""
+
+    /// What every app promises, under the family list, in these words.
+    public static let promise =
+        "Free and open source, forever. Nothing you do is ever reported; nothing leaves your Mac."
 
     public init() {}
 
@@ -15,13 +19,16 @@ public struct CommonToolsSection: View {
         } header: {
             Text("Common Tools")
         } footer: {
-            HStack {
-                Text("\(name) \(version)")
-                Spacer()
-                Link("oddurs.github.io/common-tools", destination: CommonTool.website)
+            VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                SettingsFootnote(Self.promise)
+                HStack {
+                    Text("\(name) \(version)")
+                    Spacer()
+                    Link("oddurs.github.io/common-tools", destination: CommonTool.website)
+                }
+                .font(.footnote)
+                .foregroundStyle(.secondary)
             }
-            .font(.footnote)
-            .foregroundStyle(.secondary)
         }
     }
 }

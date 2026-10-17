@@ -30,6 +30,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings is laid out like the other Common Tools apps’ and sized to the screen it opens on, instead of a fixed 720 pt window. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, footnotes, and Open at login switch, with Open at login first under General. In the panel, a calculation, a link, or a web search gets an icon like the other rows instead of a bare symbol.
 - ⌘1–⌘9 choose a scope instead of opening the nth result, to match Spotlight.
 

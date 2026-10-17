@@ -43,20 +43,12 @@ final class FixBubble {
             display: true)
         panel.alphaValue = 0
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = Tokens.Motion.fast
-            panel.animator().alphaValue = 1
-        }
+        Tokens.Motion.animate(Tokens.Motion.fast) { panel.animator().alphaValue = 1 }
     }
 
     private func fadeOut() {
         guard let panel, panel.isVisible else { return }
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = Tokens.Motion.base
-            panel.animator().alphaValue = 0
-        } completionHandler: {
-            MainActor.assumeIsolated { panel.orderOut(nil) }
-        }
+        Tokens.Motion.animate(changes: { panel.animator().alphaValue = 0 }, completion: { panel.orderOut(nil) })
     }
 
     private func makePanel() -> NSPanel {

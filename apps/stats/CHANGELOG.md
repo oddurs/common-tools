@@ -11,8 +11,14 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the family's shared layout: the same window, section spacing, footnotes, and Open at login switch as the other Common Tools apps, and the menu's cards and icons match them too.
 - Settings edits the menu bar in place. The preview is the editor: drag items to reorder them, drag one out to the tray below to remove it, drag one in from the tray (or click it) to add it, and click an item to choose how it looks. The item list is gone. VoiceOver users get Move Left, Move Right, and Remove actions on each item.
+
+### Fixed
+
+- When macOS is still waiting for you to allow Common Stats under System Settings › General › Login Items, Settings says so again under **Open at login**.
+
 
 ## [0.3.0] - 2026-10-16
 

@@ -10,7 +10,7 @@ struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
     let state: BatteryState
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
     @State private var notificationsBlocked = false
 
     var body: some View {
@@ -27,12 +27,10 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if !state.barVisible {
-                        Label(
+                        SettingsFootnote(
                             "Common Battery is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Hold ⌘ and drag other menu bar items out of the way.",
-                            systemImage: "eye.slash"
+                            symbol: "eye.slash"
                         )
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
                     }
                     SettingsFootnote(
                         "Time remaining learns from how you use your Mac, so it holds steady when you start something brief and knows your usual day. What it learns stays on this Mac."
@@ -69,11 +67,11 @@ struct SettingsView: View {
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
             } header: {
                 Text("General")
             } footer: {
-                if let loginError { SettingsFootnote(loginError) }
+                OpenAtLoginFootnote(loginProblem)
             }
 
             CommonToolsSection()

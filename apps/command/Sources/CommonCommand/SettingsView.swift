@@ -9,9 +9,8 @@ import SwiftUI
 struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
 
-    private static let height: CGFloat = 720
     private static let commandSpace = KeyCombo(keyCode: 49, modifiers: .command)
     private static let keyboardShortcuts = URL(
         string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension")!
@@ -37,12 +36,12 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if let conflict = Conflicts.holder(of: preferences.hotKey, among: controller.otherShortcuts) {
-                        Text(
-                            "\(preferences.hotKey.displayName) also opens \(conflict.owner), so only one of them will. Change it in \(conflict.whereToChange), or choose another shortcut here."
+                        SettingsFootnote(
+                            "\(preferences.hotKey.displayName) also opens \(conflict.owner), so only one of them will. Change it in \(conflict.whereToChange), or choose another shortcut here.",
+                            tone: .danger
                         )
-                        .foregroundStyle(.orange)
                     } else if let problem = controller.hotKeyProblem {
-                        Text(problem).foregroundStyle(Tokens.Color.danger.color)
+                        SettingsFootnote(problem, tone: .danger)
                     }
                     if let spaceHolder = Conflicts.holder(of: Self.commandSpace, among: controller.otherShortcuts),
                         preferences.hotKey != Self.commandSpace
@@ -103,13 +102,13 @@ struct SettingsView: View {
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
                 Toggle("Show in menu bar", isOn: $preferences.showsMenuBarItem)
             } header: {
                 Text("General")
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
-                    if let loginError { SettingsFootnote(loginError) }
+                    OpenAtLoginFootnote(loginProblem)
                     if !preferences.showsMenuBarItem {
                         SettingsFootnote("Open Common Command from Finder again to get back to Settings.")
                     }
@@ -118,10 +117,7 @@ struct SettingsView: View {
 
             CommonToolsSection()
         }
-        // Not `.settingsForm()`: that sizes the window to its sections, and with the preview on top these run
-        // to about 1,700 points, taller than any screen. The family's width, and a height that scrolls.
-        .formStyle(.grouped)
-        .frame(width: Tokens.Layout.settingsWidth, height: Self.height)
+        .settingsForm()
         .onChange(of: preferences.theme) { controller.preferencesChanged() }
         .onChange(of: preferences.size) { controller.preferencesChanged() }
         .onChange(of: preferences.translucent) { controller.preferencesChanged() }

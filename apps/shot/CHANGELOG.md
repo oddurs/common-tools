@@ -16,6 +16,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings fits the screen it opens on and scrolls past that, instead of a fixed 720 pt cap, so it uses a tall display and still fits a 13-inch one. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/shot

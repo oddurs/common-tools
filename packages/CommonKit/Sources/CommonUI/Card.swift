@@ -12,9 +12,6 @@ import SwiftUI
 ///     }
 ///     .frame(width: Tokens.Layout.menuPanelWidth)
 public struct Card<Content: View>: View {
-    /// What the content is inset by; a layout that must know the card's inner width can use it.
-    public static var inset: CGFloat { Tokens.Space.sm }
-
     private let content: Content
 
     public init(@ViewBuilder content: () -> Content) {
@@ -24,9 +21,14 @@ public struct Card<Content: View>: View {
     public var body: some View {
         let shape = RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous)
         content
-            .padding(Self.inset)
+            .padding(Tokens.Layout.cardInset)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Tokens.Surface.card.color, in: shape)
             .overlay(shape.strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
     }
+}
+
+extension Tokens.Layout {
+    /// What a `Card` insets its content by; a layout that must know the card's inner width reads it here.
+    public static let cardInset: CGFloat = Tokens.Space.sm
 }
