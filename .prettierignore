@@ -3,3 +3,4 @@ static/
 build/
 .svelte-kit/
 standard/app/
+standard/snippets/

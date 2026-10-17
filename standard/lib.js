@@ -78,8 +78,13 @@ const headings = (markdown) => [...markdown.matchAll(/^## (.+)$/gm)].map((m) => 
 
 /** Checks an owned file's structure. Returns problems; an empty list means it conforms. */
 export const owned = {
-	'README.md'(text, app) {
+	'README.md'(text, app, snippets = {}) {
 		const problems = [];
+		const development = snippets['README-development.md'];
+		if (development && !text.includes(development))
+			problems.push(
+				'the Development section must start with the standard block (standard/snippets/README-development.md)'
+			);
 		if (!text.startsWith(`# ${app.NAME}\n`)) problems.push(`must start with "# ${app.NAME}"`);
 		const required = ['Install', 'Usage', 'Build from source', 'Development', 'Licence'];
 		const found = headings(text).filter((h) => required.includes(h));

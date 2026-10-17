@@ -78,6 +78,9 @@ describe('owned files', () => {
 		const readme = `# Common Bar\n\n[x](https://github.com/oddurs/common-bar/releases/latest/download/CommonBar.zip)\n## Install\n## Usage\n## Extra\n## Build from source\n## Development\n## Licence\n`;
 		expect(owned['README.md'](readme, app)).toEqual([]);
 		expect(owned['README.md'](readme.replace('## Usage\n', ''), app)[0]).toMatch(/in that order/);
+		expect(
+			owned['README.md'](readme, app, { 'README-development.md': '## Development\n\nshared' })[0]
+		).toMatch(/standard block/);
 	});
 	it('checks the CHANGELOG starts with Unreleased and dates its versions', () => {
 		const log =
