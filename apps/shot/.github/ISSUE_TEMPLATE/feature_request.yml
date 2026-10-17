@@ -1,0 +1,16 @@
+name: Feature request
+description: Suggest something to search, a key, or a change to how results rank.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that Common Shot doesn't support?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Suggested approach
+      description: Common Shot uses only public APIs and asks only for Screen Recording; say if your idea would need anything more.
