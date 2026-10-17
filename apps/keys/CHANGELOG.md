@@ -22,6 +22,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
+- No system Accessibility prompt at launch: Welcome asks instead. **Reset and Ask Again…** in the menu clears a switch left by an earlier copy, which shows on in System Settings but doesn't apply, and asks again.
 - The flag in the menu bar sits level with the other menu bar icons instead of slightly high. With no layout to show, it shows a keyboard symbol that follows the menu bar's colour.
 - A slow system spelling service can no longer freeze Common Keys at launch while it learns each language's spelling: it gives up after a slow answer and tries again later.
 - A slow or stuck system spelling service can no longer stall typing: Common Keys checks each language's spelling data at launch, gives the check half a second, and falls back to plain spell checking past that.

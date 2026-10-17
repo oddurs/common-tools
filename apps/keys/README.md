@@ -27,9 +27,9 @@ Requires macOS 14.4 or later.
    xattr -dr com.apple.quarantine "/Applications/Common Keys.app"
    ```
 
-3. Allow Common Keys in **System Settings › Privacy & Security › Accessibility** when it asks. It needs Accessibility to read key presses and type fixes back; it asks for nothing else.
+3. Click **Open System Settings** in the Welcome window and allow Common Keys in **Privacy & Security › Accessibility**. If it is already on there, that switch belongs to an earlier copy; click **Reset and Ask Again**. It needs Accessibility to read key presses and type fixes back; it asks for nothing else.
 
-Release builds are signed ad-hoc, so macOS treats each update as a new app. After updating, turn Common Keys off and on again in Accessibility, or remove it there and allow it again.
+Release builds are signed ad-hoc, so macOS treats each update as a new app. After updating, the switch in Accessibility may show on and still belong to the old copy; turning it off and on again keeps the old one. Choose **Reset and Ask Again…** from the menu, which removes that record and asks again.
 
 ### The `worldkey` command
 

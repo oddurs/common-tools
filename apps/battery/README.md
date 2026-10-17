@@ -30,7 +30,7 @@ Requires macOS 14 or later.
    xattr -dr com.apple.quarantine "/Applications/Common Battery.app"
    ```
 
-3. Settings opens on first launch. Click **Open Control Center Settings…** and set **Battery** to **Don't Show in Menu Bar**, so only one battery shows. Turn on **Open at login**.
+3. Choose **Settings…** from its menu. Click **Open Control Center Settings…** and set **Battery** to **Don't Show in Menu Bar**, so only one battery shows. Turn on **Open at login**.
 
 ## Usage
 

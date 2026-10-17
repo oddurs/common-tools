@@ -401,7 +401,7 @@ final class MenuBarController: NSObject {
 extension MenuBarController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // The how-to plays in the menu bar beside the chevron, so both fit on a first launch.
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(line: "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them."))
         updates.start()
     }

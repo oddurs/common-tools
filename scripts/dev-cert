@@ -1,8 +1,9 @@
 #!/bin/sh
 set -eu
 # Creates the self-signed code signing certificate every Common Tools development build uses, in the
-# login keychain, trusted for code signing. Run it once per Mac. Running it again repairs trust and
-# resets the permission grants of the apps named, or of every app.
+# login keychain, trusted for code signing. Run it once per Mac; running it again only repairs what is
+# missing. When this run creates the identity or trusts it, it also resets the permission grants of
+# the apps named, or of every app: those grants belong to copies signed some other way.
 #
 #   scripts/dev-cert [app ...]
 #
@@ -16,6 +17,8 @@ keychain="$HOME/Library/Keychains/login.keychain-db"
 
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
+# Set when the signature builds will carry is new to this Mac.
+changed=""
 
 if security find-certificate -c "$name" "$keychain" >/dev/null 2>&1; then
     echo "==> '$name' is already in the login keychain"
@@ -33,6 +36,7 @@ else
         -name "$name" -out "$work/identity.p12" -passout pass:common-tools
     echo "==> importing into the login keychain, usable by codesign"
     security import "$work/identity.p12" -k "$keychain" -P common-tools -T /usr/bin/codesign >/dev/null
+    changed=1
 fi
 
 # An untrusted self-signed identity isn't valid for signing; trust it for code signing only.
@@ -41,10 +45,18 @@ if security find-identity -v -p codesigning | grep -q "\"$name\""; then
 else
     echo "==> trusting '$name' for code signing (macOS asks for your password)"
     security add-trusted-cert -r trustRoot -p codeSign -k "$keychain" "$work/cert.pem"
+    changed=1
 fi
 
 # A permission granted to an earlier signature stays switched on in System Settings but no longer
-# applies. Clear it, so the app asks again and the new grant sticks.
+# applies. Clear it, so the app asks again and the new grant sticks. With the identity unchanged,
+# the grants already belong to its signature, and clearing them would only make the user grant
+# them again.
+if [ -z "$changed" ]; then
+    echo "==> the identity is unchanged, so permission grants are kept"
+    echo "==> done. Rebuild with scripts/task build <app> or scripts/task run <app>."
+    exit 0
+fi
 for slug in ${*:-$(ls apps)}; do
     bundle_id="$(plutil -extract "$slug.BUNDLE" raw -o - apps.json)"
     for service in $(plutil -extract "$slug.PERMISSIONS" raw -o - apps.json); do

@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
+- Settings no longer opens by itself on first launch.
 - When macOS is still waiting for you to allow Common Stats under System Settings › General › Login Items, Settings says so again under **Open at login**.
 
 

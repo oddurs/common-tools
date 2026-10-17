@@ -21,3 +21,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings follows the Common Tools family layout: the same window, grouped sections, and footnotes as the other apps, and the menu's panel shares their card style.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/battery
+
+### Fixed
+
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
+- Settings no longer opens by itself on first launch, and the request to post notifications waits until Welcome closes.

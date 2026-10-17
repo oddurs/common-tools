@@ -80,14 +80,17 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         refresh()
         schedule()
-        if preferences.notifies { notifier.requestAccess() }
-        Welcome.showIfFirstLaunch(
+        // Asking to post notifications raises a prompt of its own; it waits for Welcome to close.
+        Welcome.showIfNeeded(
             WelcomeInfo(
                 line:
                     "The battery in the menu bar: level, time left, what it's doing, and alerts at the levels you choose."
-            ))
+            )
+        ) { [weak self] in
+            guard let self, preferences.notifies else { return }
+            notifier.requestAccess()
+        }
         updates.start()
-        showSettingsOnFirstLaunch()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -257,18 +260,6 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     // MARK: Launch
-
-    /// The first launch opens Settings: it says how to hide the system's own battery icon, which
-    /// replacing it needs, and, on a notched Mac where the new item landed behind the camera
-    /// housing, why launching seemed to do nothing.
-    private func showSettingsOnFirstLaunch() {
-        let key = "launchedBefore"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            MainActor.assumeIsolated { self?.showSettings() }
-        }
-    }
 
     private func isOlder(_ other: NSRunningApplication) -> Bool {
         let me = NSRunningApplication.current

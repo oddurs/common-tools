@@ -41,6 +41,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
+- Settings no longer opens by itself on first launch.
 - A file Spotlight listed twice showed as two rows.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/command

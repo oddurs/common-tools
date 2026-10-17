@@ -19,54 +19,130 @@ public struct WelcomeInfo: Sendable {
     }
 }
 
-/// The window every app shows on its first launch: what it does, the permission it needs with a
-/// live check, Open at login, and the rest of the family.
+/// Which Welcome an app shows when it starts, if any.
+public enum WelcomeKind: Sendable, Equatable {
+    /// Everything: what the app does, the family's promise, Open at login, the family. Once per Mac,
+    /// from whichever family app runs first.
+    case full
+    /// Only the permission the app can't work without, for a later app that hasn't got it.
+    case permission
+
+    /// The family is welcomed once; after that an app speaks up only when it can't do its job.
+    public static func decide(familyWelcomed: Bool, permissionMissing: Bool) -> WelcomeKind? {
+        if !familyWelcomed { return .full }
+        return permissionMissing ? .permission : nil
+    }
+}
+
+/// The window an app shows when it starts: the family's welcome on the first launch of any of the
+/// apps, and later only a permission the app is missing.
 @MainActor
 public enum Welcome {
+    /// Set in the app's own defaults when it shows Welcome. Kept for installs from before the family
+    /// key, so an app that already welcomed doesn't count as a first launch.
     static let shownKey = "CommonKit.welcomed"
-    private static var window: NSWindow?
+    /// Read and written by every app: they aren't sandboxed, so a suite is one shared file in
+    /// ~/Library/Preferences.
+    nonisolated static let familySuite = "io.github.oddurs.commontools"
+    nonisolated static let familyKey = "welcomed"
 
-    /// Shows the window the first time the app runs, and never again. Call it from
-    /// `applicationDidFinishLaunching`.
-    public static func showIfFirstLaunch(_ info: WelcomeInfo, defaults: UserDefaults = .standard) {
-        guard !defaults.bool(forKey: shownKey) else { return }
-        defaults.set(true, forKey: shownKey)
-        show(info)
+    private static var window: NSWindow?
+    private static var closer: Closer?
+    private static let lock = WelcomeLock()
+
+    /// Shows Welcome if this launch needs one (`WelcomeKind.decide`), after any other family app's
+    /// Welcome has closed, then calls `then`; `then` runs at once when there's nothing to show. Call
+    /// it from `applicationDidFinishLaunching`, and put anything that would raise a prompt of its
+    /// own, such as asking to post notifications, in `then`.
+    public static func showIfNeeded(_ info: WelcomeInfo, then: @escaping @MainActor () -> Void = {}) {
+        Task {
+            await acquireLock()
+            let family = UserDefaults(suiteName: familySuite) ?? .standard
+            let welcomed = family.bool(forKey: familyKey) || UserDefaults.standard.bool(forKey: shownKey)
+            let missing = info.permission.map { !$0.isGranted } ?? false
+            guard let kind = WelcomeKind.decide(familyWelcomed: welcomed, permissionMissing: missing) else {
+                lock.release()
+                then()
+                return
+            }
+            family.set(true, forKey: familyKey)
+            UserDefaults.standard.set(true, forKey: shownKey)
+            present(info, kind: kind) {
+                lock.release()
+                then()
+            }
+        }
     }
 
-    /// Shows the window now, for a Welcome… menu item or a button in Settings.
+    /// Waits, a second at a time, while another app's Welcome is open. If the lock can't be made at
+    /// all, a window that might overlap another is better than none.
+    private static func acquireLock() async {
+        while true {
+            do {
+                if try lock.tryAcquire() { return }
+            } catch {
+                NSLog("Common Tools: no Welcome lock at \(lock.url.path): \(error.localizedDescription)")
+                return
+            }
+            try? await Task.sleep(for: .seconds(1))
+        }
+    }
+
+    /// Shows the full window now, for a Welcome… menu item or a button in Settings.
     public static func show(_ info: WelcomeInfo) {
+        present(info, kind: .full) {}
+    }
+
+    /// Hosted as `SettingsWindowHost` hosts Settings: a hosting controller in a plain titled window.
+    /// The first version put an `NSHostingView` in a window with a full-size, transparent title bar
+    /// and a movable background, and seven of those stacked on one Mac answered clicks with a beep.
+    private static func present(_ info: WelcomeInfo, kind: WelcomeKind, onClose: @escaping @MainActor () -> Void) {
         if let window {
-            window.makeKeyAndOrderFront(nil)
             NSApp.activate()
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            onClose()
             return
         }
-        let window = NSWindow(
-            contentRect: .zero, styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered, defer: false)
-        window.title = "Welcome to \(info.name)"
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-        window.isMovableByWindowBackground = true
+        let host = NSHostingController(rootView: WelcomeView(info: info, kind: kind) { Welcome.window?.close() })
+        host.sizingOptions = .preferredContentSize
+        let window = NSWindow(contentViewController: host)
+        window.title = kind == .full ? "Welcome to \(info.name)" : info.name
+        window.styleMask = [.titled, .closable]
         window.isReleasedWhenClosed = false
-        let content = NSHostingView(rootView: WelcomeView(info: info) { [weak window] in window?.close() })
-        window.contentView = content
-        window.setContentSize(content.fittingSize)
+        let closer = Closer {
+            Welcome.window = nil
+            Welcome.closer = nil
+            onClose()
+        }
+        window.delegate = closer
         window.center()
-        window.makeKeyAndOrderFront(nil)
-        NSApp.activate()
         self.window = window
+        self.closer = closer
+        // As in SettingsWindowHost: activation may be declined, so order front regardless.
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+    }
+
+    private final class Closer: NSObject, NSWindowDelegate {
+        let action: @MainActor () -> Void
+        init(_ action: @escaping @MainActor () -> Void) { self.action = action }
+        func windowWillClose(_ notification: Notification) { action() }
     }
 }
 
 public struct WelcomeView: View {
     let info: WelcomeInfo
+    let kind: WelcomeKind
     let done: () -> Void
     @State private var granted: Bool
     @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginProblem: String?
 
-    public init(info: WelcomeInfo, done: @escaping () -> Void) {
+    public init(info: WelcomeInfo, kind: WelcomeKind = .full, done: @escaping () -> Void) {
         self.info = info
+        self.kind = kind
         self.done = done
         _granted = State(initialValue: info.permission?.isGranted ?? true)
     }
@@ -76,59 +152,55 @@ public struct WelcomeView: View {
             VStack(spacing: 8) {
                 Image(nsImage: NSApp.applicationIconImage)
                     .resizable()
-                    .frame(width: 96, height: 96)
-                Text("Welcome to \(info.name)").font(.title2.weight(.semibold))
+                    .frame(width: kind == .full ? 96 : 64, height: kind == .full ? 96 : 64)
+                Text(heading).font(.title2.weight(.semibold))
                 Text(info.line).foregroundStyle(.secondary).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.top, 8)
 
-            // The family's promise, in the same words as docs/install.md.
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Completely free, forever: no trial, no subscription, no paid tier.")
-                Text("Open source under MIT: every line is on GitHub.")
-                Text(
-                    "Private: no analytics, no crash reports, no account. Nothing you do is ever reported. The only network request is the update check, off until you turn it on, which asks GitHub for the latest version and sends nothing about you."
-                )
+            if kind == .full {
+                // The family's promise, in the same words as docs/install.md.
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Completely free, forever: no trial, no subscription, no paid tier.")
+                    Text("Open source under MIT: every line is on GitHub.")
+                    Text(
+                        "Private: no analytics, no crash reports, no account. Nothing you do is ever reported. The only network request is the update check, off until you turn it on, which asks GitHub for the latest version and sends nothing about you."
+                    )
+                }
+                .font(.callout)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .font(.callout)
-            .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: 0) {
                 if let permission = info.permission {
-                    row(
-                        title: permission.name,
-                        detail: "\(info.name) needs \(permission.name) access \(permission.reason).",
-                        status: granted
-                    ) {
-                        if granted {
-                            Label("Granted", systemImage: "checkmark").foregroundStyle(.secondary)
-                        } else {
-                            Button("Open System Settings") { permission.request() }
-                        }
+                    PermissionRow(app: info.name, permission: permission, granted: granted)
+                    if kind == .full { Divider() }
+                }
+                if kind == .full {
+                    row(title: "Open at login", detail: "Starts \(info.name) when you log in.") {
+                        Toggle("Open at login", isOn: $openAtLogin).labelsHidden().toggleStyle(.switch)
                     }
-                    Divider()
-                }
-                row(title: "Open at login", detail: "Starts \(info.name) when you log in.") {
-                    Toggle("Open at login", isOn: $openAtLogin).labelsHidden().toggleStyle(.switch)
-                }
-                if let loginProblem {
-                    Text(loginProblem)
-                        .font(.caption).foregroundStyle(.red)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding([.horizontal, .bottom], 12)
+                    if let loginProblem {
+                        Text(loginProblem)
+                            .font(.caption).foregroundStyle(.red)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding([.horizontal, .bottom], 12)
+                    }
                 }
             }
             .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 10))
 
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Common Tools").font(.headline)
-                HStack(alignment: .top, spacing: 6) {
-                    ForEach(CommonTool.all) { tool in FamilyTile(tool: tool, host: info.name) }
+            if kind == .full {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("Common Tools").font(.headline)
+                    HStack(alignment: .top, spacing: 6) {
+                        ForEach(CommonTool.all) { tool in FamilyTile(tool: tool, host: info.name) }
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             Button("Done", action: done).keyboardShortcut(.defaultAction)
         }
@@ -153,13 +225,17 @@ public struct WelcomeView: View {
         }
     }
 
+    private var heading: String {
+        if kind == .permission, let permission = info.permission {
+            return "\(info.name) needs \(permission.name) access"
+        }
+        return "Welcome to \(info.name)"
+    }
+
     private func row<Trailing: View>(
-        title: String, detail: String, status: Bool? = nil, @ViewBuilder trailing: () -> Trailing
+        title: String, detail: String, @ViewBuilder trailing: () -> Trailing
     ) -> some View {
         HStack(spacing: 12) {
-            if let status {
-                Circle().fill(status ? Color.green : Color.orange).frame(width: 8, height: 8)
-            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                 // Wraps instead of truncating beside the trailing control.
@@ -169,6 +245,68 @@ public struct WelcomeView: View {
             trailing()
         }
         .padding(12)
+    }
+}
+
+/// The permission, whether it's on, and every way to put it right: the system's prompt and pane,
+/// clearing a record left by an earlier copy, and for Screen Recording a reopen.
+private struct PermissionRow: View {
+    let app: String
+    let permission: Permission
+    let granted: Bool
+    @State private var problem: String?
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                Circle().fill(granted ? Color.green : Color.orange).frame(width: 8, height: 8)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(permission.name)
+                    Text("\(app) needs \(permission.name) access \(permission.reason).")
+                        .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                }
+                Spacer(minLength: 12)
+                if granted {
+                    Label("Granted", systemImage: "checkmark").foregroundStyle(.secondary)
+                }
+            }
+            if !granted {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) { buttons }
+                    VStack(alignment: .leading, spacing: 8) { buttons }
+                }
+                Text(
+                    [permission.staleSwitchNote(app: app), permission.reopenNote(app: app)].compactMap { $0 }
+                        .joined(separator: " ")
+                )
+                .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                if let problem {
+                    Text(problem).font(.footnote).foregroundStyle(.red).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .padding(12)
+    }
+
+    @ViewBuilder private var buttons: some View {
+        Button("Open System Settings") { permission.request() }
+        Button("Reset and Ask Again") {
+            do {
+                try permission.resetAndRequest()
+                problem = nil
+            } catch {
+                problem = error.localizedDescription
+            }
+        }
+        if permission.appliesAfterReopen {
+            Button("Quit and Reopen") {
+                do {
+                    try Relaunch.now()
+                } catch {
+                    problem = error.localizedDescription
+                }
+            }
+        }
     }
 }
 

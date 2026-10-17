@@ -7,7 +7,7 @@ import ShotKit
 /// the clipboard.
 @MainActor
 final class AppController: NSObject {
-    private static let onboardedKey = "onboarded"
+    static let permission = Permission.screenRecording(reason: "to capture what is on your screen")
     private static let askedForAccessKey = "askedForAccess"
     private static let screenRecordingSettings = URL(
         string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")!
@@ -33,13 +33,6 @@ final class AppController: NSObject {
         hotKey.onPress = { [weak self] in self?.shortcutPressed() }
         registerHotKey()
         updateStatusItem()
-
-        if !UserDefaults.standard.bool(forKey: Self.onboardedKey) {
-            UserDefaults.standard.set(true, forKey: Self.onboardedKey)
-            DispatchQueue.main.async { [weak self] in
-                MainActor.assumeIsolated { self?.showSettings() }
-            }
-        }
     }
 
     // MARK: Shortcut
@@ -232,23 +225,46 @@ final class AppController: NSObject {
         NSApp.activate()
         let alert = NSAlert()
         alert.messageText = "Common Shot needs Screen Recording access"
-        // A switch that's already on usually belongs to an earlier build: macOS ties the grant to the
-        // signature, and a rebuilt app signed ad hoc has a new one.
         alert.informativeText = """
-            Turn on Common Shot in System Settings › Privacy & Security › Screen & System Audio Recording, then \
-            quit and reopen it.
+            Turn on Common Shot in System Settings › Privacy & Security › Screen & System Audio Recording. \
+            \(Self.permission.reopenNote(app: "Common Shot") ?? "")
 
-            If it's already on, that switch is for an earlier copy of the app. Select Common Shot, remove it \
-            with −, then turn on the copy you're running.
+            \(Self.permission.staleSwitchNote(app: "Common Shot")) Reset and Ask Again clears it.
             """
         alert.addButton(withTitle: "Open System Settings")
+        alert.addButton(withTitle: "Reset and Ask Again")
+        alert.addButton(withTitle: "Quit and Reopen")
         alert.addButton(withTitle: "Cancel")
-        if alert.runModal() == .alertFirstButtonReturn { NSWorkspace.shared.open(Self.screenRecordingSettings) }
+        switch alert.runModal() {
+        case .alertFirstButtonReturn: openScreenRecordingSettings()
+        case .alertSecondButtonReturn: resetScreenRecording()
+        case .alertThirdButtonReturn: reopen()
+        default: break
+        }
         return false
     }
 
     func openScreenRecordingSettings() {
         NSWorkspace.shared.open(Self.screenRecordingSettings)
+    }
+
+    /// Clears a record left by an earlier copy, whose switch shows on but doesn't apply to this one,
+    /// and asks again.
+    func resetScreenRecording() {
+        do {
+            try Self.permission.resetAndRequest()
+        } catch {
+            Self.present(error)
+        }
+    }
+
+    /// macOS applies a Screen Recording switch only when the app starts.
+    func reopen() {
+        do {
+            try Relaunch.now()
+        } catch {
+            Self.present(error)
+        }
     }
 
     // MARK: Settings
@@ -353,10 +369,9 @@ extension AppController: NSMenuDelegate {
 
 extension AppController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(
-                line: "Screenshots straight to the clipboard: press ⇧⌘2, drag, paste.",
-                permission: .screenRecording(reason: "to capture what is on your screen")))
+                line: "Screenshots straight to the clipboard: press ⇧⌘2, drag, paste.", permission: Self.permission))
         updates.start()
     }
 

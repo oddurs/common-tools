@@ -154,9 +154,9 @@
 	<h2 id="questions">Questions</h2>
 	<h3>The item doesn't appear.</h3>
 	<p>
-		It may be behind the camera housing or hidden by a menu bar manager such as Common Bar. Common Stats
-		opens Settings to say so. Show fewer items, choose Compact density, or hold <kbd>⌘</kbd> and drag other
-		items out of the way. Open Common Stats again from Finder or Spotlight at any time to get Settings.
+		It may be behind the camera housing or hidden by a menu bar manager such as Common Bar. Open Common
+		Stats again from Finder or Spotlight: that opens Settings, which says so while the item is hidden.
+		Show fewer items, choose Compact density, or hold <kbd>⌘</kbd> and drag other items out of the way.
 	</p>
 	<h3>Why no temperatures or fans?</h3>
 	<p>

@@ -22,3 +22,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/shot
+
+### Fixed
+
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
+- Settings no longer opens by itself on first launch. When Screen Recording is missing, Welcome, the shortcut's alert, and Settings offer **Reset and Ask Again**, which clears a switch left by an earlier copy (on in System Settings, but not for this one), and **Quit and Reopen**, since macOS applies the switch only after the app reopens.

@@ -85,16 +85,21 @@ test_flags() {
 }
 
 # macOS ties permissions and login items to the signature. The shared development identity keeps
-# them across rebuilds; scripts/dev-cert makes it. An identity that exists but isn't trusted makes
-# codesign fail, so only a valid one is used.
+# them across rebuilds; scripts/dev-cert makes it. Outside CI a build without it is an error: an
+# ad-hoc copy gets grants of its own, and the next properly signed build is left with a switch in
+# System Settings that shows on and doesn't apply. CI never holds a grant, so it signs ad hoc.
 sign() {
     identity="Common Tools Development"
-    if security find-identity -v -p codesigning | grep -q "\"$identity\""; then
+    if [ -n "${CI:-}" ]; then
+        echo "==> signing $1 ad-hoc (CI)"
+        codesign --force --sign - --identifier "$2" --options runtime "$1"
+    elif security find-identity -v -p codesigning | grep -q "\"$identity\""; then
         echo "==> signing $1 with '$identity'"
         codesign --force --sign "$identity" --identifier "$2" --options runtime "$1"
     else
-        echo "==> signing $1 ad-hoc; run scripts/dev-cert to keep permissions across rebuilds"
-        codesign --force --sign - --identifier "$2" --options runtime "$1"
+        echo "error: no valid '$identity' signing identity in the keychain." >&2
+        echo "       Run scripts/dev-cert once on this Mac, then build again." >&2
+        exit 1
     fi
 }
 

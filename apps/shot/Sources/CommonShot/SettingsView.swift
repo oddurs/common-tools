@@ -37,7 +37,13 @@ struct SettingsView: View {
                         Label("Allowed", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(Tokens.Color.success.color)
                     } else {
-                        Button("Open Privacy & Security…") { controller.openScreenRecordingSettings() }
+                        Button("Open System Settings") { controller.openScreenRecordingSettings() }
+                    }
+                }
+                if !hasAccess {
+                    HStack {
+                        Button("Reset and Ask Again") { controller.resetScreenRecording() }
+                        Button("Quit and Reopen") { controller.reopen() }
                     }
                 }
             } header: {
@@ -45,7 +51,11 @@ struct SettingsView: View {
             } footer: {
                 if !hasAccess {
                     SettingsFootnote(
-                        "Turn on Common Shot under Screen & System Audio Recording, then quit and reopen it. If it's already on, remove it with − and add it again: that switch is for an earlier copy."
+                        "Turn on Common Shot under Screen & System Audio Recording. "
+                            + [
+                                AppController.permission.reopenNote(app: "Common Shot") ?? "",
+                                AppController.permission.staleSwitchNote(app: "Common Shot"),
+                            ].joined(separator: " ")
                     )
                 }
             }

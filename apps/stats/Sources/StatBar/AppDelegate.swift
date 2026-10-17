@@ -26,10 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = StatusItemController(model: model) { [unowned self] in showSettings() }
         model.onUpdate = { [weak statusItem] in statusItem?.render() }
         model.start()
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(line: "System stats in the menu bar: CPU, GPU, memory, network, disk, storage, and battery."))
         updates.start()
-        offerSettingsIfHiddenOnFirstLaunch()
 
         // Nobody can see the menu bar while the displays sleep; stop waking the CPU for it.
         let center = NSWorkspace.shared.notificationCenter
@@ -38,22 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         center.addObserver(forName: NSWorkspace.screensDidWakeNotification, object: nil, queue: .main) { [model] _ in
             MainActor.assumeIsolated { model?.start() }
-        }
-    }
-
-    /// On a notched Mac a new item can land behind the camera housing, and
-    /// launching the app then appears to do nothing. The first time only,
-    /// if the item isn't visible once the menu bar settles, open Settings,
-    /// which explains why and how to make room.
-    private func offerSettingsIfHiddenOnFirstLaunch() {
-        let key = "launchedBefore"
-        guard !UserDefaults.standard.bool(forKey: key) else { return }
-        UserDefaults.standard.set(true, forKey: key)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, !self.model.barVisible else { return }
-                self.showSettings()
-            }
         }
     }
 
