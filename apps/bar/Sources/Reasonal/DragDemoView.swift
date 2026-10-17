@@ -1,4 +1,5 @@
 import BarKit
+import CommonUI
 import SwiftUI
 
 /// Draws `DragDemo` over the real menu bar: a stand-in icon carried past the chevron by
@@ -60,31 +61,47 @@ private struct Caption: View {
     let commandDown: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
-            Text("⌘")
-                .font(.system(size: 13, weight: .medium))
-                .frame(width: 26, height: 22)
-                .background(
-                    RoundedRectangle(cornerRadius: 6).fill(.primary.opacity(commandDown ? 0.22 : 0.06))
-                )
-                .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(.primary.opacity(0.25), lineWidth: 0.5))
-                .scaleEffect(commandDown ? 0.92 : 1)
-                .animation(.easeOut(duration: 0.1), value: commandDown)
+        HStack(spacing: Tokens.Space.xs) {
+            KeyCap(symbol: "⌘", down: commandDown)
             Text("Hold ⌘ and drag an icon past the chevron to hide it.")
                 .font(.callout)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.horizontal, Tokens.Space.sm)
+        .padding(.vertical, Tokens.Space.xs)
         .modifier(Glass())
+    }
+}
+
+/// The ⌘ key as a key cap: pressed while the demo holds it.
+private struct KeyCap: View {
+    let symbol: String
+    let down: Bool
+
+    var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
+        Text(symbol)
+            .font(.body.weight(.medium))
+            .frame(width: 26, height: 22)
+            .background {
+                if down {
+                    shape.fill(.tertiary)
+                } else {
+                    shape.fill(Tokens.Surface.card.color)
+                }
+            }
+            .overlay(shape.strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
+            .scaleEffect(down ? 0.92 : 1)
+            .animation(Tokens.Motion.animation(Tokens.Motion.fast), value: down)
     }
 }
 
 private struct Glass: ViewModifier {
     func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous)
         if #available(macOS 26.0, *) {
-            content.glassEffect(in: RoundedRectangle(cornerRadius: 12))
+            content.glassEffect(in: shape)
         } else {
-            content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+            content.background(.regularMaterial, in: shape)
         }
     }
 }

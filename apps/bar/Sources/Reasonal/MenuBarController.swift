@@ -1,5 +1,6 @@
 import AppKit
 import BarKit
+import CommonUI
 
 /// Three status items, right to left: a chevron that toggles, a divider left of it, and
 /// an always-hidden divider further left. Collapsing stretches a divider so everything
@@ -38,7 +39,7 @@ final class MenuBarController: NSObject {
     private var preferencesObserver: Any?
     private var alwaysHidden = Preferences.isOn(Preferences.alwaysHiddenSection)
     private let demo = DragDemoOverlay()
-    private let settings = SettingsWindow()
+    private let settings = SettingsWindowHost(title: "Common Bar Settings")
 
     override init() {
         Preferences.register()
@@ -366,7 +367,7 @@ final class MenuBarController: NSObject {
     }
 
     @objc func showSettings() {
-        settings.show()
+        settings.show { SettingsView() }
     }
 }
 
