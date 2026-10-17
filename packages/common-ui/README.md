@@ -113,3 +113,12 @@ context.duration = Tokens.Motion.duration(Tokens.Motion.base)
 <p class="callout">Nothing leaves your Mac.</p>
 <b>Common Glyph <em class="badge">Soon</em></b>
 ```
+
+## Governance
+
+Both surfaces are checked, so the system cannot drift by accident:
+
+- **Apps.** `AppContract` in CommonTesting, which every app runs as a test, requires the app target to build Settings from `SettingsWindowHost`, `.settingsForm()`, `OpenAtLoginToggle` and `CommonToolsSection()`, forbids hand-picked colours (`Color(red:`, `NSColor(srgbRed:`, hex, `#colorLiteral`) anywhere in the app target, and forbids `.system(size:` and `.shadow(` in any Settings file. Panels and menus keep their own metrics; the library target (status-item renderers, image processing) is not a view and is not held to these.
+- **Site.** `site/src/lib/common-ui/tokens.test.ts` requires that both generated outputs match `tokens.json`, that every listed text pair meets WCAG AA in light and dark, that pages read only custom properties the tokens define, that no colour literal sits outside `tokens.css`, and that every breakpoint is the one `tokens.json` names.
+
+A rule every app should keep goes into `AppContract`, not into seven files.

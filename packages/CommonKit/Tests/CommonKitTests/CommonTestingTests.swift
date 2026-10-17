@@ -10,7 +10,8 @@ import Testing
             try JSONSerialization.jsonObject(
                 with: Data(contentsOf: contract.repository.appending(path: "apps.json"))) as? [String: Any]
         for slug in try #require(apps).keys.sorted() {
-            #expect(try AppContract(slug: slug).violations() == [], "\(slug)")
+            let violations = try AppContract(slug: slug).violations()
+            #expect(violations.isEmpty, "\(slug): \(violations)")
         }
     }
 

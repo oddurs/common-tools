@@ -5,7 +5,7 @@ Seven apps, one shared package and a website, checked by one seam: `scripts/task
 | Layer | Runs | Catches | Cost |
 | --- | --- | --- | --- |
 | Unit tests (`Tests/<Name>KitTests`) | `scripts/task test <app>`, every `check` | Logic: layout, parsing, ranking, geometry, detection | Under a second per app, except Keys |
-| Contract test (`ContractTests.swift`) | every `check` | `apps.json`, `CommonTool.all` and `Info.plist` disagreeing; a missing icon, source target or changelog section | Milliseconds |
+| Contract test (`ContractTests.swift`) | every `check` | `apps.json`, `CommonTool.all` and `Info.plist` disagreeing; a missing icon, source target or changelog section; Settings not built from Common UI, a hand-picked colour in a view, a fixed text size or shadow in Settings | Milliseconds |
 | Performance gates (`PerformanceTests.swift`) | every `check` | An accidental quadratic loop, a per-draw text measurement, a leak per tick | A few seconds |
 | Site tests (`site/src/**/*.test.ts`) | `scripts/task test site` | Tools, releases and demo scripts drifting from the apps | Seconds |
 | Build (`scripts/task build`) | every `check` | A universal, signed bundle with every family icon; every app page on the site | A minute per app |
