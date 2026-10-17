@@ -12,7 +12,7 @@ Common Command is built to feel like part of macOS:
 - **It learns.** Whatever you choose for a query comes first the next time you type it, and leans the same way for a shorter start: choose Safari for "safari" once, and "sa" prefers it too. Things you open often rise for every query. Usage decays with a one-week half-life, so last year's habits fade.
 - **Typing is forgiving.** "vsc" finds Visual Studio Code, "sys set" finds System Settings, "cafe" finds Café. Matched letters are drawn in bold.
 
-Free and open source under the MIT licence. No network access except the web searches and links you open, no analytics, no helper tools, and no Accessibility or Full Disk Access permissions.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access except the web searches and links you open, no helper tools, and no Accessibility or Full Disk Access permissions.
 
 ## Install
 

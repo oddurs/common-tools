@@ -14,7 +14,7 @@ A menu bar app that fixes words typed on the wrong keyboard layout, for every ke
 - Switching apps restores the layout you last used there, or the one you usually write in.
 - It runs on **WorldKey**, an engine that reads keys on any keyboard. Other tools can use it through the `worldkey` command.
 
-Free and open source under the MIT licence. No network access, and what it learns stays on your Mac.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access; what it learns stays in one file on your Mac.
 
 ## Install
 

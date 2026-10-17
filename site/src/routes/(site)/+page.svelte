@@ -2,32 +2,17 @@
 	import { asset, resolve } from '$app/paths';
 	import DemoVideo from '#lib/DemoVideo.svelte';
 	import Meta from '#lib/Meta.svelte';
+	import { promise } from '#lib/promise.ts';
 	import { megabytes, shortDate } from '#lib/releases.ts';
 	import { download, tools, upcoming } from '#lib/tools.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-
-	const principles = [
-		[
-			'Native.',
-			'AppKit and SwiftUI, drawn the way macOS draws its own. Real menus, System Settings layouts, VoiceOver.'
-		],
-		[
-			'Private.',
-			'No network access, no analytics, no account. What an app learns stays in one file on your Mac.'
-		],
-		['Small.', 'Each one does a single job, downloads in seconds, and stays out of the way.'],
-		[
-			'Open.',
-			'MIT licensed and built in the open on GitHub, every change checked by its tests before it merges.'
-		]
-	];
 </script>
 
 <Meta
 	title="Common Tools — small, native utilities for the Mac"
-	description="Common Stats, Common Keys, Common Bar, and more on the way: small, native macOS utilities. Free and open source, and nothing leaves your Mac."
+	description="Common Stats, Common Keys, Common Bar, and more on the way: small, native macOS utilities. Free forever, open source, and nothing you do is ever reported."
 	path=""
 	image="stats/poster.jpg"
 />
@@ -41,7 +26,8 @@
 		</div>
 		<h1>Common Tools</h1>
 		<p class="lede">Small, native utilities for the Mac. Each does one thing and gets out of the way.</p>
-		<p class="fine">Free and open source · macOS 14 or later · Apple silicon and Intel</p>
+		<p class="promise">{promise.line}</p>
+		<p class="fine">macOS 14 or later · Apple silicon and Intel</p>
 	</header>
 
 	{#each tools as t, i (t.slug)}
@@ -82,7 +68,7 @@
 	</section>
 
 	<section class="principles ruled">
-		{#each principles as [title, text] (title)}
+		{#each promise.parts as [title, text] (title)}
 			<div>
 				<h2>{title}</h2>
 				<p class="muted">{text}</p>
@@ -168,6 +154,13 @@
 	}
 	.soon .card .muted {
 		font-size: 14px;
+	}
+	.promise {
+		margin: var(--space-sm) auto 0;
+		max-width: 600px;
+		font: var(--type-callout);
+		letter-spacing: var(--type-callout-tracking);
+		font-weight: var(--weight-semibold);
 	}
 	.principles {
 		display: grid;

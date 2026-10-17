@@ -23,9 +23,8 @@
 		<p class="lede">{app.tagline}</p>
 		<p class="summary">{app.summary}</p>
 		<p class="fine">
-			Not released yet. It's free and open source, like every Common Tools app. <a href={app.repo}
-				>Follow it on GitHub ›</a
-			>
+			Not released yet. Like every Common Tools app it will be free forever and open source, and nothing
+			you do in it will ever be reported. <a href={app.repo}>Follow it on GitHub ›</a>
 		</p>
 	</header>
 	<MoreTools slug={app.slug} />
