@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import CommonUI
 import SwiftUI
 
@@ -7,11 +8,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let engine = Engine(prefs: Preferences())
     private var statusMenu: StatusMenu?
     private let settings = SettingsWindowHost(title: "Common Keys Settings")
+    private let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = Self.mainMenu()
         engine.start()
         statusMenu = StatusMenu(engine: engine) { [weak self] in self?.showSettings() }
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(
+                line: "Fixes words typed on the wrong keyboard layout, for every keyboard macOS has.",
+                permission: .accessibility(reason: "to see what you type and fix it")))
+        updates.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -26,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showSettings(_ sender: Any? = nil) {
-        settings.show { SettingsView().environment(engine) }
+        settings.show { SettingsView(updates: updates).environment(engine) }
     }
 
     /// Never shown, since this is a menu bar app, but it gives the settings window ⌘, ⌘W and ⌘Q.

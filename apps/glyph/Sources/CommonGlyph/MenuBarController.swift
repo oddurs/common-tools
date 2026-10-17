@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import CommonUI
 import GlyphKit
 import SwiftUI
@@ -11,6 +12,7 @@ final class MenuBarController: NSObject {
 
     let library: GlyphLibrary
     private let settings = SettingsWindowHost(title: "Common Glyph Settings")
+    private let updates = UpdateCheck(tool: CommonTool.thisApp!)
     private var items: [UUID: GlyphItem] = [:]
 
     init(library: GlyphLibrary) {
@@ -43,7 +45,7 @@ final class MenuBarController: NSObject {
     func showSettings(_ glyph: GlyphModel?) {
         if let glyph { library.editing = glyph.id }
         // A fresh view each time; the open editor lives in the library, so it survives the rebuild.
-        settings.show { SettingsView(library: library) }
+        settings.show { SettingsView(library: library, updates: updates) }
     }
 
     func newGlyph() {
@@ -52,6 +54,12 @@ final class MenuBarController: NSObject {
 }
 
 extension MenuBarController: NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(line: "Put your own images in the menu bar: a character, a sticker, an emoji, or a word."))
+        updates.start()
+    }
+
     /// Opening the app again while it runs is how people look for its settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings(nil)

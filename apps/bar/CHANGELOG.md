@@ -10,6 +10,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A Welcome window on first launch: what Common Bar does, Open at login, and the Common Tools family. The how-to in the menu bar plays as before.
+- An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - Spacers: blank gaps you drag between menu bar icons to group them. Choose up to five under **Spacers** in Settings. They're invisible except while you hold ⌘, when a dashed outline shows where each one is.
 
 ### Changed
