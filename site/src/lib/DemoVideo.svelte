@@ -94,24 +94,17 @@
 <style>
 	figure {
 		position: relative;
-		margin: 56px auto 0;
-		border-radius: 18px;
+		margin: var(--space-xxxl) auto 0;
+		border-radius: var(--radius-lg);
 		overflow: hidden;
-		box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+		box-shadow: var(--shadow-media);
 		aspect-ratio: 16 / 10;
-		background: var(--video);
+		background: var(--surface-media);
 	}
 	figure.compact {
 		margin: 0;
-		border-radius: 14px;
-		box-shadow: 0 14px 40px rgba(0, 0, 0, 0.16);
-	}
-	@media (prefers-color-scheme: dark) {
-		figure {
-			box-shadow:
-				0 20px 60px rgba(0, 0, 0, 0.5),
-				0 0 0 1px rgba(255, 255, 255, 0.08);
-		}
+		border-radius: var(--radius-md);
+		box-shadow: var(--shadow-media-compact);
 	}
 	picture img,
 	video {
@@ -124,27 +117,24 @@
 	}
 	button {
 		position: absolute;
-		right: 14px;
-		bottom: 14px;
+		right: var(--space-sm);
+		bottom: var(--space-sm);
 		width: 36px;
 		height: 36px;
 		display: grid;
 		place-items: center;
 		border: 0;
-		border-radius: 50%;
-		background: rgba(30, 30, 34, 0.55);
+		border-radius: var(--radius-full);
+		background: var(--surface-overlay);
 		backdrop-filter: blur(12px);
-		color: #fff;
+		color: var(--text-inverse);
 		cursor: pointer;
 		opacity: 0.85;
+		transition: opacity var(--duration-fast) var(--easing-standard);
 	}
 	button:hover,
 	button:focus-visible {
 		opacity: 1;
-	}
-	button:focus-visible {
-		outline: 2px solid var(--accent);
-		outline-offset: 2px;
 	}
 	svg {
 		width: 14px;
@@ -154,13 +144,13 @@
 	.compact button {
 		width: 30px;
 		height: 30px;
-		right: 10px;
-		bottom: 10px;
+		right: var(--space-xs);
+		bottom: var(--space-xs);
 	}
 	@media (max-width: 760px) {
 		figure:not(.compact) {
-			margin-top: 40px;
-			border-radius: 12px;
+			margin-top: var(--space-xxl);
+			border-radius: var(--radius-md);
 		}
 	}
 </style>

@@ -137,7 +137,7 @@ dkssudgktpdy</code
 		align-items: center;
 	}
 	.prompt {
-		color: var(--secondary);
+		color: var(--text-secondary);
 		user-select: none;
 	}
 	@media (max-width: 760px) {

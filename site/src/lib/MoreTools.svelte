@@ -20,7 +20,7 @@
 				<img src={asset(t.icon)} alt="" width="56" height="56" />
 				<span>
 					<b
-						>{t.name}{#if t.soon}<em>Soon</em>{/if}</b
+						>{t.name}{#if t.soon}<em class="badge">Soon</em>{/if}</b
 					>
 					<span class="muted">{t.summary}</span>
 				</span>
@@ -33,33 +33,21 @@
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
-		gap: 16px;
-		margin-top: 16px;
+		gap: var(--space-md);
+		margin-top: var(--space-md);
 	}
 	.card {
 		display: flex;
-		gap: 16px;
+		gap: var(--space-md);
 		align-items: center;
-		padding: 18px;
-		border-radius: 16px;
-		background: var(--panel);
-		color: var(--text);
-		transition: transform 0.15s ease;
+		/* The duration is 0 under prefers-reduced-motion, so the lift just doesn't happen. */
+		transition: transform var(--duration-fast) var(--easing-standard);
 	}
 	.card:hover {
-		text-decoration: none;
 		transform: translateY(-2px);
 	}
-	em {
-		margin-left: 8px;
-		padding: 1px 8px;
-		border-radius: 999px;
-		background: var(--bg);
-		color: var(--secondary);
-		font-size: 11px;
-		font-style: normal;
-		font-weight: 600;
-		vertical-align: 2px;
+	.badge {
+		margin-left: var(--space-xs);
 	}
 	.card > span {
 		display: flex;
@@ -69,11 +57,6 @@
 	@media (max-width: 760px) {
 		.cards {
 			grid-template-columns: 1fr;
-		}
-	}
-	@media (prefers-reduced-motion: reduce) {
-		.card {
-			transition: none;
 		}
 	}
 </style>

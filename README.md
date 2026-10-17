@@ -22,7 +22,8 @@ Free and open source under the MIT licence. No network access, no analytics, no 
 Every app lives here, with its history, as a separate app bundle and a separate release:
 
 - `apps/<slug>/`: one app, a Swift package of its own, with its `README.md`, `CHANGELOG.md`, and docs.
-- `packages/CommonKit/`: what the apps share, starting with the family list and the Common Tools section at the end of every app's Settings.
+- `packages/CommonKit/`: what the apps share: the family list, the Common Tools section at the end of every app's Settings, and, as the `CommonUI` product, the Settings, card, and row primitives.
+- `packages/common-ui/`: Common UI, the design system: the tokens both the apps and the site are drawn from, and the generator that renders them into CommonKit's `CommonUI` product and the site's CSS.
 - `shared/`: the family icons every app bundles, and the shared icon body.
 - `site/`: the website, which reads each app's latest release and CHANGELOG at build time.
 - `apps.json`: what differs between apps: names, bundle identifiers, deployment target, extra command-line tools, permissions.

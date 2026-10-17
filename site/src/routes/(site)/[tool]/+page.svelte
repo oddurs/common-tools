@@ -44,14 +44,14 @@
 		margin-top: 18px;
 		padding: 4px 12px;
 		border-radius: 999px;
-		background: var(--panel);
-		color: var(--secondary);
+		background: var(--surface-card);
+		color: var(--text-secondary);
 		font-size: 13px;
 		font-weight: 600;
 	}
 	.summary {
 		max-width: 560px;
 		margin: 18px auto 0;
-		color: var(--secondary);
+		color: var(--text-secondary);
 	}
 </style>

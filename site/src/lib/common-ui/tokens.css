@@ -1,0 +1,109 @@
+/*
+ * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
+ * change the source and run `node packages/common-ui/build.mjs`.
+ * source sha256: 1b4230a12c81bc187425fdeb0d632def0340b6fc9fff925b09201d76ee58288f
+ */
+:root {
+	color-scheme: light dark;
+	--text-primary: #1d1d1f;
+	--text-secondary: #6e6e73;
+	--text-inverse: #ffffff;
+	--surface-base: #fbfbfd;
+	--surface-card: #f2f2f5;
+	--surface-media: #e4e4ea;
+	--surface-chrome: #fbfbfdcc;
+	--surface-overlay: #1e1e228c;
+	--color-accent: #0066cc;
+	--color-accent-fill: #0071e3;
+	--color-border: #00000014;
+	--color-border-card: #0000000f;
+	--color-focus: #0066cc;
+	--color-danger: #d70015;
+	--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+	--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+	--font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+	--weight-regular: 400;
+	--weight-semibold: 600;
+	--weight-bold: 700;
+	--type-display: var(--weight-semibold) 56px/1.07 var(--font-display);
+	--type-display-tracking: -0.005em;
+	--type-title: var(--weight-semibold) 40px/1.1 var(--font-display);
+	--type-title-tracking: 0em;
+	--type-title2: var(--weight-semibold) 28px/1.14 var(--font-display);
+	--type-title2-tracking: 0.007em;
+	--type-title3: var(--weight-regular) 24px/1.33 var(--font-sans);
+	--type-title3-tracking: 0.009em;
+	--type-headline: var(--weight-semibold) 21px/1.19 var(--font-sans);
+	--type-headline-tracking: 0.011em;
+	--type-body: var(--weight-regular) 17px/1.47 var(--font-sans);
+	--type-body-tracking: -0.022em;
+	--type-callout: var(--weight-regular) 15px/1.47 var(--font-sans);
+	--type-callout-tracking: -0.016em;
+	--type-footnote: var(--weight-regular) 14px/1.43 var(--font-sans);
+	--type-footnote-tracking: -0.016em;
+	--type-caption: var(--weight-regular) 13px/1.38 var(--font-sans);
+	--type-caption-tracking: -0.01em;
+	--type-caption2: var(--weight-semibold) 11px/1.36 var(--font-sans);
+	--type-caption2-tracking: 0em;
+	--space-xxs: 4px;
+	--space-xs: 8px;
+	--space-sm: 12px;
+	--space-md: 16px;
+	--space-lg: 24px;
+	--space-xl: 32px;
+	--space-xxl: 40px;
+	--space-xxxl: 56px;
+	--space-section: 72px;
+	--radius-sm: 8px;
+	--radius-md: 12px;
+	--radius-lg: 16px;
+	--radius-full: 9999px;
+	--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.18);
+	--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.16);
+	--shadow-icon: 0 8px 18px rgba(0, 40, 120, 0.22);
+	--duration-fast: 150ms;
+	--duration-base: 250ms;
+	--duration-slow: 400ms;
+	--easing-standard: cubic-bezier(0.25, 0.1, 0.25, 1);
+	--easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
+	--easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+	--layer-base: 0;
+	--layer-raised: 1;
+	--layer-sticky: 10;
+	--layer-overlay: 100;
+	--layout-settings-width: 460px;
+	--layout-menu-panel-width: 320px;
+	--layout-content: 980px;
+	--layout-prose: 680px;
+	--layout-lede: 600px;
+	--layout-gutter: 22px;
+	--layout-gutter-narrow: 16px;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--text-primary: #f5f5f7;
+		--text-secondary: #86868b;
+		--text-inverse: #ffffff;
+		--surface-base: #000000;
+		--surface-card: #1c1c1e;
+		--surface-media: #1c1c1e;
+		--surface-chrome: #000000b8;
+		--surface-overlay: #1e1e228c;
+		--color-accent: #2997ff;
+		--color-accent-fill: #0071e3;
+		--color-border: #ffffff1f;
+		--color-border-card: #ffffff0f;
+		--color-focus: #2997ff;
+		--color-danger: #ff453a;
+		--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
+		--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+		--shadow-icon: 0 8px 18px rgba(0, 0, 0, 0.5);
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--duration-fast: 0ms;
+		--duration-base: 0ms;
+		--duration-slow: 0ms;
+	}
+}

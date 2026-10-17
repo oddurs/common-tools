@@ -103,7 +103,7 @@
 	}
 	.family img {
 		margin: 0 -6px;
-		filter: drop-shadow(0 8px 18px rgba(0, 40, 120, 0.22));
+		filter: drop-shadow(var(--shadow-icon));
 	}
 	.family img:nth-child(1) {
 		transform: rotate(-8deg) translateY(6px);
@@ -133,7 +133,7 @@
 		font-size: 28px;
 	}
 	h2 a {
-		color: var(--text);
+		color: var(--text-primary);
 	}
 	.tagline {
 		margin: 0 0 8px;
@@ -159,8 +159,8 @@
 		gap: 6px;
 		padding: 22px 14px;
 		border-radius: 16px;
-		background: var(--panel);
-		color: var(--text);
+		background: var(--surface-card);
+		color: var(--text-primary);
 		text-align: center;
 	}
 	.soon .card:hover {
