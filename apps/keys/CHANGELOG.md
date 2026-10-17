@@ -11,6 +11,10 @@ All notable changes to this project are documented here. The format follows [Kee
 - Thai, Georgian and Armenian words typed on the wrong keyboard are fixed. Typed on U.S., they are now fixed every time in testing, against 58%, 0% and 51% before.
 - Each language's spelling is learned on this Mac from its own dictionary, so names and words no dictionary has can still be told apart from wrong-keyboard noise.
 
+### Changed
+
+- Finding the keys for a word on syllabary layouts such as Ge'ez is now immediate; it took minutes the first time a word was checked mid-sentence.
+
 ### Fixed
 
 - The flag in the menu bar sits level with the other menu bar icons instead of slightly high. With no layout to show, it shows a keyboard symbol that follows the menu bar's colour.

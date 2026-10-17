@@ -69,7 +69,13 @@ struct ListedWordTests {
             WordLists.shipped("am")?.first { geez.strokes(for: $0) != nil && $0.unicodeScalars.count >= 3 })
         let keys = try #require(geez.strokes(for: word))
         let start = Array(keys.prefix(keys.count - 1))
+        // The first ask finds the keys of every listed word, each a walk through the layout's
+        // dead-key states. Before the per-state tables that took minutes; a loaded Mac takes ten
+        // seconds now, and this budget keeps a search over raw keys from creeping back.
+        let clock = ContinuousClock()
+        let began = clock.now
         #expect(sharedLexicon.startsListed(start, on: geez))
+        #expect(clock.now - began < .seconds(60))
         #expect(!sharedLexicon.startsListed([KeyStroke(12), KeyStroke(12), KeyStroke(12), KeyStroke(12)], on: geez))
     }
 
