@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonUI
 import SwiftUI
 
 /// A borderless panel that takes typing without activating the app, so the app you were in stays
@@ -319,7 +320,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             size: size, translucent: false,
             field: FieldView(model: model, preferences: preferences, commands: noop),
             card: CardView(model: model, preferences: preferences) { _ in })
-        let margin: CGFloat = 24
+        let margin = Tokens.Space.lg
         let frame = NSRect(x: 0, y: 0, width: size.width + 2 * margin, height: height + 2 * margin)
         let window = NSWindow(contentRect: frame, styleMask: .borderless, backing: .buffered, defer: false)
         let backdrop = NSView(frame: frame)

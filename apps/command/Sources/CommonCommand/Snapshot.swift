@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonUI
 import SwiftUI
 
 /// `CommonCommand --snapshot out.png [query] [--theme light|dark] [--scope apps|files|actions] [--settings]` draws the panel with `query` typed into
@@ -69,8 +70,9 @@ enum Snapshot {
 
     private static func renderSettings(_ controller: AppController, appearance: NSAppearance?) -> NSBitmapImageRep? {
         let view = NSHostingView(rootView: SettingsView(controller: controller, preferences: controller.preferences))
+        // The size the real window takes.
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 460, height: 720), styleMask: .borderless, backing: .buffered,
+            contentRect: NSRect(origin: .zero, size: view.fittingSize), styleMask: .borderless, backing: .buffered,
             defer: false)
         window.appearance = appearance
         window.contentView = view

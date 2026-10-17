@@ -30,6 +30,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings follows the layout shared by every Common Tools app: the same window, footnotes, and Open at login switch, with Open at login first under General. In the panel, a calculation, a link, or a web search gets an icon like the other rows instead of a bare symbol.
 - ⌘1–⌘9 choose a scope instead of opening the nth result, to match Spotlight.
 
 - Rows say less: no "Application" label, a pane's name instead of "System Settings ›", and file paths keep their start and end when shortened.

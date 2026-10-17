@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonUI
 import SwiftUI
 
 /// The search field, in its capsule.
@@ -11,10 +12,12 @@ struct FieldView: View {
     private var size: PanelSize { preferences.size }
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: Tokens.Space.xs) {
             Image(systemName: model.scope.symbol)
                 .font(.system(size: size.fieldFontSize * 0.82, weight: .medium))
-                .foregroundStyle(model.scope == .all ? AnyShapeStyle(.secondary) : AnyShapeStyle(.tint))
+                .foregroundStyle(
+                    model.scope == .all ? AnyShapeStyle(.secondary) : AnyShapeStyle(Tokens.Color.accent.color)
+                )
                 .frame(width: size.fieldFontSize * 1.1)
             SearchField(model: model, fontSize: size.fieldFontSize, commands: commands)
             ScopeButtons(model: model, size: size, toggle: commands.toggleScope)
@@ -42,9 +45,11 @@ private struct ScopeButtons: View {
                 } label: {
                     Image(systemName: scope.symbol)
                         .font(.system(size: size.fieldFontSize * 0.62, weight: .medium))
-                        .foregroundStyle(isOn ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                        .foregroundStyle(isOn ? AnyShapeStyle(Tokens.Text.inverse.color) : AnyShapeStyle(.secondary))
                         .frame(width: size.fieldHeight * 0.62, height: size.fieldHeight * 0.62)
-                        .background(Circle().fill(isOn ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(.clear)))
+                        .background(
+                            Circle().fill(isOn ? AnyShapeStyle(Tokens.Color.accent.color) : AnyShapeStyle(.clear))
+                        )
                         .contentShape(Circle())
                 }
                 .buttonStyle(.plain)
@@ -124,7 +129,7 @@ private struct SectionHeader: View {
         Text(title)
             .font(.system(size: size.headerFontSize, weight: .semibold))
             .foregroundStyle(.secondary)
-            .padding(.horizontal, 10)
+            .padding(.horizontal, Tokens.Space.xs)
             .frame(maxWidth: .infinity, minHeight: size.headerHeight, alignment: .bottomLeading)
             .padding(.bottom, 2)
             .frame(height: size.headerHeight)
@@ -140,9 +145,9 @@ extension View {
         return
             self
             .background {
-                if solid { shape.fill(Color(nsColor: .windowBackgroundColor)) }
+                if solid { shape.fill(Tokens.Surface.base.color) }
             }
-            .overlay { shape.strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5) }
+            .overlay { shape.strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5) }
     }
 }
 
@@ -163,28 +168,29 @@ private struct ResultRow: View {
     let isSelected: Bool
 
     var body: some View {
-        HStack(spacing: 10) {
-            ItemIcon(item: ranked.item, size: size.iconSize, isSelected: isSelected)
+        HStack(spacing: Tokens.Space.xs) {
+            ItemIcon(item: ranked.item, size: size.iconSize)
             Text(title)
                 .lineLimit(1)
                 .truncationMode(.middle)
-            Spacer(minLength: 16)
+            Spacer(minLength: Tokens.Space.md)
             Text(ranked.item.subtitle)
                 .font(.system(size: size.rowFontSize - 2))
-                .foregroundStyle(isSelected ? AnyShapeStyle(.white.opacity(0.8)) : AnyShapeStyle(.secondary))
+                // Secondary to the row's own colour: dimmed white on the selection, grey otherwise.
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
                 // A path keeps its start and its end: "~/Code/…/src" says more than "…ode/app/src".
                 .truncationMode(.middle)
                 .layoutPriority(-1)
         }
         .font(.system(size: size.rowFontSize))
-        .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.primary))
-        .padding(.horizontal, 8)
+        .foregroundStyle(isSelected ? AnyShapeStyle(Tokens.Text.inverse.color) : AnyShapeStyle(.primary))
+        .padding(.horizontal, Tokens.Space.xs)
         .frame(height: size.rowHeight)
         .background {
             if isSelected {
                 RoundedRectangle(cornerRadius: size.rowRadius, style: .continuous)
-                    .fill(Color.accentColor)
+                    .fill(Tokens.Color.accent.color)
             }
         }
         .contentShape(Rectangle())
@@ -209,19 +215,18 @@ private struct ResultRow: View {
     }
 }
 
+/// The item's own icon, or for a result that has none (a calculation, a link, a web search) its kind's
+/// symbol on an accent badge, so every row has an icon of the same shape.
 private struct ItemIcon: View {
     let item: Item
     let size: CGFloat
-    let isSelected: Bool
 
     var body: some View {
         Group {
             if let image = Icons.shared.image(for: item) {
                 Image(nsImage: image).resizable().interpolation(.high)
             } else {
-                Image(systemName: Icons.symbol(for: item.kind))
-                    .font(.system(size: size * 0.62, weight: .medium))
-                    .foregroundStyle(isSelected ? AnyShapeStyle(.white) : AnyShapeStyle(.secondary))
+                IconBadge(symbol: Icons.symbol(for: item.kind), tint: Tokens.Color.accent.color, size: size)
             }
         }
         .frame(width: size, height: size)
