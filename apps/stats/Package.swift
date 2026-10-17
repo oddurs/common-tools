@@ -15,8 +15,11 @@ let package = Package(
         ),
         .executableTarget(
             name: "StatBar",
-            dependencies: ["StatKit", .product(name: "CommonKit", package: "CommonKit")],
-            linkerSettings: [.linkedFramework("ServiceManagement")]
+            dependencies: [
+                "StatKit",
+                .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ]
         ),
         .testTarget(name: "StatKitTests", dependencies: ["StatKit"]),
     ]

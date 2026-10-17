@@ -1,3 +1,4 @@
+import CommonUI
 import StatKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -23,15 +24,18 @@ struct BarEditor: View {
     private var spacing: CGFloat { max(model.layout.density.itemGap - 8, 2) }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Tokens.Space.sm) {
             strip
             tray
             Text("Drag to arrange. Click an item to change how it looks.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Tokens.Space.xxs)
     }
+
+    /// Drops and tray clicks move an item with the family's motion, and none while the user asks for less.
+    private var motion: Animation? { Tokens.Motion.animation(Tokens.Motion.fast) }
 
     // MARK: The strip
 
@@ -46,10 +50,11 @@ struct BarEditor: View {
             }
         }
         .frame(maxWidth: .infinity, minHeight: height + 14)
-        .background(.bar, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(.bar, in: RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous))
         .overlay(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
-                .strokeBorder(Color.primary.opacity(insertion == nil ? 0.08 : 0.2), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
+                .strokeBorder(
+                    insertion == nil ? Tokens.Color.borderCard.color : Tokens.Color.border.color, lineWidth: 0.5)
         )
         .overlay(alignment: .topLeading) { indicator(visible) }
         .coordinateSpace(name: Self.space)
@@ -59,7 +64,7 @@ struct BarEditor: View {
             delegate: StripDrop(
                 dragging: dragging, frames: frames, visible: visible, insertion: $insertion,
                 drop: { metric, slot in
-                    withAnimation(.snappy(duration: 0.2)) { place(metric, inSlot: slot, of: visible) }
+                    withAnimation(motion) { place(metric, inSlot: slot, of: visible) }
                     dragging = nil
                 }))
     }
@@ -78,11 +83,12 @@ struct BarEditor: View {
                     .foregroundStyle(.primary)
             }
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, Tokens.Space.xxs)
         .padding(.vertical, 3)
-        // Selected looks like a pressed menu bar item; hover is a lighter hint that it's clickable.
+        // Selected looks like a pressed menu bar item; hover is a lighter hint that it's clickable. The
+        // radius is the menu bar's own highlight, which no token holds.
         .background(
-            Color.primary.opacity(selected == metric ? 0.16 : hovered == metric ? 0.07 : 0),
+            highlight(for: metric),
             in: RoundedRectangle(cornerRadius: 5, style: .continuous)
         )
         .opacity(dragging == metric && insertion != nil ? 0.35 : 1)
@@ -118,6 +124,12 @@ struct BarEditor: View {
         }
     }
 
+    private func highlight(for metric: Metric) -> AnyShapeStyle {
+        if selected == metric { return AnyShapeStyle(.tertiary) }
+        if hovered == metric { return AnyShapeStyle(.quaternary) }
+        return AnyShapeStyle(.clear)
+    }
+
     /// A line in the gap the drop would land in.
     @ViewBuilder private func indicator(_ visible: [Metric]) -> some View {
         if let slot = insertion {
@@ -127,7 +139,7 @@ struct BarEditor: View {
                 return frames[visible[slot - 1]].map { $0.maxX + spacing / 2 }
             }()
             if let x {
-                Capsule().fill(Color.accentColor)
+                Capsule().fill(Tokens.Color.accent.color)
                     .frame(width: 2, height: height)
                     .offset(x: x - 1, y: 7)
             }
@@ -150,7 +162,7 @@ struct BarEditor: View {
 
     private var tray: some View {
         let hidden = model.layout.items.filter { $0.style == .hidden }.map(\.metric).filter(isAvailable)
-        return HStack(spacing: 6) {
+        return HStack(spacing: Tokens.Space.xs) {
             if hidden.isEmpty {
                 Text("Everything is in the menu bar")
                     .font(.callout).foregroundStyle(.secondary)
@@ -158,15 +170,15 @@ struct BarEditor: View {
             }
             ForEach(hidden, id: \.self) { metric in
                 Button {
-                    withAnimation(.snappy(duration: 0.2)) { model.layout.place(metric, atVisibleIndex: .max) }
+                    withAnimation(motion) { model.layout.place(metric, atVisibleIndex: .max) }
                 } label: {
-                    HStack(spacing: 6) {
-                        IconTile(metric: metric, size: 16)
-                        Text(metric.name).font(.system(size: 11, weight: .medium)).lineLimit(1)
+                    HStack(spacing: Tokens.Space.xxs) {
+                        IconBadge(metric: metric, size: 16)
+                        Text(metric.name).font(.subheadline.weight(.medium)).lineLimit(1)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(Color.primary.opacity(0.06), in: Capsule())
+                    .padding(.horizontal, Tokens.Space.xs)
+                    .padding(.vertical, Tokens.Space.xxs)
+                    .background(Tokens.Surface.card.color, in: Capsule())
                 }
                 .buttonStyle(.plain)
                 .help("Drag into the menu bar, or click to add")
@@ -179,11 +191,11 @@ struct BarEditor: View {
             if !hidden.isEmpty { Spacer(minLength: 0) }
         }
         .frame(minHeight: 30)
-        .padding(6)
+        .padding(Tokens.Space.xs)
         .background(
-            RoundedRectangle(cornerRadius: 8, style: .continuous)
+            RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
                 .strokeBorder(
-                    trayTargeted ? Color.accentColor : Color.primary.opacity(0.1),
+                    trayTargeted ? Tokens.Color.accent.color : Tokens.Color.border.color,
                     style: StrokeStyle(lineWidth: 1, dash: trayTargeted ? [] : [3, 3]))
         )
         // Dropping an item from the strip here removes it.
@@ -191,7 +203,7 @@ struct BarEditor: View {
             guard let metric = dragging, model.layout.visible.contains(where: { $0.metric == metric }) else {
                 return false
             }
-            withAnimation(.snappy(duration: 0.2)) { model.layout.remove(metric) }
+            withAnimation(motion) { model.layout.remove(metric) }
             dragging = nil
             return true
         } isTargeted: {
@@ -262,9 +274,9 @@ private struct ItemInspector: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                IconTile(metric: metric, size: 20)
+        VStack(alignment: .leading, spacing: Tokens.Space.sm) {
+            HStack(spacing: Tokens.Space.xs) {
+                IconBadge(metric: metric, size: 20)
                 Text(metric.name).font(.headline)
             }
             Picker("Show as", selection: style) {
@@ -277,7 +289,7 @@ private struct ItemInspector: View {
                 dismiss()
             }
         }
-        .padding(14)
+        .padding(Tokens.Space.md)
         .frame(width: 230, alignment: .leading)
     }
 }

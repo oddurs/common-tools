@@ -1,10 +1,12 @@
 import AppKit
+import CommonUI
 import StatKit
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var model: AppModel!
     private var statusItem: StatusItemController!
+    private let settings = SettingsWindowHost(title: "Common Stats Settings")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Two copies (say, a build folder and /Applications) would draw two bars.
@@ -19,7 +21,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         model = AppModel()
-        statusItem = StatusItemController(model: model)
+        statusItem = StatusItemController(model: model) { [unowned self] in showSettings() }
         model.onUpdate = { [weak statusItem] in statusItem?.render() }
         model.start()
         offerSettingsIfHiddenOnFirstLaunch()
@@ -42,12 +44,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let key = "launchedBefore"
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [model] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
             MainActor.assumeIsolated {
-                guard let model, !model.barVisible else { return }
-                SettingsWindowController.shared.show(model: model)
+                guard let self, !self.model.barVisible else { return }
+                self.showSettings()
             }
         }
+    }
+
+    private func showSettings() {
+        settings.show { SettingsView(model: model) }
     }
 
     private func isOlder(_ other: NSRunningApplication) -> Bool {
@@ -60,7 +66,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Launching the app again while it runs is the only way back to
     /// Settings if the menu bar item is hidden behind the notch.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        SettingsWindowController.shared.show(model: model)
+        showSettings()
         return false
     }
 }

@@ -7,13 +7,15 @@ import SwiftUI
 @MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let model: AppModel
+    private let showSettings: () -> Void
     private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let menu = NSMenu()
     private var renderer: BarRenderer?
     private var menuOpen = false
 
-    init(model: AppModel) {
+    init(model: AppModel, showSettings: @escaping () -> Void) {
         self.model = model
+        self.showSettings = showSettings
         super.init()
         // The pre-rename name: macOS keys the item's saved menu bar position on it.
         item.autosaveName = "StatBar"
@@ -115,6 +117,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     }
 
     @objc private func openSettings() {
-        SettingsWindowController.shared.show(model: model)
+        showSettings()
     }
 }

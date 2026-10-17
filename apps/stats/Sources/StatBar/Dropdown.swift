@@ -1,3 +1,4 @@
+import CommonUI
 import StatKit
 import SwiftUI
 
@@ -8,7 +9,9 @@ enum DropdownPanel: Hashable {
     case card(Metric)
     case tiles([Metric])
 
-    static let width: CGFloat = 320
+    static var width: CGFloat { Tokens.Layout.menuPanelWidth }
+    /// The menu item's inset around each panel.
+    static var inset: CGFloat { Tokens.Space.xs }
 
     static func panels(for metrics: [Metric]) -> [DropdownPanel] {
         let tiles = metrics.filter(\.isTile)
@@ -48,15 +51,15 @@ struct PanelView: View {
                     readout: readout, metric: metric, interval: interval, ink: Ink(palette.color(for: metric)),
                     previewHover: previewHover)
             case .tiles(let metrics):
-                HStack(spacing: 8) {
+                HStack(spacing: Tokens.Space.xs) {
                     ForEach(metrics, id: \.self) {
                         MetricTile(readout: readout, metric: $0, ink: Ink(palette.color(for: $0)))
                     }
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .padding(.horizontal, DropdownPanel.inset)
+        .padding(.vertical, Tokens.Space.xxs)
         .frame(width: DropdownPanel.width)
     }
 }
@@ -72,15 +75,15 @@ private struct MetricCard: View {
 
     var body: some View {
         Card {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .center, spacing: 8) {
-                    IconTile(metric: metric, size: 20)
-                    Text(metric == .disk ? "Disk" : metric.name).font(.system(size: 13, weight: .semibold))
+            VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                HStack(alignment: .center, spacing: Tokens.Space.xs) {
+                    IconBadge(metric: metric, size: 20)
+                    Text(metric == .disk ? "Disk" : metric.name).font(.headline)
                         .lineLimit(1)
                     if metric == .network, let source = readout.latest.network?.source {
-                        Text(source).font(.system(size: 11)).foregroundStyle(.tertiary)
+                        Text(source).font(.subheadline).foregroundStyle(.tertiary)
                     }
-                    Spacer(minLength: 8)
+                    Spacer(minLength: Tokens.Space.xs)
                     headline
                 }
                 content
@@ -90,24 +93,24 @@ private struct MetricCard: View {
     }
 
     @ViewBuilder private var headline: some View {
-        let big = Font.system(size: 15, weight: .semibold).monospacedDigit()
+        let big = Font.title3.weight(.semibold).monospacedDigit()
         switch metric {
         case .network, .disk:
             let r = readout.rates(metric)
             let (inGlyph, outGlyph) = metric == .network ? ("↓", "↑") : ("R", "W")
             // The glyphs take their graph colours, so the header doubles as the legend.
-            HStack(spacing: 10) {
+            HStack(spacing: Tokens.Space.xs) {
                 Reading(glyph: inGlyph, value: r.map { Format.rate($0.inbound) }, ink: ink.strong)
                 Reading(glyph: outGlyph, value: r.map { Format.rate($0.outbound) }, ink: ink.medium)
             }
-            .font(.system(size: 13, weight: .semibold).monospacedDigit())
+            .font(.headline.monospacedDigit())
             .lineLimit(1)
             .fixedSize()
         case .memory:
             if let m = readout.latest.memory {
                 HStack(alignment: .firstTextBaseline, spacing: 3) {
                     Text(Format.memory(m.used)).font(big)
-                    Text("of \(Format.memory(m.total))").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("of \(Format.memory(m.total))").font(.subheadline).foregroundStyle(.secondary)
                 }
             }
         default:
@@ -138,7 +141,8 @@ private struct MetricCard: View {
                 Fact("Idle", Format.percent(1 - c.total)),
             ])
             CoreClusters(
-                cores: c.cores, topology: .current, ink: ink.strong, width: DropdownPanel.width - 16 - cardInset * 2)
+                cores: c.cores, topology: .current, ink: ink.strong,
+                width: DropdownPanel.width - 2 * (DropdownPanel.inset + Card<EmptyView>.inset))
             Facts([
                 Fact(
                     "Load",
@@ -152,7 +156,7 @@ private struct MetricCard: View {
 
     @ViewBuilder private var memory: some View {
         if let m = readout.latest.memory {
-            HStack(spacing: 8) {
+            HStack(spacing: Tokens.Space.xs) {
                 Segments(
                     fractions: [m.app, m.wired, m.compressed].map { Double($0) / Double(m.total) },
                     inks: [ink.strong, ink.medium, ink.soft])
@@ -190,23 +194,6 @@ private struct MetricCard: View {
     }
 }
 
-private let cardInset: CGFloat = 10
-
-/// A Control Center–style module: a softly filled rounded panel.
-private struct Card<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .padding(cardInset)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5))
-    }
-}
-
 private struct Reading: View {
     let glyph: String
     let value: String?
@@ -230,23 +217,23 @@ private struct MetricTile: View {
 
     var body: some View {
         Card {
-            VStack(spacing: 8) {
-                HStack(spacing: 6) {
-                    IconTile(metric: metric, size: 16)
-                    Text(metric.name).font(.system(size: 11, weight: .semibold))
+            VStack(spacing: Tokens.Space.xs) {
+                HStack(spacing: Tokens.Space.xxs) {
+                    IconBadge(metric: metric, size: 16)
+                    Text(metric.name).font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Ring(fraction: readout.fraction(metric) ?? 0, ink: ringInk) {
                     VStack(spacing: 0) {
-                        Text(center).font(.system(size: 12, weight: .semibold).monospacedDigit())
+                        Text(center).font(.callout.weight(.semibold).monospacedDigit())
                         if metric == .battery, readout.latest.battery?.state == .charging {
-                            Image(systemName: "bolt.fill").font(.system(size: 7, weight: .bold))
+                            Image(systemName: "bolt.fill").font(.caption2.weight(.bold)).imageScale(.small)
                                 .foregroundStyle(.secondary)
                         }
                     }
                 }
-                Text(caption).font(.system(size: 10)).foregroundStyle(.secondary).lineLimit(1)
+                Text(caption).font(.footnote).foregroundStyle(.secondary).lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
         }
@@ -275,7 +262,9 @@ private struct MetricTile: View {
     private var ringInk: Color {
         switch metric {
         case .battery:
-            if let b = readout.latest.battery, b.level <= 0.1, b.state == .discharging { return .red }
+            if let b = readout.latest.battery, b.level <= 0.1, b.state == .discharging {
+                return Tokens.Color.danger.color
+            }
         case .storage:
             if let s = readout.latest.storage, s.usedFraction >= 0.9 { return .orange }
         default: break
@@ -301,7 +290,7 @@ private struct Ring<Label: View>: View {
 
     var body: some View {
         ZStack {
-            Circle().stroke(Color.primary.opacity(0.1), lineWidth: 5)
+            Circle().stroke(.quaternary, lineWidth: 5)
             Circle()
                 .trim(from: 0, to: min(max(fraction, 0), 1))
                 .stroke(ink, style: StrokeStyle(lineWidth: 5, lineCap: .round))
@@ -346,13 +335,13 @@ private struct PressurePill: View {
             switch pressure {
             case .normal: ("Normal", .green)
             case .warning: ("Warning", .orange)
-            case .critical: ("Critical", .red)
+            case .critical: ("Critical", Tokens.Color.danger.color)
             }
-        HStack(spacing: 4) {
+        HStack(spacing: Tokens.Space.xxs) {
             Circle().fill(color).frame(width: 6, height: 6)
-            Text(name).font(.system(size: 10, weight: .medium))
+            Text(name).font(.footnote.weight(.medium))
         }
-        .padding(.horizontal, 7)
+        .padding(.horizontal, Tokens.Space.xs)
         .padding(.vertical, 3)
         .background(color.opacity(0.14), in: Capsule())
         .accessibilityLabel("Memory pressure \(name)")
@@ -384,7 +373,7 @@ private struct Facts: View {
     }
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 4, verticalSpacing: 4) {
+        Grid(alignment: .leading, horizontalSpacing: Tokens.Space.xxs, verticalSpacing: Tokens.Space.xxs) {
             ForEach(Array(stride(from: 0, to: facts.count, by: columns)), id: \.self) { start in
                 GridRow {
                     ForEach(facts[start..<min(start + columns, facts.count)]) { fact in
@@ -396,13 +385,13 @@ private struct Facts: View {
                         }
                         Text(fact.value ?? "")
                             .monospacedDigit()
-                            .padding(.trailing, 12)
+                            .padding(.trailing, Tokens.Space.sm)
                             .gridColumnAlignment(.leading)
                     }
                 }
             }
         }
-        .font(.system(size: 11))
+        .font(.subheadline)
         .lineLimit(1)
         .fixedSize()
     }
@@ -425,7 +414,7 @@ private struct Segments: View {
             }
         }
         .frame(height: 6)
-        .background(Color.primary.opacity(0.08))
+        .background(.quaternary)
         .clipShape(Capsule())
         .accessibilityHidden(true)
     }
@@ -440,7 +429,7 @@ private struct CoreClusters: View {
     let ink: Color
     let width: CGFloat
 
-    private let gap: CGFloat = 10
+    private let gap: CGFloat = Tokens.Space.xs
     private let spacing: CGFloat = 2
 
     var body: some View {
@@ -453,13 +442,13 @@ private struct CoreClusters: View {
             HStack(alignment: .top, spacing: gap) {
                 ForEach(clusters, id: \.kind) { cluster in
                     let load = cluster.cores.map { cores[$0] }
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                         CoreBars(cores: load, ink: ink)
-                        HStack(spacing: 4) {
+                        HStack(spacing: Tokens.Space.xxs) {
                             Text(cluster.kind.rawValue).foregroundStyle(.secondary)
                             Text(Format.percent(load.reduce(0, +) / Double(load.count))).monospacedDigit()
                         }
-                        .font(.system(size: 10))
+                        .font(.footnote)
                         .lineLimit(1)
                     }
                     .frame(width: bar * CGFloat(load.count) + spacing * CGFloat(load.count - 1))
@@ -478,7 +467,7 @@ private struct CoreBars: View {
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(cores.indices, id: \.self) { i in
                 ZStack(alignment: .bottom) {
-                    Rectangle().fill(Color.primary.opacity(0.08))
+                    Rectangle().fill(.quaternary)
                     Rectangle().fill(ink)
                         .frame(height: 14 * CGFloat(min(max(cores[i], 0), 1)))
                 }
