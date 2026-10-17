@@ -123,7 +123,7 @@ dkssudgktpdy</code
 
 	{#if release}<WhatsNew tool={keys} {release} />{/if}
 	<GetStarted tool={keys} />
-	<MoreTools tool={keys} />
+	<MoreTools slug={keys.slug} />
 </main>
 
 <style>

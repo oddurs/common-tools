@@ -106,7 +106,7 @@
 
 	{#if release}<WhatsNew tool={stats} {release} />{/if}
 	<GetStarted tool={stats} />
-	<MoreTools tool={stats} />
+	<MoreTools slug={stats.slug} />
 </main>
 
 <style>

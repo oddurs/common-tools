@@ -82,7 +82,7 @@
 
 	{#if release}<WhatsNew tool={bar} {release} />{/if}
 	<GetStarted tool={bar} />
-	<MoreTools tool={bar} />
+	<MoreTools slug={bar.slug} />
 </main>
 
 <style>

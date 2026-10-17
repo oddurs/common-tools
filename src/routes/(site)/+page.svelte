@@ -3,7 +3,7 @@
 	import DemoVideo from '#lib/DemoVideo.svelte';
 	import Meta from '#lib/Meta.svelte';
 	import { megabytes, shortDate } from '#lib/releases.ts';
-	import { download, tools } from '#lib/tools.ts';
+	import { download, tools, upcoming } from '#lib/tools.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -26,8 +26,8 @@
 </script>
 
 <Meta
-	title="Common Tools — small, native utilities for the Mac menu bar"
-	description="Common Stats, Common Keys, and Common Bar: small, native macOS menu bar utilities. Free and open source, and nothing leaves your Mac."
+	title="Common Tools — small, native utilities for the Mac"
+	description="Common Stats, Common Keys, Common Bar, and more on the way: small, native macOS utilities. Free and open source, and nothing leaves your Mac."
 	path=""
 	image="stats/poster.jpg"
 />
@@ -40,9 +40,7 @@
 			{/each}
 		</div>
 		<h1>Common Tools</h1>
-		<p class="lede">
-			Small, native utilities for the Mac menu bar. Each does one thing and gets out of the way.
-		</p>
+		<p class="lede">Small, native utilities for the Mac. Each does one thing and gets out of the way.</p>
 		<p class="fine">Free and open source · macOS 14 or later · Apple silicon and Intel</p>
 	</header>
 
@@ -69,6 +67,19 @@
 			</div>
 		</section>
 	{/each}
+
+	<section class="soon ruled">
+		<h2>Coming soon.</h2>
+		<div class="cards">
+			{#each upcoming as u (u.slug)}
+				<a class="card" href={resolve(`${u.slug}/`)}>
+					<img src={asset(u.icon)} alt="" width="64" height="64" />
+					<b>{u.name}</b>
+					<span class="muted">{u.tagline}</span>
+				</a>
+			{/each}
+		</div>
+	</section>
 
 	<section class="principles ruled">
 		{#each principles as [title, text] (title)}
@@ -135,6 +146,29 @@
 		gap: 14px;
 		align-items: center;
 	}
+	.soon .cards {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: 16px;
+		margin-top: 16px;
+	}
+	.soon .card {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 6px;
+		padding: 22px 14px;
+		border-radius: 16px;
+		background: var(--panel);
+		color: var(--text);
+		text-align: center;
+	}
+	.soon .card:hover {
+		text-decoration: none;
+	}
+	.soon .card .muted {
+		font-size: 14px;
+	}
 	.principles {
 		display: grid;
 		grid-template-columns: repeat(4, 1fr);
@@ -154,6 +188,9 @@
 		}
 		.tool.flip :global(figure) {
 			order: 0;
+		}
+		.soon .cards {
+			grid-template-columns: 1fr 1fr;
 		}
 		.principles {
 			grid-template-columns: 1fr 1fr;
