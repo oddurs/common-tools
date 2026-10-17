@@ -1,6 +1,6 @@
 # First run and update checks
 
-Two pieces of CommonKit every app can adopt. Neither is wired into any app yet; each app's owner adds the lines below in its own pull request.
+Two pieces of CommonKit every app adopts; the lines below are all an app adds.
 
 ## The Welcome window
 
@@ -43,17 +43,13 @@ let updates = UpdateCheck(tool: CommonTool.thisApp!)
 updates.start()
 ```
 
-In Settings › **General**, after Open at login:
+In Settings › **General**, the row after `OpenAtLoginToggle` and the line after `OpenAtLoginFootnote`:
 
 ```swift
-Toggle("Check for updates daily", isOn: Binding(
-    get: { updates.isEnabled },
-    set: { updates.isEnabled = $0; Task { await updates.checkIfDue() } }))
-if let update = updates.available {
-    Link("Version \(update.version) is available", destination: update.download ?? update.page)
-}
+UpdateCheckToggle(updates: updates)     // "Check for updates daily"
+UpdateCheckFootnote(updates: updates)   // "Version x.y.z is available" as a link, or why the last check failed
 ```
 
-`UpdateCheck` is `@Observable`, so the view updates on its own. `lastError` holds why the last check failed (offline, rate-limited), for a footnote if wanted; the next launch tries again. `check()` runs one now, for a **Check Now** button.
+Both views are CommonKit's, so every app's row reads the same. The toggle keeps its state in `@State` and writes `isEnabled` from there: `isEnabled` is a preference, not an observed property, so a `Binding` straight to it would draw a switch that never moves. `available` and `lastError` are observed, so the footnote updates on its own; a failed check (offline, rate-limited) is tried again at the next launch. `check()` runs one now, for a **Check Now** button.
 
 Keep the rule in the root `CLAUDE.md` in mind: this is the one place an app touches the network, and only after the user asks.
