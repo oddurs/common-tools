@@ -23,6 +23,10 @@ app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
 changed_areas() {
     base="${changed_base:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)}"
     { git diff --name-only "$base"; git diff --name-only; git ls-files --others --exclude-standard; } | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
+        # Workflows and root documents change nothing a local check can test.
+        /^\.github\//        { next }
+        /^[^\/]+\.md$/       { next }
+        /^LICENSE$/          { next }
         /^site\//            { site = 1; next }
         /^packages\//        { kit = 1; everyapp = 1; next }
         /^apps\/[^\/]+\//    { split($0, p, "/"); app[p[2]] = 1; next }
