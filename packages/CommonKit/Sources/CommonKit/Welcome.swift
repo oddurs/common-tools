@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import SwiftUI
 
 /// What the Welcome window says about this app. Everything else in it is the same for every app.
