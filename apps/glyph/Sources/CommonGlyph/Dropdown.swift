@@ -1,8 +1,9 @@
+import CommonUI
 import GlyphKit
 import SwiftUI
 
 enum DropdownPanel {
-    static let width: CGFloat = 320
+    static var width: CGFloat { Tokens.Layout.menuPanelWidth }
 }
 
 /// The card at the top of a glyph's menu: the glyph large, its name, and how it's made.
@@ -12,27 +13,27 @@ struct GlyphCard: View {
 
     var body: some View {
         Card {
-            HStack(spacing: 12) {
+            HStack(spacing: Tokens.Space.sm) {
                 GlyphTile(glyph: model.glyph, size: 52)
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                     Text(model.spec.name)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.headline)
                         .lineLimit(1)
                     Text(model.summary)
-                        .font(.system(size: 11))
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                     if others > 0 {
                         Text(others == 1 ? "1 other glyph" : "\(others) other glyphs")
-                            .font(.system(size: 11))
+                            .font(.subheadline)
                             .foregroundStyle(.tertiary)
                     }
                 }
                 Spacer(minLength: 0)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .padding(.horizontal, Tokens.Space.xs)
+        .padding(.vertical, Tokens.Space.xxs)
         .frame(width: DropdownPanel.width)
         .accessibilityElement(children: .combine)
     }
@@ -62,12 +63,14 @@ extension GlyphModel {
     }
 }
 
-/// The glyph on a soft rounded square, like an app icon: in settings rows and the menu's card.
+/// The glyph on a soft rounded square, like an app icon: in settings rows and the menu's card. It is
+/// the card surface at `IconBadge`'s proportions, since it stands where a badge would.
 struct GlyphTile: View {
     let glyph: Glyph?
     var size: CGFloat = 28
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
         Group {
             if let glyph, let image = glyph.frames.first {
                 Image(nsImage: image)
@@ -84,26 +87,8 @@ struct GlyphTile: View {
         }
         .padding(size * 0.18)
         .frame(width: size, height: size)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: size * 0.27, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5)
-        )
+        .background(Tokens.Surface.card.color, in: shape)
+        .overlay(shape.strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
         .accessibilityHidden(true)
-    }
-}
-
-/// A Control Center–style module: a softly filled rounded panel, as in Common Stats and Common Keys.
-struct Card<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5))
     }
 }

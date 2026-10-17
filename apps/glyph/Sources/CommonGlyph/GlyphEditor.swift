@@ -1,3 +1,4 @@
+import CommonUI
 import GlyphKit
 import SwiftUI
 
@@ -43,9 +44,9 @@ struct GlyphEditor: View {
                 Button("Done") { dismiss() }
                     .keyboardShortcut(.defaultAction)
             }
-            .padding(16)
+            .padding(Tokens.Space.md)
         }
-        .frame(width: 460, height: 660)
+        .frame(width: Tokens.Layout.settingsWidth, height: 660)
         .confirmationDialog("Delete “\(model.spec.name)”?", isPresented: $confirmingDelete) {
             Button("Delete", role: .destructive) { library.remove(model) }
         } message: {
@@ -67,9 +68,7 @@ struct GlyphEditor: View {
                     .disabled(model.spec.isVisible && !library.canHide(model))
             } footer: {
                 if model.spec.isVisible && !library.canHide(model) {
-                    Text("One glyph always stays in the menu bar, so its menu stays in reach.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    SettingsFootnote("One glyph always stays in the menu bar, so its menu stays in reach.")
                 }
             }
 
@@ -88,7 +87,7 @@ struct GlyphEditor: View {
                 Text("Source")
             } footer: {
                 if let message = importError ?? model.problem {
-                    Text(message).foregroundStyle(.red)
+                    Text(message).font(.callout).foregroundStyle(Tokens.Color.danger.color)
                 }
             }
 
@@ -99,9 +98,7 @@ struct GlyphEditor: View {
                 } header: {
                     Text("Look")
                 } footer: {
-                    Text(Self.summary(of: model.edit.style))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    SettingsFootnote(Self.summary(of: model.edit.style))
                 }
             }
         }
@@ -116,7 +113,7 @@ struct GlyphEditor: View {
                 CropEditor(image: canvas, crop: $model.edit.crop)
                     .frame(height: 260)
             } else {
-                VStack(spacing: 6) {
+                VStack(spacing: Tokens.Space.xxs) {
                     Image(systemName: "photo.badge.plus")
                         .font(.largeTitle)
                         .foregroundStyle(.secondary)
@@ -128,7 +125,7 @@ struct GlyphEditor: View {
                 // The crop editor's height, so the sheet doesn't jump when the image arrives.
                 .frame(maxWidth: .infinity, minHeight: 260)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: Tokens.Radius.md, style: .continuous)
                         .strokeBorder(style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
                         .foregroundStyle(.tertiary))
             }
@@ -201,7 +198,10 @@ struct GlyphEditor: View {
             }
             .help("Emoji & Symbols (⌃⌘Space)")
         }
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 6), count: 6), spacing: 6) {
+        LazyVGrid(
+            columns: Array(repeating: GridItem(.flexible(), spacing: Tokens.Space.xxs), count: 6),
+            spacing: Tokens.Space.xxs
+        ) {
             ForEach(Self.suggestions, id: \.self) { suggestion in
                 Button {
                     model.spec.setText(suggestion)

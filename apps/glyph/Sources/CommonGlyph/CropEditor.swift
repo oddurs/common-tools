@@ -1,3 +1,4 @@
+import CommonUI
 import GlyphKit
 import SwiftUI
 
@@ -7,6 +8,8 @@ struct CropEditor: View {
     let image: NSImage
     @Binding var crop: CropRect
     @State private var dragStart: CropRect?
+
+    private static let handle: CGFloat = 12
 
     var body: some View {
         GeometryReader { geometry in
@@ -27,11 +30,13 @@ struct CropEditor: View {
                     path.addRect(frame)
                     path.addRect(box)
                 }
-                .fill(.black.opacity(0.5), style: FillStyle(eoFill: true))
+                .fill(Tokens.Surface.overlay.color, style: FillStyle(eoFill: true))
                 .allowsHitTesting(false)
+                // The box and its handles float over whatever the image holds, so each is drawn in the
+                // over-media ink with the overlay colour as its edge, legible on white and on black alike.
                 Rectangle()
-                    .strokeBorder(.white, lineWidth: 1.5)
-                    .shadow(color: .black.opacity(0.4), radius: 1)
+                    .strokeBorder(Tokens.Surface.overlay.color, lineWidth: 2.5)
+                    .overlay(Rectangle().strokeBorder(Tokens.Text.inverse.color, lineWidth: 1.5).padding(0.5))
                     .contentShape(Rectangle())
                     .frame(width: box.width, height: box.height)
                     .offset(x: box.minX, y: box.minY)
@@ -41,11 +46,11 @@ struct CropEditor: View {
                 ForEach(CropRect.Corner.allCases, id: \.self) { corner in
                     let point = Self.point(of: corner, in: box)
                     Circle()
-                        .fill(.white)
-                        .shadow(color: .black.opacity(0.4), radius: 1.5)
-                        .frame(width: 12, height: 12)
-                        .contentShape(Rectangle().inset(by: -6))
-                        .offset(x: point.x - 6, y: point.y - 6)
+                        .fill(Tokens.Text.inverse.color)
+                        .overlay(Circle().strokeBorder(Tokens.Surface.overlay.color, lineWidth: 1))
+                        .frame(width: Self.handle, height: Self.handle)
+                        .contentShape(Rectangle().inset(by: -Self.handle / 2))
+                        .offset(x: point.x - Self.handle / 2, y: point.y - Self.handle / 2)
                         .gesture(drag(in: frame) { start, dx, dy in start.resized(corner, dx: dx, dy: dy) })
                         .onHover { inside in inside ? NSCursor.crosshair.push() : NSCursor.pop() }
                 }
@@ -84,16 +89,17 @@ struct CropEditor: View {
     }
 }
 
-/// Shows where an image is transparent, the way image editors do.
+/// Shows where an image is transparent, the way image editors do: the media surface, with every other
+/// square tinted a step darker.
 struct Checkerboard: View {
     var body: some View {
         Canvas { context, size in
-            let side: CGFloat = 8
-            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(white: 0.92)))
+            let side = Tokens.Space.xs
+            context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Tokens.Surface.media.color))
             for row in 0..<Int((size.height / side).rounded(.up)) {
                 for column in 0..<Int((size.width / side).rounded(.up)) where (row + column).isMultiple(of: 2) {
                     let square = CGRect(x: CGFloat(column) * side, y: CGFloat(row) * side, width: side, height: side)
-                    context.fill(Path(square), with: .color(Color(white: 0.78)))
+                    context.fill(Path(square), with: .style(.quaternary))
                 }
             }
         }

@@ -1,4 +1,5 @@
 import CommonKit
+import CommonUI
 import GlyphKit
 import SwiftUI
 
@@ -7,7 +8,6 @@ import SwiftUI
 /// as a sheet from its row.
 struct SettingsView: View {
     @Bindable var library: GlyphLibrary
-    @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
     @State private var pendingDelete: GlyphModel?
     @State private var duplicateError: String?
@@ -19,7 +19,7 @@ struct SettingsView: View {
             } footer: {
                 if let warning {
                     Label(warning, systemImage: "eye.slash")
-                        .font(.footnote)
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -33,29 +33,25 @@ struct SettingsView: View {
                 Text("Glyphs")
             } footer: {
                 if let duplicateError {
-                    Text(duplicateError).font(.footnote).foregroundStyle(.red)
+                    Text(duplicateError).font(.callout).foregroundStyle(Tokens.Color.danger.color)
                 } else {
-                    Text("Click a glyph to edit it. Hold ⌘ and drag a glyph in the menu bar to move it.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                    SettingsFootnote("Click a glyph to edit it. Hold ⌘ and drag a glyph in the menu bar to move it.")
                 }
             }
 
             Section {
-                Toggle("Open at login", isOn: $openAtLogin)
+                OpenAtLoginToggle(error: $loginError)
             } header: {
                 Text("General")
             } footer: {
                 if let loginError {
-                    Text(loginError).font(.footnote).foregroundStyle(.secondary)
+                    SettingsFootnote(loginError)
                 }
             }
 
             CommonToolsSection()
         }
-        .formStyle(.grouped)
-        .frame(width: 460)
-        .fixedSize(horizontal: false, vertical: true)
+        .settingsForm()
         .sheet(item: editing) { model in
             GlyphEditor(model: model, library: library)
         }
@@ -66,35 +62,20 @@ struct SettingsView: View {
         } message: { _ in
             Text("It leaves the menu bar, and its copy of the image is deleted.")
         }
-        .onChange(of: openAtLogin) { _, enabled in
-            guard enabled != LoginItem.isEnabled else { return }
-            do {
-                try LoginItem.setEnabled(enabled)
-                loginError = nil
-            } catch {
-                loginError = error.localizedDescription
-                openAtLogin = LoginItem.isEnabled
-            }
-        }
     }
 
     private func row(_ model: GlyphModel) -> some View {
         let visible = model.spec.isVisible
-        return HStack(spacing: 10) {
+        return HStack(spacing: Tokens.Space.xs) {
             Button {
                 library.editing = model.id
             } label: {
-                HStack(spacing: 10) {
-                    GlyphTile(glyph: model.glyph)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(model.spec.name).lineLimit(1)
-                        Text(model.summary)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                    Spacer(minLength: 8)
+                LabeledRow(model.spec.name, subtitle: model.summary) {
+                    GlyphTile(glyph: model.glyph, size: 32)
+                } trailing: {
+                    EmptyView()
                 }
+                .lineLimit(1)
                 // Glyphs left out of the menu bar recede, so the shown set reads at a glance.
                 .opacity(visible ? 1 : 0.5)
                 .contentShape(Rectangle())
@@ -118,7 +99,7 @@ struct SettingsView: View {
             .disabled(visible && !library.canHide(model))
             .help(visible && !library.canHide(model) ? "One glyph always stays in the menu bar" : "Show in menu bar")
             Image(systemName: "chevron.right")
-                .font(.system(size: 11, weight: .semibold))
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(.tertiary)
         }
         .contextMenu {
