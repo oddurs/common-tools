@@ -1,16 +1,17 @@
 import AppKit
+import CommonUI
 import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let engine = Engine(prefs: Preferences())
     private var statusMenu: StatusMenu?
-    private lazy var settings = SettingsWindow(engine: engine)
+    private let settings = SettingsWindowHost(title: "Common Keys Settings")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.mainMenu = Self.mainMenu()
         engine.start()
-        statusMenu = StatusMenu(engine: engine) { [weak self] in self?.settings.show() }
+        statusMenu = StatusMenu(engine: engine) { [weak self] in self?.showSettings() }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -20,12 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Opening the app again while it runs, from Finder or Spotlight, shows Settings: a menu bar app
     /// has no other window to bring forward.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
-        settings.show()
+        showSettings()
         return false
     }
 
-    @objc func showSettings(_ sender: Any?) {
-        settings.show()
+    @objc func showSettings(_ sender: Any? = nil) {
+        settings.show { SettingsView().environment(engine) }
     }
 
     /// Never shown, since this is a menu bar app, but it gives the settings window ⌘, ⌘W and ⌘Q.
@@ -42,35 +43,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.submenu = app
         root.addItem(item)
         return root
-    }
-}
-
-/// The settings window: one short pane.
-@MainActor
-final class SettingsWindow {
-    private let engine: Engine
-    private var window: NSWindow?
-
-    init(engine: Engine) {
-        self.engine = engine
-    }
-
-    func show() {
-        let window = self.window ?? make()
-        self.window = window
-        NSApp.activate()
-        window.makeKeyAndOrderFront(nil)
-    }
-
-    private func make() -> NSWindow {
-        let host = NSHostingController(rootView: SettingsView().environment(engine))
-        host.sizingOptions = [.preferredContentSize]
-        let window = NSWindow(contentViewController: host)
-        window.title = "Common Keys Settings"
-        window.styleMask = [.titled, .closable]
-        window.isReleasedWhenClosed = false
-        window.center()
-        return window
     }
 }
 

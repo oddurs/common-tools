@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import SwiftUI
 
 /// A small note under the fixed word, in the spirit of the system's autocorrect bubble:
@@ -43,7 +44,7 @@ final class FixBubble {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.12
+            context.duration = Tokens.Motion.fast
             panel.animator().alphaValue = 1
         }
     }
@@ -51,7 +52,7 @@ final class FixBubble {
     private func fadeOut() {
         guard let panel, panel.isVisible else { return }
         NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.25
+            context.duration = Tokens.Motion.base
             panel.animator().alphaValue = 0
         } completionHandler: {
             MainActor.assumeIsolated { panel.orderOut(nil) }
@@ -80,21 +81,21 @@ private struct BubbleView: View {
     let undoHint: String?
 
     var body: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: Tokens.Space.xs) {
             Text(flag)
             Text(replacement).fontWeight(.medium)
             Text(original).strikethrough().foregroundStyle(.secondary)
             if let undoHint {
-                Text(undoHint).font(.system(size: 10, weight: .medium)).foregroundStyle(.tertiary)
+                Text(undoHint).font(.caption.weight(.medium)).foregroundStyle(.tertiary)
             }
         }
-        .font(.system(size: 12))
-        .padding(.horizontal, 9)
-        .padding(.vertical, 4)
+        .font(.callout)
+        .padding(.horizontal, Tokens.Space.xs)
+        .padding(.vertical, Tokens.Space.xxs)
         .background(.regularMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5))
-        .shadow(color: .black.opacity(0.15), radius: 4, y: 1)
-        .padding(6)
+        .overlay(Capsule().strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
+        // Room around the capsule, so the panel's edge never clips the hairline.
+        .padding(Tokens.Space.xxs)
         .fixedSize()
     }
 }

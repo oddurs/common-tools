@@ -1,5 +1,6 @@
 import AppKit
 import Carbon
+import CommonUI
 import SwiftUI
 import WorldKey
 
@@ -154,7 +155,7 @@ struct ShortcutRecorder: View {
     @State private var monitor: Any?
 
     var body: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: Tokens.Space.xxs) {
             Button(action: start) {
                 Text(recording ? "Type shortcut…" : shortcut?.display ?? "Record Shortcut")
                     .foregroundStyle(shortcut == nil || recording ? .secondary : .primary)

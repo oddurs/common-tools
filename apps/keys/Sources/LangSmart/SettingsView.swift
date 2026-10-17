@@ -1,10 +1,11 @@
 import CommonKit
-import ServiceManagement
+import CommonUI
 import SwiftUI
 import UniformTypeIdentifiers
 import WorldKey
 
-/// The whole of Settings. Common Keys works out the rest by watching how you type.
+/// The whole of Settings, laid out the Common Tools way: the app's own sections, then General, then
+/// the family. Common Keys works out the rest by watching how you type.
 struct SettingsView: View {
     @Environment(Engine.self) private var engine
     @State private var loginError: String?
@@ -28,9 +29,9 @@ struct SettingsView: View {
 
             Section {
                 ForEach(apps, id: \.self) { bundleID in
-                    HStack(spacing: 10) {
+                    LabeledRow(AppLabel.name(of: bundleID)) {
                         AppLabel(bundleID: bundleID)
-                        Spacer()
+                    } trailing: {
                         Picker("Layout", selection: choice(bundleID)) {
                             Text(automaticTitle(bundleID)).tag("")
                             Divider()
@@ -46,42 +47,34 @@ struct SettingsView: View {
             } header: {
                 Text("Exceptions")
             } footer: {
-                Text(
-                    "Pin an app to one layout, or pause Common Keys in it. Terminals and code editors start paused."
-                )
-                .foregroundStyle(.secondary)
+                SettingsFootnote(
+                    "Pin an app to one layout, or pause Common Keys in it. Terminals and code editors start paused.")
             }
 
             Section {
-                LabeledContent {
+                LabeledRow("What it has learned", subtitle: learnedSummary) {
                     Button("Forget Everything…", role: .destructive) { confirmingReset = true }
                         .disabled(engine.memory.isEmpty && engine.stats.days.isEmpty)
-                } label: {
-                    Text("What it has learned")
-                    Text(learnedSummary)
                 }
             } header: {
                 Text("Learning")
             } footer: {
-                Text("Kept on this Mac only, in ~/Library/Application Support/LangSmart.")
-                    .foregroundStyle(.secondary)
+                SettingsFootnote("Kept on this Mac only, in ~/Library/Application Support/LangSmart.")
             }
 
             Section {
-                Toggle("Open at login", isOn: openAtLogin)
+                OpenAtLoginToggle(error: $loginError)
             } header: {
                 Text("General")
             } footer: {
                 if let loginError {
-                    Text(loginError).foregroundStyle(.red)
+                    SettingsFootnote(loginError)
                 }
             }
 
             CommonToolsSection()
         }
-        .formStyle(.grouped)
-        .frame(width: 460)
-        .fixedSize(horizontal: false, vertical: true)
+        .settingsForm()
         .confirmationDialog("Forget everything Common Keys has learned?", isPresented: $confirmingReset) {
             Button("Forget Everything", role: .destructive) { engine.forgetEverything() }
         } message: {
@@ -152,25 +145,9 @@ struct SettingsView: View {
             engine.prefs.excludedApps.append(id)
         }
     }
-
-    private var openAtLogin: Binding<Bool> {
-        Binding(
-            get: { SMAppService.mainApp.status == .enabled },
-            set: { enable in
-                do {
-                    if enable {
-                        try SMAppService.mainApp.register()
-                    } else {
-                        try SMAppService.mainApp.unregister()
-                    }
-                    loginError = nil
-                } catch {
-                    loginError = error.localizedDescription
-                }
-            })
-    }
 }
 
+/// An app's icon for its row in Exceptions; the row's title is `name(of:)`.
 private struct AppLabel: View {
     let bundleID: String
 
@@ -183,13 +160,9 @@ private struct AppLabel: View {
 
     var body: some View {
         if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                .resizable()
-                .frame(width: 20, height: 20)
-            Text(Self.name(of: bundleID))
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable()
         } else {
-            Image(systemName: "app.dashed").frame(width: 20, height: 20).foregroundStyle(.tertiary)
-            Text(bundleID).foregroundStyle(.secondary)
+            Image(systemName: "app.dashed").foregroundStyle(.tertiary)
         }
     }
 }
