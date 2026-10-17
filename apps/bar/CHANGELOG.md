@@ -14,6 +14,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 - Clicking empty menu bar space no longer reveals hidden icons unless you turn it on in Settings. A stray click on blank bar space used to open or close the bar.
 - Smoother opening and closing. Hidden icons glide in from just past the screen's edge instead of from thousands of points away, the chevron turns with a gentle spring to point the way they go, and the ⌘ hairline fades in.
 - While you hold ⌘, a hairline marks where hidden icons begin, just left of the chevron. Icons dropped between it and the chevron stay visible; the divider is no longer moved back beside the chevron behind your back.

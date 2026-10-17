@@ -10,7 +10,10 @@ let package = Package(
         // Keeps its pre-rename name: the bundle's executable and login item match it.
         .executableTarget(
             name: "Reasonal",
-            dependencies: ["BarKit", .product(name: "CommonKit", package: "CommonKit")],
+            dependencies: [
+                "BarKit", .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ],
             linkerSettings: [.linkedFramework("ServiceManagement")]
         ),
         .testTarget(name: "BarKitTests", dependencies: ["BarKit"]),
