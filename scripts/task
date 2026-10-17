@@ -15,10 +15,10 @@ root="$(pwd)"
 verb="${1:-}"
 [ $# -gt 0 ] && shift
 
-all_apps() { ls apps 2>/dev/null || :; }
+all_apps() { ls "$root/apps" 2>/dev/null || :; }
 
 # A field of one app from apps.json. plutil reads JSON, so no other tool is needed.
-app_field() { plutil -extract "$1.$2" raw -o - apps.json; }
+app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
 
 changed_areas() {
     base="${changed_base:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)}"

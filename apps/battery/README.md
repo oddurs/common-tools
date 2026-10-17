@@ -100,10 +100,10 @@ Notifications need the built app: run bare from `.build`, the app has no bundle 
 Common Battery lives in `apps/battery/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
 
 ```sh
-scripts/setup                       # once: wire the git hooks
-scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/task run battery       # build, quit the running copy, open the new one
-scripts/task check battery     # lint + test + build, what CI runs for this app
+scripts/setup                         # once: wire the git hooks
+scripts/dev-cert                      # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run battery              # build, quit the running copy, open the new one
+scripts/task check battery            # lint + test + build, what CI runs for this app
 scripts/task test battery --filter=X  # only the tests whose name matches
 ```
 

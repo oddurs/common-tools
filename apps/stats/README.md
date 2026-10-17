@@ -89,8 +89,8 @@ Common Stats lives in `apps/stats/` of [oddurs/common-tools](https://github.com/
 ```sh
 scripts/setup                       # once: wire the git hooks
 scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/task run stats         # build, quit the running copy, open the new one
-scripts/task check stats       # lint + test + build, what CI runs for this app
+scripts/task run stats              # build, quit the running copy, open the new one
+scripts/task check stats            # lint + test + build, what CI runs for this app
 scripts/task test stats --filter=X  # only the tests whose name matches
 ```
 

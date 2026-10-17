@@ -54,7 +54,7 @@ More in the [documentation](https://oddurs.github.io/common-tools/bar/docs/).
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                          # universal build → build/bar/Common Bar.app
+scripts/task build bar                          # universal build → build/bar/Common Bar.app
 mv "build/bar/Common Bar.app" /Applications/
 ```
 
@@ -63,10 +63,10 @@ mv "build/bar/Common Bar.app" /Applications/
 Common Bar lives in `apps/bar/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
 
 ```sh
-scripts/setup                       # once: wire the git hooks
-scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/task run bar           # build, quit the running copy, open the new one
-scripts/task check bar         # lint + test + build, what CI runs for this app
+scripts/setup                     # once: wire the git hooks
+scripts/dev-cert                  # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run bar              # build, quit the running copy, open the new one
+scripts/task check bar            # lint + test + build, what CI runs for this app
 scripts/task test bar --filter=X  # only the tests whose name matches
 ```
 

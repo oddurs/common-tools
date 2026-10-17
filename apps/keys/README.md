@@ -172,7 +172,7 @@ The Command Line Tools are enough; Xcode is not required.
 
 ```sh
 scripts/dev-cert                          # once: a stable signing identity, see below
-scripts/task build                        # universal build → build/keys/Common Keys.app and build/worldkey
+scripts/task build keys                        # universal build → build/keys/Common Keys.app and build/worldkey
 mv "build/keys/Common Keys.app" /Applications/
 ```
 
@@ -186,10 +186,10 @@ the grant again.
 Common Keys lives in `apps/keys/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
 
 ```sh
-scripts/setup                       # once: wire the git hooks
-scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/task run keys          # build, quit the running copy, open the new one
-scripts/task check keys        # lint + test + build, what CI runs for this app
+scripts/setup                      # once: wire the git hooks
+scripts/dev-cert                   # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run keys              # build, quit the running copy, open the new one
+scripts/task check keys            # lint + test + build, what CI runs for this app
 scripts/task test keys --filter=X  # only the tests whose name matches
 ```
 

@@ -53,7 +53,7 @@ A glyph's image and its text each keep their own edits, so switching between the
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                          # universal build → build/glyph/Common Glyph.app
+scripts/task build glyph                          # universal build → build/glyph/Common Glyph.app
 mv "build/glyph/Common Glyph.app" /Applications/
 ```
 
@@ -64,8 +64,8 @@ Common Glyph lives in `apps/glyph/` of [oddurs/common-tools](https://github.com/
 ```sh
 scripts/setup                       # once: wire the git hooks
 scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/task run glyph         # build, quit the running copy, open the new one
-scripts/task check glyph       # lint + test + build, what CI runs for this app
+scripts/task run glyph              # build, quit the running copy, open the new one
+scripts/task check glyph            # lint + test + build, what CI runs for this app
 scripts/task test glyph --filter=X  # only the tests whose name matches
 ```
 

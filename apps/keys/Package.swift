@@ -4,12 +4,12 @@ import PackageDescription
 let package = Package(
     name: "CommonKeys",
     platforms: [.macOS("14.4")],
-    dependencies: [.package(path: "../../packages/CommonKit")],
     products: [
         .library(name: "WorldKey", targets: ["WorldKey"]),
         .executable(name: "worldkey", targets: ["WorldKeyCLI"]),
         .executable(name: "LangSmart", targets: ["LangSmart"]),
     ],
+    dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
         .target(name: "WorldKey"),
         .executableTarget(

@@ -2,5 +2,3 @@ pnpm-lock.yaml
 static/
 build/
 .svelte-kit/
-standard/app/
-standard/snippets/
