@@ -1,0 +1,97 @@
+# Common Shot
+
+[![CI](https://github.com/oddurs/common-shot/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-shot/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+Screenshots straight to the clipboard, for macOS. Press ⇧⌘2, drag over what you want, and paste it: into Claude, a terminal, a chat, a pull request, or a document.
+
+- **The screen freezes first.** The shortcut captures every display before anything moves, so a menu, a tooltip, or a hover state is still there while you choose.
+- **Drag, click, or Return.** Drag for an area, with its size in pixels and a loupe for the exact edge. Click for the window under the pointer, captured on its own without what overlaps it. Return for the whole screen. Escape, a right-click, or the shortcut again cancels.
+- **Hold ⌥ to copy the text instead.** The same gestures read the text in the shot on your Mac and copy that: an error message, a log, a stack trace. Code keeps its indentation. Text is exact and costs a fraction of the tokens an image does.
+- **Sized for prompts.** Claude reads an image at about one token per 750 pixels, so by default a shot's long edge is capped at 1568 px: a full Retina screen costs about 2,100 tokens instead of 4,800, and a crop of an error or a few lines of code is left alone. Full resolution is one switch away.
+- **PNG on the clipboard.** Claude Code pastes it with **Ctrl+V** (not ⌘V, which pastes text), and a shot taken from a terminal says so; chats, issues, and documents take it with ⌘V. Or drag the preview into the terminal, which drops in the file's path for Claude Code to read.
+- **Recent shots in the menu.** The menu bar menu shows the last few as thumbnails with their size and token cost; click one to copy it again. Settings decides how many are kept.
+- **A preview in the corner** shows what was copied and roughly what it costs in tokens. It fades on its own; hover to keep it, drag the thumbnail out as a file, or click to dismiss it.
+
+Free and open source under the MIT licence. No network access, no analytics, and one permission: Screen Recording, which every screenshot tool needs.
+
+## Install
+
+Requires macOS 14 or later.
+
+1. Download [CommonShot.zip](https://github.com/oddurs/common-shot/releases/latest/download/CommonShot.zip) from the [latest release](https://github.com/oddurs/common-shot/releases/latest), unzip it, and move **Common Shot** to Applications.
+2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
+
+   ```sh
+   xattr -dr com.apple.quarantine "/Applications/Common Shot.app"
+   ```
+
+3. Press ⇧⌘2. macOS asks for Screen Recording access; turn on Common Shot in **Privacy & Security › Screen & System Audio Recording**, then quit and reopen it.
+4. Turn on **Open at login** in Settings.
+
+## Usage
+
+| Key | Does |
+| --- | --- |
+| ⇧⌘2 | Freeze the screen and start (change it in Settings) |
+| Drag | Copy that area |
+| Click | Copy the highlighted window, on its own |
+| ↩ | Copy the whole screen under the pointer |
+| ⌥ with any of these | Copy the text in it instead of the image |
+| ⎋, right-click, ⇧⌘2 | Cancel |
+| Ctrl+V in Claude Code | Paste the shot into the prompt |
+
+Text recognition runs on your Mac with Vision. It reads code well but not perfectly: a line holding only a `}` and an underscore on its own are often missed. When every character matters, copy the image.
+
+## Settings
+
+- **Shortcut**: click and press a new one. Escape cancels; Delete restores ⇧⌘2.
+- **Access**: whether Screen Recording is allowed, with a button to the right pane of System Settings.
+- **Image**: for prompts (long edge at most 1568 px) or full resolution, and whether to show the preview.
+- **History**: keep none, or the last 5 to 100 shots (the newest 6 in the menu, the rest under Older Shots), in `~/Library/Application Support/Common Shot/History`. Show it in Finder or clear it.
+- **General**: show in the menu bar, and open at login. With the menu bar item hidden, open Common Shot from Finder to get back to Settings.
+
+## Build from source
+
+The Command Line Tools are enough; Xcode is not required.
+
+```sh
+scripts/task build                 # universal build → build/Common Shot.app
+mv "build/Common Shot.app" /Applications/
+```
+
+macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/setup-signing` once per Mac: it creates a self-signed "Common Tools Local Signing" identity in your login keychain and trusts it for code signing (macOS asks for your password), and `scripts/task build` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
+
+## Development
+
+```sh
+scripts/setup           # once: wire the git hooks
+scripts/agent doctor    # check tools and repository state
+```
+
+| Command | Does |
+| --- | --- |
+| `scripts/task check` | lint + test + build, exactly what CI runs |
+| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
+| `scripts/agent commit "<type>: subject"` | Conventional Commit, checked by the hook |
+| `scripts/agent pr` | full check, push, open the pull request |
+| `scripts/agent sync` | rebase onto `origin/main` |
+| `scripts/agent done` | after merge: remove the worktree and branch |
+| `scripts/agent list` | worktrees, branches, and pull request state |
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+
+Two flags check changes without pressing the shortcut. Both need Screen Recording access for the terminal running them, and neither touches your settings:
+
+- `swift build && .build/debug/CommonShot --capture out.png` runs the whole pipeline on the main display: freeze, size, encode, copy to the clipboard, and write what the clipboard holds to `out.png`.
+- `.build/debug/CommonShot --overlay out.png 300,250,640,380` shows the overlay with that area dragged (points from the bottom-left), or with the window under the pointer highlighted if no area is given, captures it, and quits.
+
+Layout:
+
+- `Sources/ShotKit`: selection geometry, points to pixels, window hit-testing, what a press and release means, image sizing and token estimates, putting recognised text back in reading order with indentation, the shortcut model, and file naming. No UI, so it can be tested on its own.
+- `Sources/CommonShot`: the global shortcut, ScreenCaptureKit, the overlay and loupe, Vision text recognition, the clipboard, the history, the preview, the menu bar item, and Settings.
+- `Tests`: ShotKit unit tests, and checks that the app bundle keeps its identity.
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
