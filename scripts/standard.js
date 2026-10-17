@@ -1,6 +1,7 @@
 // Keeps the three app repositories on the Common Tools app standard (standard/).
 //
-//   node scripts/standard.js check [app ...] [--from <dir>]    report drift; exit 1 if any
+//   node scripts/standard.js check [app ...] [--from <dir> | --tree]   report drift; exit 1 if any
+//   node scripts/standard.js repos                              the published app repositories
 //   node scripts/standard.js apply <app> <worktree> [--seeds <file.json>]
 //   node scripts/standard.js settings <check|apply> [app ...]   GitHub repository settings (needs gh)
 //
@@ -20,7 +21,7 @@ import {
 } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { compare, merge, owned, render, settings } from '../standard/lib.js';
+import { adopt, compare, merge, owned, regions, render, settings } from '../standard/lib.js';
 
 const root = fileURLToPath(new URL('..', import.meta.url));
 const templates = join(root, 'standard', 'app');
@@ -37,6 +38,8 @@ const option = (name) => {
 	return at >= 0 ? args.splice(at, 2)[1] : undefined;
 };
 const from = option('--from');
+// Read each app's working tree instead of its main branch: for apps not on GitHub yet.
+const tree = args.includes('--tree') ? (args.splice(args.indexOf('--tree'), 1), true) : false;
 const seedsFile = option('--seeds');
 const [command, ...rest] = args;
 
@@ -91,6 +94,18 @@ function reader(app) {
 		};
 	}
 	// The app repositories sit beside this one's main checkout, even when this runs in a worktree.
+	if (tree) {
+		const common = execFileSync(
+			'git',
+			['-C', root, 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+			{ encoding: 'utf8' }
+		).trim();
+		const base = join(dirname(dirname(common)), app.DIR);
+		return {
+			read: (path) => (existsSync(join(base, path)) ? readFileSync(join(base, path)) : null),
+			executable: (path) => (statSync(join(base, path)).mode & 0o111) !== 0
+		};
+	}
 	const common = execFileSync(
 		'git',
 		['-C', root, 'rev-parse', '--path-format=absolute', '--git-common-dir'],
@@ -142,10 +157,14 @@ function apply(app, worktree) {
 		const target = join(worktree, file.path);
 		mkdirSync(dirname(target), { recursive: true });
 		const current = existsSync(target) ? readFileSync(target) : null;
-		const next =
-			file.text === null
-				? file.bytes
-				: Buffer.from(merge(file.text, current?.toString('utf8'), seeds[file.path]));
+		let next = file.bytes;
+		if (file.text !== null) {
+			const text = current?.toString('utf8');
+			// A file from before the standard has no markers: carry its own text into the regions.
+			const marked = Boolean(text) && regions(text).some((part) => 'region' in part);
+			const found = text && !marked ? adopt(file.path, text, file.text) : {};
+			next = Buffer.from(merge(file.text, marked ? text : '', { ...found, ...seeds[file.path] }));
+		}
 		if (!current || !current.equals(next)) {
 			writeFileSync(target, next);
 			console.log(`wrote ${file.path}`);
@@ -234,11 +253,24 @@ let failed = false;
 switch (command) {
 	case 'check':
 		for (const app of pick(rest)) {
+			if (!app.published && !tree && !from) {
+				console.log(`- ${app.NAME} (${app.REPO}): not on GitHub yet; check its working tree with --tree`);
+				continue;
+			}
 			const problems = check(app);
 			console.log(problems.length ? `✗ ${app.NAME} (${app.REPO})` : `✓ ${app.NAME} (${app.REPO})`);
 			for (const p of problems) console.log(`    ${p}`);
 			failed ||= problems.length > 0;
 		}
+		break;
+	case 'repos':
+		// The published app repositories, for CI to clone.
+		console.log(
+			Object.values(apps)
+				.filter((app) => app.published)
+				.map((app) => app.REPO)
+				.join('\n')
+		);
 		break;
 	case 'apply': {
 		const [name, worktree] = rest;

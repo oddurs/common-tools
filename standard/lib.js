@@ -47,6 +47,58 @@ export function regions(text) {
 const bodies = (parts) =>
 	Object.fromEntries(parts.filter((p) => 'region' in p).map((p) => [p.region, p.body]));
 
+/** The body of a Markdown `## heading` section, without the heading. */
+function section(markdown, heading) {
+	const lines = markdown.split('\n');
+	const start = lines.findIndex((line) => line.trim() === `## ${heading}`);
+	if (start < 0) return '';
+	const end = lines.findIndex((line, i) => i > start && line.startsWith('## '));
+	return lines
+		.slice(start + 1, end < 0 ? undefined : end)
+		.join('\n')
+		.trim();
+}
+
+/**
+ * For a file that predates the standard (no region markers yet), the text that would go in its
+ * regions, found where every app kept it before. Adopting the standard keeps an app's own words.
+ */
+export function adopt(path, current, template) {
+	const shared = template.split('\n');
+	switch (path) {
+		case 'CLAUDE.md':
+			return {
+				about: current.split('\n## ')[0].split('\n').slice(1).join('\n').trim(),
+				code: section(current, 'Code')
+			};
+		case 'SECURITY.md': {
+			const last = current
+				.trim()
+				.split(/\n\s*\n/)
+				.pop()
+				.trim();
+			return { surface: template.includes(last) || last.startsWith('#') ? '' : last };
+		}
+		case 'CONTRIBUTING.md': {
+			const after = current.split('A bug fix comes with the test that would have caught it.')[1];
+			return { checks: after ? after.split('\n\n')[0].trim() : '' };
+		}
+		case '.github/PULL_REQUEST_TEMPLATE.md':
+			return {
+				checklist: current
+					.split('\n')
+					.filter((line) => line.startsWith('- [ ]') && !shared.includes(line))
+					.join('\n')
+			};
+		case 'scripts/make-icon.swift': {
+			const glyph = current.split('// MARK: - Glyph')[1]?.split('func render(')[0];
+			return { glyph: glyph ? glyph.trim() : '' };
+		}
+		default:
+			return {};
+	}
+}
+
 /** The template's shared text with each region's body taken from `current`, else `seeds`, else kept empty. */
 export function merge(template, current = '', seeds = {}) {
 	const own = current ? bodies(regions(current)) : {};
@@ -105,8 +157,8 @@ export const owned = {
 			if (!/^\[\d+\.\d+\.\d+\] - \d{4}-\d{2}-\d{2}$/.test(s))
 				problems.push(`"## ${s}" isn't "## [x.y.z] - YYYY-MM-DD"`);
 		const repo = `https://github.com/oddurs/${app.REPO}/`;
-		if (!text.includes(`[Unreleased]: ${repo}compare/`))
-			problems.push(`needs an [Unreleased]: ${repo}compare/… link`);
+		// Before the first release there's nothing to compare against, so any link into the repository will do.
+		if (!text.includes(`[Unreleased]: ${repo}`)) problems.push(`needs an [Unreleased]: ${repo}… link`);
 		return problems;
 	},
 	'Package.swift'(text, app) {

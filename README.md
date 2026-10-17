@@ -17,7 +17,7 @@ Each app lives in its own repository and publishes its releases there. This repo
 
 A [SvelteKit](https://svelte.dev/docs/kit) site, prerendered with `adapter-static` and deployed to GitHub Pages on every push to `main`.
 
-- `src/lib/tools.ts`: the three apps: names, repositories, and release asset names. Download buttons point at `releases/latest/download/<asset>`, so they always get the newest build without a site change.
+- `src/lib/tools.ts`: the apps: names, repositories, and release asset names. Download buttons point at `releases/latest/download/<asset>`, so they always get the newest build without a site change.
 - `src/routes/(site)/`: the pages. `<tool>/` is the product page, `<tool>/docs/` the documentation.
 - `src/lib/releases.ts`: at build time, each app's latest release (version, date, download size) from the GitHub API, and its notes from that release's `CHANGELOG.md`. The site rebuilds daily, so a new release appears without a change here. Without network access the pages still build, just without those details. Set `GITHUB_TOKEN` to raise the API rate limit; CI passes its own.
 - `src/lib/<tool>/`: each app's demo scene. A scene is a pure function of time (`demo.ts`) drawn by a Svelte component (`Demo.svelte`).
@@ -53,7 +53,7 @@ pnpm glyphs                          # re-render static/symbols/ after adding a 
 
 ## The app standard
 
-The three apps share one setup, kept here in `standard/` and checked daily by the Standard workflow:
+Every Common Tools app (Stats, Keys, Bar, Glyph, Command, Shot, Battery) shares one setup, kept here in `standard/` and checked daily by the Standard workflow for each one that's on GitHub:
 
 - `standard/app/` holds the repository files every app has: dotfiles, git hooks, CI, release and Dependabot workflows, `scripts/agent`, `task`, `setup`, `dev-cert`, and `release`, the licence and community files, CLAUDE.md, CONTRIBUTING, SECURITY, the PR template, the icon renderer, and the Common Tools Settings section with its icons. Text between `standard:begin <name>` and `standard:end <name>` markers is each app's own; everything else must match.
 - `standard/apps.json` holds what differs: names, bundle identifiers, the deployment target, extra command-line tools, topics.
@@ -66,7 +66,7 @@ node scripts/standard.js settings check              # GitHub settings: merges, 
 node scripts/standard.js settings apply bar          # set them
 ```
 
-To change something every app has: edit `standard/`, then apply it to each app in a worktree and ship it there.
+To change something every app has: edit `standard/`, then apply it to each app in a worktree and ship it there. `apply` also adopts an app that predates the standard: its own text moves into the marked regions. A new app joins by adding it to `standard/apps.json` and running `apply`.
 
 ## Development
 
