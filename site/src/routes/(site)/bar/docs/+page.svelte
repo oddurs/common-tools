@@ -78,9 +78,9 @@
 	<h2 id="spacers">Spacers</h2>
 	<p>
 		Spacers are blank gaps you can put between icons to group them. Add up to five in
-		<a href="#settings">Settings</a>. Each is an empty 24-point slot that shows a dashed outline only
-		while you hold <kbd>⌘</kbd> over the menu bar, so you can find it and drag it into place. New spacers appear
-		just right of the chevron; drag one past the chevron and it hides like any icon. Removing a spacer remembers
+		<a href="#settings">Settings</a>. Each is a narrow empty slot that shows a dashed outline only while
+		you hold <kbd>⌘</kbd> over the menu bar, so you can find it and drag it into place. New spacers appear just
+		right of the chevron; drag one past the chevron and it hides like any icon. Removing a spacer remembers
 		where it was for when you add it back.
 	</p>
 
