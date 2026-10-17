@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import GlyphKit
 import SwiftUI
 import UniformTypeIdentifiers
@@ -9,12 +10,11 @@ final class MenuBarController: NSObject {
     private static let onboardedKey = "onboarded"
 
     let library: GlyphLibrary
-    private let settings: SettingsWindow
+    private let settings = SettingsWindowHost(title: "Common Glyph Settings")
     private var items: [UUID: GlyphItem] = [:]
 
     init(library: GlyphLibrary) {
         self.library = library
-        settings = SettingsWindow(library: library)
         super.init()
         library.onChange = { [weak self] in self?.sync() }
         sync()
@@ -42,7 +42,8 @@ final class MenuBarController: NSObject {
     /// Opens Settings, with `glyph`'s editor on top of it if one is given.
     func showSettings(_ glyph: GlyphModel?) {
         if let glyph { library.editing = glyph.id }
-        settings.show()
+        // A fresh view each time; the open editor lives in the library, so it survives the rebuild.
+        settings.show { SettingsView(library: library) }
     }
 
     func newGlyph() {

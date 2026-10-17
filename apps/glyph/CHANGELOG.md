@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Changed
+
+- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats, Common Keys, and Common Bar.
+
 ### Added
 
 - Any number of glyphs, each its own menu bar item showing an image, an animated GIF, an emoji, or a piece of text.

@@ -9,7 +9,10 @@ let package = Package(
         .target(name: "GlyphKit"),
         .executableTarget(
             name: "CommonGlyph",
-            dependencies: ["GlyphKit", .product(name: "CommonKit", package: "CommonKit")],
+            dependencies: [
+                "GlyphKit", .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ],
             linkerSettings: [.linkedFramework("ServiceManagement"), .linkedFramework("Vision")]
         ),
         .testTarget(name: "GlyphKitTests", dependencies: ["GlyphKit"]),
