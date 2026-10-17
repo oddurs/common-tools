@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import CommonUI
 import StatKit
 
@@ -7,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var model: AppModel!
     private var statusItem: StatusItemController!
     private let settings = SettingsWindowHost(title: "Common Stats Settings")
+    private let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Two copies (say, a build folder and /Applications) would draw two bars.
@@ -24,6 +26,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = StatusItemController(model: model) { [unowned self] in showSettings() }
         model.onUpdate = { [weak statusItem] in statusItem?.render() }
         model.start()
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(line: "System stats in the menu bar: CPU, GPU, memory, network, disk, storage, and battery."))
+        updates.start()
         offerSettingsIfHiddenOnFirstLaunch()
 
         // Nobody can see the menu bar while the displays sleep; stop waking the CPU for it.
@@ -53,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func showSettings() {
-        settings.show { SettingsView(model: model) }
+        settings.show { SettingsView(model: model, updates: updates) }
     }
 
     private func isOlder(_ other: NSRunningApplication) -> Bool {

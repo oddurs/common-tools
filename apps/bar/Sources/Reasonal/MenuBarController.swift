@@ -1,5 +1,6 @@
 import AppKit
 import BarKit
+import CommonKit
 import CommonUI
 
 /// Three status items, right to left: a chevron that toggles, a divider left of it, and
@@ -40,6 +41,7 @@ final class MenuBarController: NSObject {
     private var alwaysHidden = Preferences.isOn(Preferences.alwaysHiddenSection)
     private let demo = DragDemoOverlay()
     private let settings = SettingsWindowHost(title: "Common Bar Settings")
+    private let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     override init() {
         Preferences.register()
@@ -367,11 +369,18 @@ final class MenuBarController: NSObject {
     }
 
     @objc func showSettings() {
-        settings.show { SettingsView() }
+        settings.show { SettingsView(updates: updates) }
     }
 }
 
 extension MenuBarController: NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        // The how-to plays in the menu bar beside the chevron, so both fit on a first launch.
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(line: "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them."))
+        updates.start()
+    }
+
     /// Opening the app again while it runs is how people look for its settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings()

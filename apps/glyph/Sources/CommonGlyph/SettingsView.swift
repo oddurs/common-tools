@@ -8,6 +8,7 @@ import SwiftUI
 /// as a sheet from its row.
 struct SettingsView: View {
     @Bindable var library: GlyphLibrary
+    let updates: UpdateCheck
     @State private var loginProblem: LoginItem.Problem?
     @State private var pendingDelete: GlyphModel?
     @State private var duplicateError: String?
@@ -39,10 +40,14 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: updates)
             } header: {
                 Text("General")
             } footer: {
-                OpenAtLoginFootnote(loginProblem)
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: updates)
+                }
             }
 
             CommonToolsSection()

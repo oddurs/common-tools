@@ -8,6 +8,7 @@ import WorldKey
 /// the family. Common Keys works out the rest by watching how you type.
 struct SettingsView: View {
     @Environment(Engine.self) private var engine
+    let updates: UpdateCheck
     @State private var loginProblem: LoginItem.Problem?
     @State private var confirmingReset = false
     private static let paused = "paused"
@@ -64,10 +65,14 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: updates)
             } header: {
                 Text("General")
             } footer: {
-                OpenAtLoginFootnote(loginProblem)
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: updates)
+                }
             }
 
             CommonToolsSection()

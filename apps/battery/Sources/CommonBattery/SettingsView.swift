@@ -68,10 +68,14 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: controller.updates)
             } header: {
                 Text("General")
             } footer: {
-                OpenAtLoginFootnote(loginProblem)
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: controller.updates)
+                }
             }
 
             CommonToolsSection()

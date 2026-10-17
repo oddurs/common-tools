@@ -103,12 +103,14 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: controller.updates)
                 Toggle("Show in menu bar", isOn: $preferences.showsMenuBarItem)
             } header: {
                 Text("General")
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                     OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: controller.updates)
                     if !preferences.showsMenuBarItem {
                         SettingsFootnote("Open Common Command from Finder again to get back to Settings.")
                     }
