@@ -268,7 +268,7 @@ private struct Keycap: View {
     }
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: Tokens.Radius.xs, style: .continuous)
         Text(label)
             .font(.callout.weight(.medium))
             .frame(minWidth: 20, minHeight: 20)

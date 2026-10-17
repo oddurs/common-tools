@@ -27,7 +27,7 @@ import Testing
             ("text.inverse", Tokens.Text.inverse), ("surface.base", Tokens.Surface.base),
             ("surface.card", Tokens.Surface.card), ("color.accent", Tokens.Color.accent),
             ("color.border", Tokens.Color.border), ("color.borderCard", Tokens.Color.borderCard),
-            ("color.danger", Tokens.Color.danger),
+            ("color.danger", Tokens.Color.danger), ("color.success", Tokens.Color.success),
         ]
         for appearance in [NSAppearance.Name.aqua, .darkAqua] {
             let resolved = try #require(NSAppearance(named: appearance))
@@ -64,12 +64,29 @@ import Testing
         ]
         #expect(space == space.sorted())
         #expect(Set(space).count == space.count)
-        #expect(Tokens.Radius.sm < Tokens.Radius.md && Tokens.Radius.md < Tokens.Radius.lg)
+        #expect(Tokens.Radius.xs < Tokens.Radius.sm && Tokens.Radius.sm < Tokens.Radius.md)
+        #expect(Tokens.Radius.md < Tokens.Radius.lg)
+        #expect(Tokens.Layout.cardInset == Tokens.Space.sm)
         #expect(Tokens.Motion.fast < Tokens.Motion.base && Tokens.Motion.base < Tokens.Motion.slow)
     }
 
     @Test @MainActor func motionIsNilOnlyUnderReducedMotion() {
         let animation = Tokens.Motion.animation()
         #expect((animation == nil) == NSWorkspace.shared.accessibilityDisplayShouldReduceMotion)
+    }
+
+    @Test @MainActor func appKitDurationIsZeroOnlyUnderReducedMotion() {
+        let reduced = NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        #expect(Tokens.Motion.duration(Tokens.Motion.fast) == (reduced ? 0 : Tokens.Motion.fast))
+        #expect(Tokens.Motion.duration() == (reduced ? 0 : Tokens.Motion.base))
+    }
+
+    @Test @MainActor func appKitAnimationRunsItsChangesAndCompletes() async {
+        // The group runs `changes` at once and reports back when it ends, however short it is.
+        var changed = false
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            Tokens.Motion.animate(0.01, changes: { changed = true }, completion: { done.resume() })
+        }
+        #expect(changed)
     }
 }

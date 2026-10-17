@@ -1,7 +1,7 @@
 /*
  * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
  * change the source and run `node packages/common-ui/build.mjs`.
- * source sha256: 1b4230a12c81bc187425fdeb0d632def0340b6fc9fff925b09201d76ee58288f
+ * source sha256: 9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c
  */
 :root {
 	color-scheme: light dark;
@@ -19,6 +19,7 @@
 	--color-border-card: #0000000f;
 	--color-focus: #0066cc;
 	--color-danger: #d70015;
+	--color-success: #1e7a35;
 	--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 	--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
@@ -54,6 +55,7 @@
 	--space-xxl: 40px;
 	--space-xxxl: 56px;
 	--space-section: 72px;
+	--radius-xs: 4px;
 	--radius-sm: 8px;
 	--radius-md: 12px;
 	--radius-lg: 16px;
@@ -95,6 +97,7 @@
 		--color-border-card: #ffffff0f;
 		--color-focus: #2997ff;
 		--color-danger: #ff453a;
+		--color-success: #30d158;
 		--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 		--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
 		--shadow-icon: 0 8px 18px rgba(0, 0, 0, 0.5);

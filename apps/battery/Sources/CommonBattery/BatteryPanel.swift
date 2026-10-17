@@ -126,9 +126,10 @@ struct ChargeChart: View {
                     for stretch in stretches {
                         let points = stretch.map(point)
                         // A stretch takes the colour of what happened during it: its second sample's state.
-                        // Charging is green, the system's; the rest is the user's accent.
+                        // Charging is the success colour; the rest is the user's accent.
                         let ink: Color =
-                            (stretch.dropFirst().first ?? stretch[0]).charging ? .green : Tokens.Color.accent.color
+                            (stretch.dropFirst().first ?? stretch[0]).charging
+                            ? Tokens.Color.success.color : Tokens.Color.accent.color
                         guard points.count > 1 else {
                             let p = points[0]
                             context.fill(

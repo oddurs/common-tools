@@ -85,7 +85,7 @@ final class Toast {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup {
-            $0.duration = Self.fade(Tokens.Motion.fast); panel.animator().alphaValue = 1
+            $0.duration = Tokens.Motion.duration(Tokens.Motion.fast); panel.animator().alphaValue = 1
         }
         self.panel = panel
         scheduleHide(after: Self.shownFor)
@@ -98,7 +98,7 @@ final class Toast {
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
             await NSAnimationContext.runAnimationGroup {
-                $0.duration = Self.fade(Tokens.Motion.base); panel.animator().alphaValue = 0
+                $0.duration = Tokens.Motion.duration(Tokens.Motion.base); panel.animator().alphaValue = 0
             }
             guard !Task.isCancelled else { return }
             panel.orderOut(nil)
@@ -110,11 +110,6 @@ final class Toast {
         hideTask?.cancel()
         panel?.orderOut(nil)
         panel = nil
-    }
-
-    /// The motion tokens' duration, or none while the user asks for reduced motion.
-    private static func fade(_ duration: TimeInterval) -> TimeInterval {
-        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : duration
     }
 
     private static func label(_ text: String, color: SemanticColor) -> NSTextField {

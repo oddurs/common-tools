@@ -1,6 +1,6 @@
 // Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
 // change the source and run `node packages/common-ui/build.mjs`.
-// source sha256: 1b4230a12c81bc187425fdeb0d632def0340b6fc9fff925b09201d76ee58288f
+// source sha256: 9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c
 
 import AppKit
 import SwiftUI
@@ -9,7 +9,7 @@ import SwiftUI
 /// motion, and the layout widths. Type comes from the system text styles, not from here.
 public enum Tokens {
     /// SHA-256 of tokens.json when this file was generated. A test compares it to the file.
-    public static let sourceHash = "1b4230a12c81bc187425fdeb0d632def0340b6fc9fff925b09201d76ee58288f"
+    public static let sourceHash = "9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c"
 
     public enum Text {
         /// Body text and headings. macOS: `labelColor`. Site: #1d1d1f / #f5f5f7.
@@ -64,6 +64,9 @@ public enum Tokens {
 
         /// An error, or a destructive action. macOS: `systemRed`. Site: #d70015 / #ff453a.
         public static let danger = SemanticColor(system: .systemRed)
+
+        /// Something that is going well: charging, allowed, done. macOS: `systemGreen`. Site: #1e7a35 / #30d158.
+        public static let success = SemanticColor(system: .systemGreen)
     }
 
     public enum Weight {
@@ -85,8 +88,9 @@ public enum Tokens {
         public static let section: CGFloat = 72
     }
 
-    /// Radius, in points.
+    /// Radius, in points. xs is for small raised pieces such as a key cap; sm and up for cards and panels.
     public enum Radius {
+        public static let xs: CGFloat = 4
         public static let sm: CGFloat = 8
         public static let md: CGFloat = 12
         public static let lg: CGFloat = 16

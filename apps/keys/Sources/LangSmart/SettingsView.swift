@@ -8,7 +8,7 @@ import WorldKey
 /// the family. Common Keys works out the rest by watching how you type.
 struct SettingsView: View {
     @Environment(Engine.self) private var engine
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
     @State private var confirmingReset = false
     private static let paused = "paused"
 
@@ -29,7 +29,7 @@ struct SettingsView: View {
 
             Section {
                 ForEach(apps, id: \.self) { bundleID in
-                    LabeledRow(AppLabel.name(of: bundleID)) {
+                    LabeledRow(AppLabel.name(of: bundleID), leadingSize: 20) {
                         AppLabel(bundleID: bundleID)
                     } trailing: {
                         Picker("Layout", selection: choice(bundleID)) {
@@ -63,13 +63,11 @@ struct SettingsView: View {
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
             } header: {
                 Text("General")
             } footer: {
-                if let loginError {
-                    SettingsFootnote(loginError)
-                }
+                OpenAtLoginFootnote(loginProblem)
             }
 
             CommonToolsSection()

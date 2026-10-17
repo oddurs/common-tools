@@ -1,4 +1,5 @@
 import AppKit
+import QuartzCore
 import SwiftUI
 
 /// A colour named for what it is for, usable from AppKit and SwiftUI. Where macOS has a semantic
@@ -51,5 +52,32 @@ extension Tokens.Motion {
     public static func animation(_ duration: TimeInterval = base, easing: Curve = Easing.standard) -> Animation? {
         if NSWorkspace.shared.accessibilityDisplayShouldReduceMotion { return nil }
         return .timingCurve(easing.x1, easing.y1, easing.x2, easing.y2, duration: duration)
+    }
+
+    /// A duration for AppKit, zero while the user asks for reduced motion, so an
+    /// `NSAnimationContext` set from it finishes at once.
+    @MainActor
+    public static func duration(_ duration: TimeInterval = base) -> TimeInterval {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : duration
+    }
+
+    /// Runs `changes` on `animator()` proxies as one AppKit animation group, on the tokens' duration
+    /// and easing; at once under reduced motion. `completion` runs on the main actor when it ends.
+    @MainActor
+    public static func animate(
+        _ duration: TimeInterval = base, easing: Curve = Easing.standard, changes: () -> Void,
+        completion: (@MainActor @Sendable () -> Void)? = nil
+    ) {
+        // AppKit calls back on the main thread, which is the main actor; it just can't say so.
+        let finish: (@Sendable () -> Void)? = completion.map { done in
+            { @Sendable in MainActor.assumeIsolated { done() } }
+        }
+        NSAnimationContext.runAnimationGroup(
+            { context in
+                context.duration = Self.duration(duration)
+                context.timingFunction = CAMediaTimingFunction(
+                    controlPoints: Float(easing.x1), Float(easing.y1), Float(easing.x2), Float(easing.y2))
+                changes()
+            }, completionHandler: finish)
     }
 }

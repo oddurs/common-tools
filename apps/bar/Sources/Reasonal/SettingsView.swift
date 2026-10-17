@@ -12,7 +12,7 @@ struct SettingsView: View {
     @AppStorage(Preferences.autoHide) private var autoHide = AutoHide.standard
     @AppStorage(Preferences.alwaysHiddenSection) private var alwaysHiddenSection = false
     @AppStorage(Preferences.spacers) private var spacerCount = 0
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
 
     var body: some View {
         Form {
@@ -39,7 +39,7 @@ struct SettingsView: View {
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
                 Picker("Hide again after", selection: $autoHide) {
                     ForEach(AutoHide.allCases) { delay in
                         Text(Self.title(for: delay)).tag(delay)
@@ -49,8 +49,10 @@ struct SettingsView: View {
             } header: {
                 Text("General")
             } footer: {
-                SettingsFootnote(
-                    loginError ?? "Icons left of the dotted line show only with ⌥-click or while holding ⌘.")
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
+                    SettingsFootnote("Icons left of the dotted line show only with ⌥-click or while holding ⌘.")
+                }
             }
 
             CommonToolsSection()

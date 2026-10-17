@@ -142,7 +142,7 @@ private struct MetricCard: View {
             ])
             CoreClusters(
                 cores: c.cores, topology: .current, ink: ink.strong,
-                width: DropdownPanel.width - 2 * (DropdownPanel.inset + Card<EmptyView>.inset))
+                width: DropdownPanel.width - 2 * (DropdownPanel.inset + Tokens.Layout.cardInset))
             Facts([
                 Fact(
                     "Load",

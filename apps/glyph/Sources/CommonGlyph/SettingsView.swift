@@ -8,7 +8,7 @@ import SwiftUI
 /// as a sheet from its row.
 struct SettingsView: View {
     @Bindable var library: GlyphLibrary
-    @State private var loginError: String?
+    @State private var loginProblem: LoginItem.Problem?
     @State private var pendingDelete: GlyphModel?
     @State private var duplicateError: String?
 
@@ -18,9 +18,7 @@ struct SettingsView: View {
                 MenuBarPreview(models: library.visible)
             } footer: {
                 if let warning {
-                    Label(warning, systemImage: "eye.slash")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
+                    SettingsFootnote(warning, symbol: "eye.slash")
                 }
             }
 
@@ -33,20 +31,18 @@ struct SettingsView: View {
                 Text("Glyphs")
             } footer: {
                 if let duplicateError {
-                    Text(duplicateError).font(.callout).foregroundStyle(Tokens.Color.danger.color)
+                    SettingsFootnote(duplicateError, tone: .danger)
                 } else {
                     SettingsFootnote("Click a glyph to edit it. Hold ⌘ and drag a glyph in the menu bar to move it.")
                 }
             }
 
             Section {
-                OpenAtLoginToggle(error: $loginError)
+                OpenAtLoginToggle(problem: $loginProblem)
             } header: {
                 Text("General")
             } footer: {
-                if let loginError {
-                    SettingsFootnote(loginError)
-                }
+                OpenAtLoginFootnote(loginProblem)
             }
 
             CommonToolsSection()
@@ -70,11 +66,9 @@ struct SettingsView: View {
             Button {
                 library.editing = model.id
             } label: {
-                LabeledRow(model.spec.name, subtitle: model.summary) {
-                    GlyphTile(glyph: model.glyph, size: 32)
-                } trailing: {
-                    EmptyView()
-                }
+                LabeledRow(
+                    model.spec.name, subtitle: model.summary, leading: { GlyphTile(glyph: model.glyph, size: 32) }
+                )
                 .lineLimit(1)
                 // Glyphs left out of the menu bar recede, so the shown set reads at a glance.
                 .opacity(visible ? 1 : 0.5)
