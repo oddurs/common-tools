@@ -87,7 +87,7 @@ public struct WelcomeView: View {
                 Text("Completely free, forever: no trial, no subscription, no paid tier.")
                 Text("Open source under MIT: every line is on GitHub.")
                 Text(
-                    "Private: no network access, no analytics, no crash reports, no account, so nothing you do is ever reported and nothing leaves your Mac."
+                    "Private: no analytics, no crash reports, no account. Nothing you do is ever reported. The only network request is the update check, off until you turn it on, which asks GitHub for the latest version and sends nothing about you."
                 )
             }
             .font(.callout)
