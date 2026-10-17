@@ -48,6 +48,15 @@ function usage(message) {
 	process.exit(2);
 }
 
+/** Shared blocks the owned files must contain verbatim, rendered for the app. */
+const snippets = (app) =>
+	Object.fromEntries(
+		readdirSync(join(root, 'standard', 'snippets')).map((name) => [
+			name,
+			render(readFileSync(join(root, 'standard', 'snippets', name), 'utf8'), app)
+		])
+	);
+
 const pick = (names) => {
 	for (const name of names)
 		if (!(name in apps)) usage(`no app '${name}'; try: ${Object.keys(apps).join(', ')}`);
@@ -122,7 +131,7 @@ function check(app) {
 	for (const [path, test] of Object.entries(owned)) {
 		const current = repo.read(path);
 		if (!current) problems.push(`${path}: missing`);
-		else for (const p of test(current.toString('utf8'), app)) problems.push(`${path}: ${p}`);
+		else for (const p of test(current.toString('utf8'), app, snippets(app))) problems.push(`${path}: ${p}`);
 	}
 	return problems;
 }
@@ -145,7 +154,9 @@ function apply(app, worktree) {
 	}
 	for (const [path, test] of Object.entries(owned)) {
 		const target = join(worktree, path);
-		const problems = existsSync(target) ? test(readFileSync(target, 'utf8'), app) : ['missing'];
+		const problems = existsSync(target)
+			? test(readFileSync(target, 'utf8'), app, snippets(app))
+			: ['missing'];
 		for (const p of problems) console.log(`fix by hand: ${path}: ${p}`);
 	}
 }
