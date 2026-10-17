@@ -1,14 +1,13 @@
 name: Standard
 
 # Checks that Common Stats, Common Keys, and Common Bar still follow the app standard in standard/.
-# It can't block their pull requests, so it runs daily and on any change to the standard, and a
-# failure here is the signal to re-apply.
+# It can't block their pull requests, so it runs daily and whenever the standard changes on main,
+# and a failure here is the signal to re-apply. Not on pull requests: a change to the standard is
+# expected to differ from the apps until it has been applied to them.
 
 on:
   push:
     branches: [main]
-    paths: ['standard/**', 'scripts/standard.js', '.github/workflows/standard.yml']
-  pull_request:
     paths: ['standard/**', 'scripts/standard.js', '.github/workflows/standard.yml']
   schedule:
     - cron: '41 6 * * *'
