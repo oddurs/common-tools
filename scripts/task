@@ -214,13 +214,20 @@ app() {
     package)
         # What a release publishes. The names carry no version; the site links each release's tag.
         [ -d "$bundle" ] || app "$slug" build
+        # Signed with a Developer ID and notarized when the environment has one; otherwise it says
+        # so and the build's signature stays (docs/signing.md).
+        "$root/scripts/notarize" "$bundle"
+        for tool in $tools; do "$root/scripts/notarize" "$out/$tool"; done
         echo "==> packaging $name into dist/$slug/"
         rm -rf "$root/dist/$slug"
         mkdir -p "$root/dist/$slug"
-        # ditto keeps the bundle's signature and extended attributes intact.
+        # ditto keeps the bundle's signature and extended attributes intact. The zip is what the
+        # install script and the Homebrew cask fetch; the disk image is for downloading by hand.
         ditto -c -k --keepParent "$bundle" "$root/dist/$slug/$asset.zip"
         for tool in $tools; do ditto -c -k "$out/$tool" "$root/dist/$slug/$tool.zip"; done
-        (cd "$root/dist/$slug" && for zip in *.zip; do shasum -a 256 "$zip" >"$zip.sha256"; done && ls -l)
+        "$root/scripts/dmg" "$bundle" "$root/dist/$slug/$asset.dmg"
+        "$root/scripts/notarize" "$root/dist/$slug/$asset.dmg"
+        (cd "$root/dist/$slug" && for file in *.zip *.dmg; do shasum -a 256 "$file" >"$file.sha256"; done && ls -l)
         ;;
     run)
         app "$slug" build
