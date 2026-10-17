@@ -57,7 +57,10 @@ async function open(browser, base, tool, dark) {
 	const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
 	await page.goto(`${base}/${tool}/demo/?record${dark ? '&dark' : ''}`, { waitUntil: 'networkidle' });
 	await page.waitForFunction(() => '__seek' in window);
-	const stage = page.locator('#stage');
+	// The stage never moves, so measure it once and shoot that rectangle. An element screenshot waits
+	// for the element to be "stable" every frame, which stalls on a busy machine.
+	const clip = await page.locator('#stage').boundingBox();
+	if (!clip) throw new Error(`the ${tool} film has no #stage`);
 	return {
 		page,
 		async still(t, options) {
@@ -66,7 +69,7 @@ async function open(browser, base, tool, dark) {
 			await page.evaluate(
 				() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
 			);
-			await stage.screenshot(options);
+			await page.screenshot({ ...options, clip, timeout: 120_000 });
 		}
 	};
 }
