@@ -17,6 +17,8 @@ final class MenuBarController: NSObject {
         static let spacerLength: CGFloat = 8
         static let pollInterval: TimeInterval = 1.0 / 30
         static let fadeDuration: TimeInterval = 0.12
+        /// Long enough for macOS to finish gliding the icons into place.
+        static let settleDelay: TimeInterval = 0.6
     }
 
     private static let onboardedKey = "onboarded"
@@ -36,6 +38,7 @@ final class MenuBarController: NSObject {
     private var scroll = ScrollGesture()
     private var poll: Timer?
     private var collapseTimer: Timer?
+    private var settleTimer: Timer?
     private var eventMonitor: Any?
     private var preferencesObserver: Any?
     private var alwaysHidden = Preferences.isOn(Preferences.alwaysHiddenSection)
@@ -144,6 +147,7 @@ final class MenuBarController: NSObject {
             reveal: reveal, isPeeking: peek.isPeeking, positions: Self.positions, alwaysHidden: alwaysHidden)
         divider.set(layout.divider, animated: motion)
         alwaysDivider.set(layout.alwaysDivider, animated: motion)
+        scheduleSettle()
 
         NSAnimationContext.runAnimationGroup { context in
             context.duration = motion ? Metric.fadeDuration : 0
@@ -161,6 +165,27 @@ final class MenuBarController: NSObject {
         chevronPointsLeft = reveal.isCollapsed
         chevron.turn(to: reveal.isCollapsed ? 0 : .pi, animated: motion && !firstLayout)
         toggle.button?.setAccessibilityLabel(reveal.isCollapsed ? "Show hidden menu bar items" : "Hide menu bar items")
+    }
+
+    /// Once the icons have glided into place, makes sure no stretched divider has left icons on
+    /// screen where they can't be seen: a reveal slides the always-hidden divider's right end along.
+    private func scheduleSettle() {
+        settleTimer?.invalidate()
+        settleTimer = Timer.scheduledTimer(withTimeInterval: Metric.settleDelay, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.divider.keepClearingScreen()
+                self?.alwaysDivider.keepClearingScreen()
+            }
+        }
+    }
+
+    /// Common Bar's items where the window server has them, so they aren't mistaken for another
+    /// app's: on macOS 26 their windows carry no name Common Bar can read.
+    private var ownItems: OwnItems {
+        let frames = [toggle.button?.window?.frame, alwaysDivider.frame] + spacers.map { $0.button?.window?.frame }
+        return OwnItems(
+            divider: divider.frame.map(MenuBar.windowServerFrame),
+            others: frames.compactMap { $0.map(MenuBar.windowServerFrame) })
     }
 
     private static var positions: ItemPositions {
@@ -217,7 +242,7 @@ final class MenuBarController: NSObject {
         case .leftMouseDown:
             demo.close()
             if Preferences.isOn(Preferences.showOnClick),
-                MenuBar.isEmptySpace(NSEvent.mouseLocation, ignoring: ItemName.all)
+                MenuBar.isEmptySpace(NSEvent.mouseLocation, own: ownItems)
             {
                 setCollapsed(!reveal.isCollapsed)
             }
@@ -261,7 +286,7 @@ final class MenuBarController: NSObject {
         if !peek.isPeeking {
             let action = hover.update(
                 isCollapsed: reveal.isCollapsed,
-                overEmptySpace: inMenuBar && MenuBar.isEmptySpace(pointer, ignoring: ItemName.all),
+                overEmptySpace: inMenuBar && MenuBar.isEmptySpace(pointer, own: ownItems),
                 inMenuBar: inMenuBar, idle: modifiers.isEmpty && !mouseDown,
                 enabled: Preferences.isOn(Preferences.showOnHover), menuOpen: MenuBar.isMenuOpen, now: now)
             switch action {

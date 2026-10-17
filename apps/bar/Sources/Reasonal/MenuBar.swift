@@ -16,18 +16,36 @@ enum MenuBar {
         return p.y >= screen.frame.maxY - height(of: screen)
     }
 
-    /// Part of the bar holding neither the app's menus nor a status item. `ignoring`
-    /// names the caller's own items, whose stretched divider would otherwise cover the gap.
-    static func isEmptySpace(_ p: NSPoint, ignoring names: Set<String>) -> Bool {
+    /// Part of the bar holding neither the app's menus nor another app's status item. `own` is
+    /// the caller's items, whose stretched divider covers exactly the empty space.
+    static func isEmptySpace(_ p: NSPoint, own: OwnItems) -> Bool {
         guard let screen = screen(at: p), contains(p) else { return false }
-        // App menus run from the left; on a notched display they stop at the notch.
-        let start = screen.auxiliaryTopRightArea.map { screen.frame.minX + $0.minX } ?? screen.frame.midX
-        guard p.x >= start else { return false }
-        let top = topInWindowServer(of: screen)
-        return !windows(onScreenOnly: true).contains { window in
-            window.layer == statusLayer && !names.contains(window.name)
-                && abs(window.frame.minY - top) < 1 && (window.frame.minX...window.frame.maxX).contains(p.x)
+        return model(of: screen, own: own).isEmptySpace(at: p.x)
+    }
+
+    /// Every status item in `screen`'s menu bar, and where it can be seen. Status item windows
+    /// are listed whether or not the window server calls them on screen: on macOS 26 it calls
+    /// none of them on screen.
+    static func model(of screen: NSScreen, own: OwnItems) -> MenuBarModel {
+        let windows = windows(onScreenOnly: false).filter { $0.layer == statusLayer }.map(\.item)
+        return MenuBarModel(windows: windows, geometry: geometry(of: screen), own: own)
+    }
+
+    static func geometry(of screen: NSScreen) -> MenuBarGeometry {
+        let frame = screen.frame
+        var notch: ClosedRange<CGFloat>?
+        if let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea {
+            notch = (frame.minX + left.maxX)...(frame.minX + right.minX)
         }
+        return MenuBarGeometry(
+            minX: frame.minX, maxX: frame.maxX, top: topInWindowServer(of: screen), height: height(of: screen),
+            notch: notch)
+    }
+
+    /// A Cocoa frame in window-server coordinates, for comparing with what the window server lists.
+    static func windowServerFrame(_ frame: NSRect) -> CGRect {
+        let top = NSScreen.screens.first?.frame.maxY ?? 0
+        return CGRect(x: frame.minX, y: top - frame.maxY, width: frame.width, height: frame.height)
     }
 
     /// Whether the window server has a status item at `frame` (Cocoa coordinates) on `screen`.
@@ -57,9 +75,15 @@ enum MenuBar {
     }
 
     private struct Window {
-        let name: String
+        let id: UInt32
         let layer: Int
         let frame: CGRect
+        let ownerPID: Int32
+        let ownerName: String
+
+        var item: StatusItemWindow {
+            StatusItemWindow(id: id, frame: frame, ownerPID: ownerPID, ownerName: ownerName)
+        }
     }
 
     private static func windows(onScreenOnly: Bool) -> [Window] {
@@ -70,7 +94,10 @@ enum MenuBar {
                 let bounds = info[kCGWindowBounds as String] as? NSDictionary,
                 let frame = CGRect(dictionaryRepresentation: bounds)
             else { return nil }
-            return Window(name: info[kCGWindowName as String] as? String ?? "", layer: layer, frame: frame)
+            return Window(
+                id: info[kCGWindowNumber as String] as? UInt32 ?? 0, layer: layer, frame: frame,
+                ownerPID: info[kCGWindowOwnerPID as String] as? Int32 ?? 0,
+                ownerName: info[kCGWindowOwnerName as String] as? String ?? "")
         }
     }
 }

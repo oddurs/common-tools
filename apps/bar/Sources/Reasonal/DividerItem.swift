@@ -85,6 +85,21 @@ final class DividerItem {
         }
     }
 
+    /// Where the item is, in Cocoa coordinates, once AppKit has laid it out.
+    var frame: NSRect? { item.button?.window?.frame }
+
+    /// Stretches further if the window server shows icons left of this stretched divider still on
+    /// screen: a reveal slid its right end along since its reach was measured. Only ever lengthens,
+    /// so it can't undo itself.
+    func keepClearingScreen() {
+        guard state == .stretched, let window = item.button?.window, let screen = window.screen,
+            MenuBar.hasStatusItem(at: window.frame, on: screen),
+            !DividerLayout.clearsScreen(windowMinX: window.frame.minX, screenMinX: screen.frame.minX)
+        else { return }
+        let length = reach
+        if length > item.length { item.length = length }
+    }
+
     /// See `DividerLayout.reach`. The full stretch until AppKit's frame for the item agrees
     /// with where the window server has it.
     private var reach: CGFloat {
