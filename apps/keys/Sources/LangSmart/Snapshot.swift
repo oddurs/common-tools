@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import SwiftUI
 import WorldKey
 
@@ -16,17 +17,17 @@ enum SnapshotCommand {
             VStack(spacing: 0) {
                 ForEach(DropdownPanel.allCases, id: \.self) { PanelView(data: data, panel: $0) }
             }
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, Tokens.Space.xxs)
+            .background(Tokens.Surface.base.color, in: RoundedRectangle(cornerRadius: Tokens.Radius.lg))
             .environment(\.colorScheme, scheme)
         }
         let renderer = ImageRenderer(
-            content: HStack(alignment: .top, spacing: 24) {
+            content: HStack(alignment: .top, spacing: Tokens.Space.lg) {
                 menu(busy, .light)
                 menu(busy, .dark)
                 menu(empty, .light)
             }
-            .padding(24)
+            .padding(Tokens.Space.lg)
             .background(Color(white: 0.5)))
         renderer.scale = 2
         guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,

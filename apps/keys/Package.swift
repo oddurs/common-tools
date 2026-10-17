@@ -13,7 +13,11 @@ let package = Package(
     targets: [
         .target(name: "WorldKey"),
         .executableTarget(
-            name: "LangSmart", dependencies: ["WorldKey", .product(name: "CommonKit", package: "CommonKit")]),
+            name: "LangSmart",
+            dependencies: [
+                "WorldKey", .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ]),
         .executableTarget(name: "WorldKeyCLI", dependencies: ["WorldKey"]),
         .testTarget(name: "WorldKeyTests", dependencies: ["WorldKey"]),
         .testTarget(

@@ -13,6 +13,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Bar.
 - Finding the keys for a word on syllabary layouts such as Ge'ez is now immediate; it took minutes the first time a word was checked mid-sentence.
 
 ### Fixed

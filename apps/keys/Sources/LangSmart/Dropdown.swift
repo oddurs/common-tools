@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import SwiftUI
 import WorldKey
 
@@ -52,8 +53,6 @@ struct DropdownData {
 
 enum DropdownPanel: CaseIterable {
     case today, languages, tiles
-
-    static let width: CGFloat = 320
 }
 
 struct PanelView: View {
@@ -66,7 +65,7 @@ struct PanelView: View {
             case .today: TodayCard(data: data)
             case .languages: LanguagesCard(data: data)
             case .tiles:
-                HStack(spacing: 8) {
+                HStack(spacing: Tokens.Space.xs) {
                     WeekTile(week: data.week)
                     NumberTile(
                         symbol: "brain", tint: .pink, title: "Learned", value: "\(data.learnedWords)",
@@ -75,9 +74,9 @@ struct PanelView: View {
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .frame(width: DropdownPanel.width)
+        .padding(.horizontal, Tokens.Space.xs)
+        .padding(.vertical, Tokens.Space.xxs)
+        .frame(width: Tokens.Layout.menuPanelWidth)
     }
 }
 
@@ -89,15 +88,14 @@ private struct TodayCard: View {
     var body: some View {
         let day = data.today
         Card {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    IconTile(symbol: "keyboard", tint: .blue)
-                    Text("Today").font(.system(size: 13, weight: .semibold))
-                    Spacer(minLength: 8)
-                    HStack(alignment: .firstTextBaseline, spacing: 3) {
-                        Text("\(day.fixes)").font(.system(size: 15, weight: .semibold).monospacedDigit())
-                        Text(day.fixes == 1 ? "fix" : "fixes").font(.system(size: 11)).foregroundStyle(
-                            .secondary)
+            VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                HStack(spacing: Tokens.Space.xs) {
+                    IconBadge(symbol: "keyboard", tint: .blue)
+                    Text("Today").font(.headline)
+                    Spacer(minLength: Tokens.Space.xs)
+                    HStack(alignment: .firstTextBaseline, spacing: Tokens.Space.xxs) {
+                        Text("\(day.fixes)").font(.title3.weight(.semibold).monospacedDigit())
+                        Text(day.fixes == 1 ? "fix" : "fixes").font(.subheadline).foregroundStyle(.secondary)
                     }
                 }
                 HourBars(counts: day.hourlyFixes, now: data.hour)
@@ -126,18 +124,17 @@ private struct LanguagesCard: View {
             return (keyboard.flag, keyboard.name, Double(count) / Double(total))
         }
         Card {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 8) {
-                    IconTile(symbol: "globe", tint: .purple)
-                    Text("Languages").font(.system(size: 13, weight: .semibold))
-                    Spacer(minLength: 8)
+            VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                HStack(spacing: Tokens.Space.xs) {
+                    IconBadge(symbol: "globe", tint: .purple)
+                    Text("Languages").font(.headline)
+                    Spacer(minLength: Tokens.Space.xs)
                     if let top = shares.max(by: { $0.share < $1.share }) {
-                        Text("\(top.flag) \(percent(top.share))").font(
-                            .system(size: 15, weight: .semibold).monospacedDigit())
+                        Text("\(top.flag) \(percent(top.share))").font(.title3.weight(.semibold).monospacedDigit())
                     }
                 }
                 if shares.isEmpty {
-                    Text("Nothing written yet today.").font(.system(size: 11)).foregroundStyle(.secondary)
+                    Text("Nothing written yet today.").font(.subheadline).foregroundStyle(.secondary)
                 } else {
                     Segments(fractions: shares.map(\.share), inks: Ink.steps)
                     Facts(
@@ -148,8 +145,8 @@ private struct LanguagesCard: View {
                         }, columns: 2)
                 }
                 if !data.apps.isEmpty {
-                    Divider().opacity(0.5)
-                    VStack(spacing: 5) {
+                    Divider()
+                    VStack(spacing: Tokens.Space.xxs) {
                         ForEach(data.apps) { AppLine(row: $0) }
                     }
                 }
@@ -164,7 +161,7 @@ private struct AppLine: View {
 
     var body: some View {
         let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: row.bundleID)
-        HStack(spacing: 7) {
+        HStack(spacing: Tokens.Space.xs) {
             if let url {
                 Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable().frame(
                     width: 16, height: 16)
@@ -178,12 +175,12 @@ private struct AppLine: View {
                 } ?? row.bundleID
             )
             .lineLimit(1)
-            Spacer(minLength: 6)
+            Spacer(minLength: Tokens.Space.xxs)
             Text("\(row.words.formatted()) words").foregroundStyle(.secondary).monospacedDigit()
             Text(row.flag ?? "·").frame(width: 18).foregroundStyle(.tertiary)
                 .help(row.flag == nil ? "Still learning this app's language" : "Usually written in")
         }
-        .font(.system(size: 11))
+        .font(.subheadline)
     }
 }
 
@@ -195,9 +192,9 @@ private struct WeekTile: View {
     var body: some View {
         let total = week.map(\.fixes).reduce(0, +)
         Card {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                 TileTitle(symbol: "calendar", tint: .orange, title: "Week")
-                Text("\(total)").font(.system(size: 17, weight: .semibold).monospacedDigit())
+                Text("\(total)").font(.title2.weight(.semibold).monospacedDigit())
                 DayBars(counts: week.map(\.fixes))
             }
         }
@@ -215,10 +212,10 @@ private struct NumberTile: View {
 
     var body: some View {
         Card {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                 TileTitle(symbol: symbol, tint: tint, title: title)
-                Text(value).font(.system(size: 17, weight: .semibold).monospacedDigit())
-                Text(caption).font(.system(size: 10)).foregroundStyle(.secondary)
+                Text(value).font(.title2.weight(.semibold).monospacedDigit())
+                Text(caption).font(.caption).foregroundStyle(.secondary)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -231,19 +228,18 @@ private struct MixedUpTile: View {
 
     var body: some View {
         Card {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                 TileTitle(symbol: "arrow.left.arrow.right", tint: .teal, title: "Mixed up")
                 if let mixedUp {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Tokens.Space.xxs) {
                         Keycap(mixedUp.typed)
-                        Image(systemName: "arrow.right").font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(.tertiary)
+                        Image(systemName: "arrow.right").font(.caption2.weight(.bold)).foregroundStyle(.tertiary)
                         Keycap(mixedUp.meant)
                     }
-                    Text("\(mixedUp.count)×").font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text("\(mixedUp.count)×").font(.caption).foregroundStyle(.secondary)
                 } else {
-                    Text("—").font(.system(size: 17, weight: .semibold))
-                    Text("nothing yet").font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text("—").font(.title2.weight(.semibold))
+                    Text("nothing yet").font(.caption).foregroundStyle(.secondary)
                 }
             }
         }
@@ -256,13 +252,14 @@ private struct TileTitle: View {
     let title: String
 
     var body: some View {
-        HStack(spacing: 5) {
-            IconTile(symbol: symbol, tint: tint, size: 15)
-            Text(title).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+        HStack(spacing: Tokens.Space.xxs) {
+            IconBadge(symbol: symbol, tint: tint, size: 15)
+            Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
         }
     }
 }
 
+/// A key as a key cap: the same tint and hairline as a card, so it reads as a raised piece of it.
 private struct Keycap: View {
     let label: String
 
@@ -271,57 +268,19 @@ private struct Keycap: View {
     }
 
     var body: some View {
+        let shape = RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
         Text(label)
-            .font(.system(size: 12, weight: .medium))
+            .font(.callout.weight(.medium))
             .frame(minWidth: 20, minHeight: 20)
-            .background(
-                Color.primary.opacity(0.07), in: RoundedRectangle(cornerRadius: 5, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 5, style: .continuous).strokeBorder(
-                    Color.primary.opacity(0.1), lineWidth: 0.5))
+            .background(Tokens.Surface.card.color, in: shape)
+            .overlay(shape.strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
     }
 }
 
 // MARK: - Shared pieces
 
-private let cardInset: CGFloat = 10
-
 private func percent(_ value: Double) -> String {
     value.formatted(.percent.precision(.fractionLength(0)))
-}
-
-/// A Control Center–style module: a softly filled rounded panel, as in StatBar.
-private struct Card<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .padding(cardInset)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(
-                    Color.primary.opacity(0.06), lineWidth: 0.5))
-    }
-}
-
-/// A System Settings–style icon: a white glyph on a tinted rounded square.
-struct IconTile: View {
-    let symbol: String
-    let tint: Color
-    var size: CGFloat = 20
-
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: size * 0.5, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: size, height: size)
-            .background(tint.gradient, in: RoundedRectangle(cornerRadius: size * 0.27, style: .continuous))
-            .accessibilityHidden(true)
-    }
 }
 
 /// Three steps of the accent colour: the strongest is always the biggest share, and legend dots
@@ -345,11 +304,15 @@ private struct HourBars: View {
 
     var body: some View {
         let peak = max(counts.max() ?? 0, 3)
-        VStack(spacing: 3) {
+        VStack(spacing: Tokens.Space.xxs) {
             HStack(alignment: .bottom, spacing: 2) {
                 ForEach(counts.indices, id: \.self) { hour in
                     ZStack(alignment: .bottom) {
-                        Rectangle().fill(Color.primary.opacity(hour <= now ? 0.07 : 0.03))
+                        if hour <= now {
+                            Rectangle().fill(.quaternary)
+                        } else {
+                            Rectangle().fill(.quinary)
+                        }
                         Rectangle()
                             .fill(hour == now ? Ink.steps[0] : Ink.steps[1])
                             .frame(height: 34 * CGFloat(counts[hour]) / CGFloat(peak))
@@ -364,7 +327,7 @@ private struct HourBars: View {
                     Text(label).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .font(.system(size: 9))
+            .font(.caption2)
             .foregroundStyle(.tertiary)
         }
         .accessibilityHidden(true)
@@ -380,7 +343,7 @@ private struct DayBars: View {
         HStack(alignment: .bottom, spacing: 2) {
             ForEach(counts.indices, id: \.self) { index in
                 ZStack(alignment: .bottom) {
-                    Rectangle().fill(Color.primary.opacity(0.07))
+                    Rectangle().fill(.quaternary)
                     Rectangle()
                         .fill(index == counts.count - 1 ? Ink.steps[0] : Ink.steps[1])
                         .frame(height: 14 * CGFloat(counts[index]) / CGFloat(peak))
@@ -410,7 +373,7 @@ private struct Segments: View {
             }
         }
         .frame(height: 6)
-        .background(Color.primary.opacity(0.08))
+        .background(.quaternary)
         .clipShape(Capsule())
         .accessibilityHidden(true)
     }
@@ -440,23 +403,23 @@ private struct Facts: View {
     }
 
     var body: some View {
-        Grid(alignment: .leading, horizontalSpacing: 4, verticalSpacing: 4) {
+        Grid(alignment: .leading, horizontalSpacing: Tokens.Space.xxs, verticalSpacing: Tokens.Space.xxs) {
             ForEach(Array(stride(from: 0, to: facts.count, by: columns)), id: \.self) { start in
                 GridRow {
                     ForEach(facts[start..<min(start + columns, facts.count)]) { fact in
-                        HStack(spacing: 5) {
+                        HStack(spacing: Tokens.Space.xxs) {
                             if let key = fact.key { Circle().fill(key).frame(width: 6, height: 6) }
                             Text(fact.label).foregroundStyle(.secondary)
                         }
                         Text(fact.value)
                             .monospacedDigit()
-                            .padding(.trailing, 12)
+                            .padding(.trailing, Tokens.Space.sm)
                             .gridColumnAlignment(.leading)
                     }
                 }
             }
         }
-        .font(.system(size: 11))
+        .font(.subheadline)
         .lineLimit(1)
         .fixedSize()
     }
