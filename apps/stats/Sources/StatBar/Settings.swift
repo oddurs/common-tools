@@ -1,33 +1,7 @@
-import AppKit
 import CommonKit
-import ServiceManagement
+import CommonUI
 import StatKit
 import SwiftUI
-
-@MainActor
-final class SettingsWindowController {
-    static let shared = SettingsWindowController()
-    private var window: NSWindow?
-
-    func show(model: AppModel) {
-        if window == nil {
-            let host = NSHostingController(rootView: SettingsView(model: model))
-            host.sizingOptions = [.preferredContentSize]
-            let window = NSWindow(contentViewController: host)
-            window.title = "Common Stats Settings"
-            window.styleMask = [.titled, .closable]
-            window.isReleasedWhenClosed = false
-            window.center()
-            self.window = window
-        }
-        // Activation is cooperative since macOS 14: the system may decline
-        // it, and an accessory app's window would then open behind the
-        // frontmost app. Ordering front regardless keeps it visible either way.
-        NSApp.activate()
-        window?.makeKeyAndOrderFront(nil)
-        window?.orderFrontRegardless()
-    }
-}
 
 struct SettingsView: View {
     @Bindable var model: AppModel
@@ -40,14 +14,13 @@ struct SettingsView: View {
             } footer: {
                 if !model.barVisible {
                     Label {
-                        Text(
+                        SettingsFootnote(
                             "Common Stats is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Show fewer items, choose Compact density, or hold ⌘ and drag other menu bar items out of the way."
                         )
                     } icon: {
-                        Image(systemName: "eye.slash")
+                        Image(systemName: "eye.slash").foregroundStyle(.secondary)
                     }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .font(.callout)
                 }
             }
 
@@ -63,15 +36,13 @@ struct SettingsView: View {
             } header: {
                 Text("Appearance")
             } footer: {
-                Text(
+                SettingsFootnote(
                     "Color applies to graphs and gauges. Off in the menu bar, items stay monochrome like the system’s own icons."
                 )
-                .font(.footnote)
-                .foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Open at login", isOn: openAtLogin)
+                OpenAtLoginToggle(error: $loginError)
                 Picker("Update every", selection: $model.layout.interval) {
                     ForEach(BarLayout.intervals, id: \.self) { s in
                         Text(s == 1 ? "1 second" : "\(s.formatted()) seconds")
@@ -83,34 +54,16 @@ struct SettingsView: View {
             } header: {
                 Text("General")
             } footer: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Averaging steadies the menu bar’s numbers and graphs. The menu always shows exact readings.")
-                    if let loginError { Text(loginError) }
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    SettingsFootnote(
+                        "Averaging steadies the menu bar’s numbers and graphs. The menu always shows exact readings.")
+                    if let loginError { SettingsFootnote(loginError) }
                 }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
             }
 
             CommonToolsSection()
         }
-        .formStyle(.grouped)
-        .frame(width: 460)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    private var openAtLogin: Binding<Bool> {
-        Binding(
-            get: { SMAppService.mainApp.status == .enabled },
-            set: { enable in
-                do {
-                    if enable { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
-                    loginError =
-                        SMAppService.mainApp.status == .requiresApproval
-                        ? "Allow Common Stats in System Settings › General › Login Items." : nil
-                } catch {
-                    loginError = error.localizedDescription
-                }
-            })
+        .settingsForm()
     }
 }
 
@@ -120,8 +73,8 @@ private struct PaletteSwatches: View {
     @Binding var selection: Palette
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: 4) {
-            HStack(spacing: 7) {
+        VStack(alignment: .trailing, spacing: Tokens.Space.xxs) {
+            HStack(spacing: Tokens.Space.xs) {
                 ForEach(Palette.allCases, id: \.self) { palette in
                     Button {
                         selection = palette
@@ -129,7 +82,7 @@ private struct PaletteSwatches: View {
                         swatch(palette)
                             .overlay {
                                 if palette == selection {
-                                    Circle().fill(.white).frame(width: 6, height: 6).shadow(radius: 0.5)
+                                    Circle().fill(Tokens.Text.inverse.color).frame(width: 6, height: 6)
                                 }
                             }
                     }
@@ -148,7 +101,7 @@ private struct PaletteSwatches: View {
         Group {
             switch palette {
             case .accent:
-                circle.foregroundStyle(Color.accentColor)
+                circle.foregroundStyle(Tokens.Color.accent.color)
             case .metric:
                 // Per Metric shows every metric's colour, like the system's Multicolor swatch.
                 circle.foregroundStyle(
@@ -158,6 +111,13 @@ private struct PaletteSwatches: View {
                 circle.foregroundStyle(Color(nsColor: palette.color(for: .cpu)))
             }
         }
-        .overlay(Circle().strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+        .overlay(Circle().strokeBorder(Tokens.Color.border.color, lineWidth: 0.5))
+    }
+}
+
+extension IconBadge {
+    /// A metric's icon: its SF Symbol on its own tint, the identity it keeps in Settings and the menu.
+    init(metric: Metric, size: CGFloat) {
+        self.init(symbol: metric.symbol, tint: Color(nsColor: metric.tint), size: size)
     }
 }

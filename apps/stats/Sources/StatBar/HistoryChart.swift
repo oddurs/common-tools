@@ -1,3 +1,4 @@
+import CommonUI
 import StatKit
 import SwiftUI
 
@@ -67,8 +68,8 @@ struct HistoryChart: View {
             }
         }
         .frame(height: height)
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .background(Tokens.Surface.card.color, in: RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous))
         .accessibilityHidden(true)
     }
 
@@ -108,7 +109,7 @@ struct HistoryChart: View {
     // MARK: Drawing
 
     private func drawGrid(_ context: GraphicsContext, _ size: CGSize) {
-        let faint = GraphicsContext.Shading.color(.primary.opacity(0.07))
+        let faint = GraphicsContext.Shading.color(Tokens.Color.borderCard.color)
         if mirrored {
             context.fill(Path(CGRect(x: 0, y: size.height / 2 - 0.25, width: size.width, height: 0.5)), with: faint)
             return
@@ -179,14 +180,15 @@ struct HistoryChart: View {
     private func drawHover(_ context: GraphicsContext, _ size: CGSize, _ i: Int, _ step: CGFloat, _ peak: Double) {
         let hx = x(i, of: count, width: size.width, step: step)
         context.fill(
-            Path(CGRect(x: hx - 0.5, y: 0, width: 1, height: size.height)), with: .color(.primary.opacity(0.35)))
+            Path(CGRect(x: hx - 0.5, y: 0, width: 1, height: size.height)),
+            with: .color(Tokens.Text.secondary.color))
         let (upper, lower) = halves(size)
         for (series, rect, isDown) in up.map({ ($0, upper, false) }) + down.map({ ($0, lower, true) }) {
             guard series.emphasis, let h = series.history, let v = value(h, at: i) else { continue }
             let f = CGFloat(min(max(v / peak, 0), 1))
             let y = isDown ? rect.minY + rect.height * f : rect.maxY - rect.height * f
             let dot = CGRect(x: hx - 3.5, y: y - 3.5, width: 7, height: 7)
-            context.fill(Path(ellipseIn: dot), with: .color(.white))
+            context.fill(Path(ellipseIn: dot), with: .color(Tokens.Text.inverse.color))
             context.fill(Path(ellipseIn: dot.insetBy(dx: 1.5, dy: 1.5)), with: .color(series.ink))
         }
     }
@@ -208,13 +210,13 @@ struct HistoryChart: View {
             Text(ago(seconds)).foregroundStyle(.secondary)
             Text(parts.joined(separator: "  ")).monospacedDigit()
         }
-        .font(.system(size: 10, weight: .medium))
+        .font(.footnote.weight(.medium))
         .lineLimit(1)
         .fixedSize()
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(.regularMaterial, in: Capsule())
-        .overlay(Capsule().strokeBorder(Color.primary.opacity(0.08), lineWidth: 0.5))
+        .overlay(Capsule().strokeBorder(Tokens.Color.borderCard.color, lineWidth: 0.5))
         // Sit beside the cursor line, flipping sides near the right edge.
         .alignmentGuide(.leading) { d in
             hx > size.width - d.width - 12 ? d.width + 6 - hx : -(hx + 6)
@@ -229,6 +231,6 @@ struct HistoryChart: View {
     }
 
     private func scaleLabel(_ text: String) -> some View {
-        Text(text).font(.system(size: 9, weight: .medium).monospacedDigit()).foregroundStyle(.tertiary)
+        Text(text).font(.caption2.weight(.medium).monospacedDigit()).foregroundStyle(.tertiary)
     }
 }

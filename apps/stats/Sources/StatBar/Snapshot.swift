@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import StatKit
 import SwiftUI
 
@@ -32,15 +33,15 @@ enum SnapshotCommand {
                         previewHover: panel == .card(.network) ? 20 : nil)
                 }
             }
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, Tokens.Space.xs)
+            .background(Tokens.Surface.base.color, in: RoundedRectangle(cornerRadius: Tokens.Radius.lg))
             .environment(\.colorScheme, scheme)
         }
         let renderer = ImageRenderer(
-            content: HStack(alignment: .top, spacing: 24) {
+            content: HStack(alignment: .top, spacing: Tokens.Space.lg) {
                 menu(.light); menu(.dark)
             }
-            .padding(24))
+            .padding(Tokens.Space.lg))
         renderer.scale = 2
         guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
             let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
