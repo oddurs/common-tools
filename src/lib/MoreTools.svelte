@@ -1,10 +1,15 @@
 <script lang="ts">
 	import { asset, resolve } from '$app/paths';
-	import { tools, type Tool } from './tools';
+	import { tools, upcoming } from './tools';
 
-	let { tool }: { tool: Tool } = $props();
+	/** The page's own app, left out of the list. */
+	let { slug }: { slug: string } = $props();
 
-	const others = $derived(tools.filter((t) => t.slug !== tool.slug));
+	const others = $derived(
+		[...tools.map((t) => ({ ...t, soon: false })), ...upcoming.map((u) => ({ ...u, soon: true }))].filter(
+			(t) => t.slug !== slug
+		)
+	);
 </script>
 
 <section class="ruled">
@@ -14,7 +19,9 @@
 			<a class="card" href={resolve(`${t.slug}/`)}>
 				<img src={asset(t.icon)} alt="" width="56" height="56" />
 				<span>
-					<b>{t.name}</b>
+					<b
+						>{t.name}{#if t.soon}<em>Soon</em>{/if}</b
+					>
 					<span class="muted">{t.summary}</span>
 				</span>
 			</a>
@@ -42,6 +49,17 @@
 	.card:hover {
 		text-decoration: none;
 		transform: translateY(-2px);
+	}
+	em {
+		margin-left: 8px;
+		padding: 1px 8px;
+		border-radius: 999px;
+		background: var(--bg);
+		color: var(--secondary);
+		font-size: 11px;
+		font-style: normal;
+		font-weight: 600;
+		vertical-align: 2px;
 	}
 	.card > span {
 		display: flex;
