@@ -1,5 +1,6 @@
 import AppKit
 import BatteryKit
+import CommonUI
 import SwiftUI
 
 /// `CommonBattery --snapshot out.png` writes every bar style in every battery state at 2x on light
@@ -49,21 +50,21 @@ enum SnapshotCommand {
         if let live { liveHistory.record(live, at: now) }
 
         func menu(_ scheme: ColorScheme) -> some View {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: Tokens.Space.sm) {
                 PanelView(reading: live, history: liveHistory, now: now)
                 PanelView(reading: example, history: afternoon, now: now)
                 PanelView(reading: nil, history: ChargeHistory(), now: now)
             }
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .windowBackgroundColor), in: RoundedRectangle(cornerRadius: 14))
+            .padding(.vertical, Tokens.Space.xs)
+            .background(Tokens.Surface.base.color, in: RoundedRectangle(cornerRadius: Tokens.Radius.lg))
             .environment(\.colorScheme, scheme)
         }
         let renderer = ImageRenderer(
-            content: HStack(alignment: .top, spacing: 24) {
+            content: HStack(alignment: .top, spacing: Tokens.Space.lg) {
                 menu(.light)
                 menu(.dark)
             }
-            .padding(24))
+            .padding(Tokens.Space.lg))
         renderer.scale = 2
         guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
             let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
