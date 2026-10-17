@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonUI
 import QuickLookUI
 
 /// Quick Look beside the launcher, as Spotlight shows a preview. A non-activating panel that can't take
@@ -47,7 +48,7 @@ final class PreviewPanel: NSPanel {
         contentView?.layer?.cornerRadius = radius
         // A layer's colour is fixed when set, so resolve it in this panel's light or dark appearance.
         effectiveAppearance.performAsCurrentDrawingAppearance {
-            contentView?.layer?.backgroundColor = NSColor.windowBackgroundColor.cgColor
+            contentView?.layer?.backgroundColor = Tokens.Surface.base.nsColor.cgColor
         }
         setFrame(NSRect(x: x, y: panel.maxY - height, width: Self.width, height: height), display: true)
         contentView?.subviews.first?.frame = contentView?.bounds ?? .zero

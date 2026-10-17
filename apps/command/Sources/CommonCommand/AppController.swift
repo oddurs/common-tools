@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonUI
 
 /// Wires the shortcut, the panel, the menu bar item, and Settings together, and carries out what a
 /// result does when chosen.
@@ -11,7 +12,7 @@ final class AppController: NSObject {
     private let library = Library()
     private let hotKey = HotKey()
     private(set) lazy var panel = PanelController(preferences: preferences, library: library)
-    private lazy var settings = SettingsWindow(controller: self)
+    private let settings = SettingsWindowHost(title: "Common Command Settings")
     private var statusItem: NSStatusItem?
     private(set) var hotKeyProblem: String?
     /// Spotlight's and Alfred's shortcuts, read when the shortcut is set and when Settings opens.
@@ -83,7 +84,8 @@ final class AppController: NSObject {
         // Spotlight's or Alfred's shortcut may have changed since; the warning in Settings should be current.
         refreshOtherShortcuts()
         panel.hide()
-        settings.show()
+        // A fresh view each time, so Open at login reflects a change made elsewhere.
+        settings.show { SettingsView(controller: self, preferences: preferences) }
     }
 
     @objc func showPanel() {

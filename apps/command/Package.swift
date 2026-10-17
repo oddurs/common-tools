@@ -9,10 +9,12 @@ let package = Package(
         .target(name: "CommandKit"),
         .executableTarget(
             name: "CommonCommand",
-            dependencies: ["CommandKit", .product(name: "CommonKit", package: "CommonKit")],
-            linkerSettings: [
-                .linkedFramework("Carbon"), .linkedFramework("IOKit"), .linkedFramework("ServiceManagement"),
-            ]
+            dependencies: [
+                "CommandKit",
+                .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ],
+            linkerSettings: [.linkedFramework("Carbon"), .linkedFramework("IOKit")]
         ),
         .testTarget(
             name: "CommandKitTests",

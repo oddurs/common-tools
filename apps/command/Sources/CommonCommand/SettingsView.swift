@@ -1,6 +1,7 @@
 import AppKit
 import CommandKit
 import CommonKit
+import CommonUI
 import SwiftUI
 
 /// Laid out by the Common Tools Settings standard: the app's own sections, then General, then
@@ -8,9 +9,9 @@ import SwiftUI
 struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
-    @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
 
+    private static let height: CGFloat = 720
     private static let commandSpace = KeyCombo(keyCode: 49, modifiers: .command)
     private static let keyboardShortcuts = URL(
         string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension")!
@@ -23,7 +24,7 @@ struct SettingsView: View {
                     theme: preferences.theme, visibleRows: preferences.visibleRows, width: 400
                 )
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 6)
+                .padding(.vertical, Tokens.Space.xs)
                 .listRowBackground(Color.clear)
             }
 
@@ -34,22 +35,21 @@ struct SettingsView: View {
             } header: {
                 Text("Shortcut")
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if let conflict = Conflicts.holder(of: preferences.hotKey, among: controller.otherShortcuts) {
                         Text(
                             "\(preferences.hotKey.displayName) also opens \(conflict.owner), so only one of them will. Change it in \(conflict.whereToChange), or choose another shortcut here."
                         )
                         .foregroundStyle(.orange)
                     } else if let problem = controller.hotKeyProblem {
-                        Text(problem).foregroundStyle(.red)
+                        Text(problem).foregroundStyle(Tokens.Color.danger.color)
                     }
                     if let spaceHolder = Conflicts.holder(of: Self.commandSpace, among: controller.otherShortcuts),
                         preferences.hotKey != Self.commandSpace
                     {
-                        Text(
+                        SettingsFootnote(
                             "⌘Space belongs to \(spaceHolder.owner). To use it here, change it in \(spaceHolder.whereToChange) first."
                         )
-                        .foregroundStyle(.secondary)
                     }
                     // The button only helps when the clash is Spotlight's; Alfred's is changed in Alfred.
                     let involved = [preferences.hotKey, Self.commandSpace].compactMap {
@@ -97,47 +97,35 @@ struct SettingsView: View {
             } header: {
                 Text("Search")
             } footer: {
-                Text(
+                SettingsFootnote(
                     "Apps are always searched. Files come from the Spotlight index of your home folder. ⌘1, ⌘2, and ⌘3 search only apps, files, or actions, whatever is switched off here."
                 )
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             Section {
+                OpenAtLoginToggle(error: $loginError)
                 Toggle("Show in menu bar", isOn: $preferences.showsMenuBarItem)
-                Toggle("Open at login", isOn: $openAtLogin)
             } header: {
                 Text("General")
             } footer: {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    if let loginError { SettingsFootnote(loginError) }
                     if !preferences.showsMenuBarItem {
-                        Text("Open Common Command from Finder again to get back to Settings.")
+                        SettingsFootnote("Open Common Command from Finder again to get back to Settings.")
                     }
-                    if let loginError { Text(loginError) }
                 }
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             CommonToolsSection()
         }
+        // Not `.settingsForm()`: that sizes the window to its sections, and with the preview on top these run
+        // to about 1,700 points, taller than any screen. The family's width, and a height that scrolls.
         .formStyle(.grouped)
-        .frame(width: 460, height: 720)
+        .frame(width: Tokens.Layout.settingsWidth, height: Self.height)
         .onChange(of: preferences.theme) { controller.preferencesChanged() }
         .onChange(of: preferences.size) { controller.preferencesChanged() }
         .onChange(of: preferences.translucent) { controller.preferencesChanged() }
         .onChange(of: preferences.showsMenuBarItem) { controller.preferencesChanged() }
-        .onChange(of: openAtLogin) { _, enabled in
-            guard enabled != LoginItem.isEnabled else { return }
-            do {
-                try LoginItem.setEnabled(enabled)
-                loginError = nil
-            } catch {
-                loginError = error.localizedDescription
-                openAtLogin = LoginItem.isEnabled
-            }
-        }
     }
 }
 
@@ -150,8 +138,8 @@ struct ShortcutRecorder: View {
     @State private var hint: String?
 
     var body: some View {
-        HStack(spacing: 8) {
-            if let hint { Text(hint).font(.callout).foregroundStyle(.secondary) }
+        HStack(spacing: Tokens.Space.xs) {
+            if let hint { SettingsFootnote(hint) }
             Button {
                 recording ? stop() : start()
             } label: {
