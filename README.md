@@ -60,24 +60,28 @@ scripts/task build                 # universal build → build/Common Shot.app
 mv "build/Common Shot.app" /Applications/
 ```
 
-macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/setup-signing` once per Mac: it creates a self-signed "Common Tools Local Signing" identity in your login keychain and trusts it for code signing (macOS asks for your password), and `scripts/task build` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
+macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/dev-cert` once per Mac: it creates the self-signed "Common Tools Development" identity that every Common Tools app shares, trusts it for code signing (macOS asks for your password), and clears Common Shot's stale Screen Recording entry. `scripts/task build` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
 
 ## Development
 
 ```sh
 scripts/setup           # once: wire the git hooks
+scripts/dev-cert        # optional, once: a stable signing identity, so permissions survive rebuilds
 scripts/agent doctor    # check tools and repository state
 ```
 
 | Command | Does |
 | --- | --- |
+| `scripts/task run` | build, quit the running copy, open the new one |
 | `scripts/task check` | lint + test + build, exactly what CI runs |
+| `scripts/task test <name>` | only the tests whose name matches |
 | `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent commit "<type>: subject"` | Conventional Commit, checked by the hook |
-| `scripts/agent pr` | full check, push, open the pull request |
+| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
+| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
 | `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after merge: remove the worktree and branch |
+| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
 | `scripts/agent list` | worktrees, branches, and pull request state |
+| `scripts/release <version>` | a release: dated notes, version bump, tag, published download, checked |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
 
