@@ -79,6 +79,7 @@ public struct WelcomeView: View {
                     .frame(width: 96, height: 96)
                 Text("Welcome to \(info.name)").font(.title2.weight(.semibold))
                 Text(info.line).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.top, 8)
 
