@@ -154,18 +154,27 @@ ship)
     [ -z "$(git status --porcelain)" ] || die "uncommitted changes; pass a commit message or commit them first"
     "$0" pr "$@"
     echo "==> waiting for $branch to merge"
+    merged() { [ "$(gh pr view "$branch" --json state --jq .state)" = "MERGED" ]; }
     while :; do
         state="$(gh pr view "$branch" --json state --jq .state)"
         [ "$state" = "MERGED" ] && break
         [ "$state" = "CLOSED" ] && die "the pull request was closed without merging"
         git fetch --quiet origin
         if ! git merge-base --is-ancestor "origin/$base" HEAD; then
+            # The move may be this pull request landing, between the state read and the fetch; its
+            # own squash is then on $base and these commits have nothing to rebase onto.
+            merged && continue
             # Test against what it will land on, not what it branched from.
             echo "==> $base moved; rebasing and checking again"
-            git rebase --quiet "origin/$base" || die "conflicts with $base; resolve them, then run 'scripts/agent ship' again"
+            if ! git rebase --quiet "origin/$base"; then
+                if merged; then
+                    git rebase --abort
+                    continue
+                fi
+                die "conflicts with $base; resolve them, then run 'scripts/agent ship' again"
+            fi
             check_and_record
             # Auto-merge may have landed the pull request while the check ran, deleting the branch.
-            merged() { [ "$(gh pr view "$branch" --json state --jq .state)" = "MERGED" ]; }
             merged && continue
             git push --quiet --force-with-lease origin "$branch" || merged || die "could not push $branch"
         fi
