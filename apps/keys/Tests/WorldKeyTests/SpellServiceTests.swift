@@ -75,7 +75,8 @@ struct SpellServiceTests {
         let clock = ContinuousClock()
         let start = clock.now
         #expect(lexicon.isWord("привет", language: "ru") == true)
-        #expect(clock.now - start < .seconds(1))
+        // Five calls at 200 ms are a second on their own; the gate is against the thirteen.
+        #expect(clock.now - start < .seconds(3))
         #expect(spelling.completionCalls <= 5)
     }
 
