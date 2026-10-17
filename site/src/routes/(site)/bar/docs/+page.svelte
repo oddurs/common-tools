@@ -31,13 +31,17 @@
 		whenever the bar is collapsed.
 	</p>
 	<ol>
-		<li>Hold <kbd>⌘</kbd> with the pointer over the menu bar. After a moment every hidden icon shows.</li>
 		<li>
-			Keep holding <kbd>⌘</kbd> and drag an icon past the chevron, to its left. This is macOS's own ⌘-drag.
+			Hold <kbd>⌘</kbd> with the pointer over the menu bar. After a moment every hidden icon shows, and a thin line
+			appears just left of the chevron, where the hidden icons begin.
 		</li>
-		<li>Let go of <kbd>⌘</kbd>. Everything left of the chevron disappears.</li>
+		<li>
+			Keep holding <kbd>⌘</kbd> and drag an icon past that line. This is macOS's own ⌘-drag. An icon dropped between
+			the line and the chevron stays visible.
+		</li>
+		<li>Let go of <kbd>⌘</kbd>. Everything left of the line disappears, and the line with it.</li>
 	</ol>
-	<p>To bring an icon back for good, hold <kbd>⌘</kbd> and drag it to the right of the chevron.</p>
+	<p>To bring an icon back for good, hold <kbd>⌘</kbd> and drag it to the right of the line.</p>
 	<p>
 		To see it done, right-click the chevron and choose <b>How to Arrange…</b>. An icon is picked up, dragged
 		past the chevron, and hidden, three times over, right in the menu bar. Any click, or holding <kbd>⌘</kbd> yourself,
@@ -68,6 +72,7 @@
 			<kbd>⌥</kbd>-click the chevron to show both sections. <kbd>⌥</kbd>-click again to hide everything.
 		</li>
 		<li>Holding <kbd>⌘</kbd> shows the dotted line too, so you can drag icons into either section.</li>
+		<li>Hidden icons show with no gap beside the chevron, whichever sections are open.</li>
 	</ul>
 
 	<h2 id="spacers">Spacers</h2>
