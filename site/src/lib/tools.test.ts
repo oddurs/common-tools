@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { download, github, releasesOf, tool, tools, upcoming } from './tools';
+import { brewLine, cask, curlLine, download, github, releasesOf, tool, tools, upcoming } from './tools';
 
 describe('tools', () => {
 	it('links each download to the latest release, falling back to the old repository', () => {
@@ -46,6 +46,34 @@ describe('tools', () => {
 			expect(apps[t.slug].ASSET).toBe(t.asset.replace(/\.zip$/, ''));
 		}
 		for (const u of upcoming) expect(apps[u.slug].NAME).toBe(u.name);
+	});
+	it('writes the terminal install lines', () => {
+		const bar = tool('bar');
+		expect(cask(bar)).toBe('common-bar');
+		expect(brewLine(bar)).toBe('brew install --cask oddurs/common-tools/common-bar');
+		expect(curlLine(bar)).toBe(
+			'curl -fsSL https://oddurs.github.io/common-tools/install.sh | sh -s -- bar'
+		);
+	});
+	it('agrees with the install script on every released app', () => {
+		// static/install.sh carries its own table: slug | name | asset | old repository | permission.
+		const script = readFileSync('static/install.sh', 'utf8');
+		const table =
+			script
+				.match(/^apps='([^']*)'/m)?.[1]
+				.trim()
+				.split('\n') ?? [];
+		expect(table).toEqual(
+			tools.map((t) =>
+				[
+					t.slug,
+					t.name,
+					t.asset.replace(/\.zip$/, ''),
+					t.legacyRepo?.replace('https://github.com/oddurs/', '') ?? '',
+					t.permission?.name ?? ''
+				].join('|')
+			)
+		);
 	});
 	it('looks tools up by slug and refuses unknown ones', () => {
 		expect(tool('keys').name).toBe('Common Keys');

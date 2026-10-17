@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { download, type Tool } from './tools';
+	import OpenAnyway from './OpenAnyway.svelte';
+	import { brewLine, curlLine, download, type Tool } from './tools';
 
 	let { tool }: { tool: Tool } = $props();
 
@@ -19,20 +20,25 @@
 		</li>
 		<li>
 			<b>Open it</b>
-			<span>
-				The first time, macOS can't verify the developer: choose <b>Open Anyway</b> in System Settings ›
-				Privacy &amp; Security.
-			</span>
+			<span><OpenAnyway {tool} /></span>
 		</li>
+		{#if tool.permission}
+			<li>
+				<b>Allow {tool.permission.name}</b>
+				<span>{tool.name} asks for it {tool.permission.why}. Flip the switch in System Settings.</span
+				>
+			</li>
+		{/if}
 		<li>
 			<b>Set it up</b>
 			<span>{tool.firstRun}</span>
 		</li>
 	</ol>
 	<p class="muted">
-		Every step, with checksums and the command-line alternative, is in the <a
-			href={resolve(`${tool.slug}/docs/`)}>docs</a
-		>.
+		Or, from a terminal, with no Open Anyway step:
+		{#if release?.cask}<code>{brewLine(tool)}</code> or{/if}
+		<code>{curlLine(tool)}</code>. Every step, with checksums, is in the
+		<a href={resolve(`${tool.slug}/docs/`)}>docs</a>.
 	</p>
 </section>
 
@@ -42,7 +48,7 @@
 		padding: 0;
 		list-style: none;
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: 40px;
 		counter-reset: step;
 	}
@@ -69,6 +75,9 @@
 	li > b {
 		color: var(--text-primary);
 		font-size: 17px;
+	}
+	code {
+		word-break: break-all;
 	}
 	@media (max-width: 760px) {
 		ol {

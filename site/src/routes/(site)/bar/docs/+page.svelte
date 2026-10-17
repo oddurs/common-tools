@@ -18,12 +18,11 @@
 
 <Docs tool={bar} {sections}>
 	<h2 id="install">Install</h2>
-	<Install tool={bar}>
-		<li>
-			A chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b> guide.
-			Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
-		</li>
-	</Install>
+	<Install tool={bar} />
+	<p class="callout">
+		On first launch a chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b>
+		guide. Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
+	</p>
 
 	<h2 id="hide">Hide icons</h2>
 	<p>

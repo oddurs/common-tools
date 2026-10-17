@@ -66,33 +66,33 @@ describe('latestRelease', () => {
 			json: async () => body,
 			text: async () => body
 		}) as unknown as Response;
-	const release = (tag: string, name: string) => ({
+	const release = (tag: string, ...names: string[]) => ({
 		tag_name: tag,
 		published_at: '2026-10-16T07:51:46Z',
 		html_url: `https://github.com/x/releases/tag/${tag}`,
 		draft: false,
 		prerelease: false,
-		assets: [
-			{
-				name,
-				size: 1_688_975,
-				browser_download_url: `https://github.com/x/releases/download/${tag}/${name}`
-			}
-		]
+		assets: names.map((name) => ({
+			name,
+			size: 1_688_975,
+			browser_download_url: `https://github.com/x/releases/download/${tag}/${name}`
+		}))
 	});
 
-	it('takes the newest monorepo release tagged for the app', async () => {
+	it('takes the newest monorepo release tagged for the app, with its disk image and cask', async () => {
 		const fake = (async (url: string) =>
 			url.includes('common-tools/releases')
 				? respond([
 						release('bar-v0.4.0', 'CommonBar.zip'),
-						release('stats-v0.4.0', 'CommonStats.zip'),
+						release('stats-v0.4.0', 'CommonStats.zip', 'CommonStats.dmg'),
 						release('stats-v0.3.5', 'CommonStats.zip')
 					])
 				: respond(changelog.replace('0.3.0', '0.4.0'))) as typeof fetch;
 		const found = await latestRelease(stats, fake);
 		expect(found).toMatchObject({ version: '0.4.0', date: '2026-10-16', size: 1_688_975 });
 		expect(found?.download).toMatch(/stats-v0\.4\.0\/CommonStats\.zip$/);
+		expect(found?.dmg).toMatch(/stats-v0\.4\.0\/CommonStats\.dmg$/);
+		expect(found?.cask).toBe('common-stats');
 		expect(found?.notes.map((n) => n.heading)).toEqual(['Changed', 'Added']);
 	});
 
@@ -106,6 +106,20 @@ describe('latestRelease', () => {
 		const found = await latestRelease(stats, fake);
 		expect(found?.version).toBe('0.3.0');
 		expect(found?.download).toMatch(/v0\.3\.0\/CommonStats\.zip$/);
+		expect(found?.dmg).toBeUndefined();
+	});
+
+	it('offers a cask and a disk image only when they exist', async () => {
+		const fake = (async (url: string) =>
+			url.includes('common-tools/releases')
+				? respond([release('stats-v0.4.0', 'CommonStats.zip')])
+				: url.includes('homebrew-common-tools')
+					? respond('', false)
+					: respond(changelog)) as typeof fetch;
+		const found = await latestRelease(stats, fake);
+		expect(found?.version).toBe('0.4.0');
+		expect(found?.cask).toBeUndefined();
+		expect(found?.dmg).toBeUndefined();
 	});
 
 	it('gives null rather than failing the build when GitHub refuses', async () => {

@@ -5,7 +5,7 @@
 // Releases are tagged <slug>-v<version> in the monorepo. Apps released before the move have their
 // releases in their old repositories, which still serve the downloads until the first release here.
 
-import { tools, type Tool } from './tools';
+import { cask, tools, type Tool } from './tools';
 
 export type Notes = { heading: string; items: string[] }[];
 
@@ -17,6 +17,10 @@ export type Release = {
 	size: number;
 	/** The app's zip. */
 	download: string;
+	/** The app's disk image, once releases publish one. */
+	dmg?: string;
+	/** The Homebrew cask token, once the tap has a cask for the app. */
+	cask?: string;
 	/** The release page. */
 	url: string;
 	/** The CHANGELOG's section for this version: Added, Changed, Fixed… */
@@ -26,6 +30,9 @@ export type Release = {
 export type Releases = Partial<Record<Tool['slug'], Release>>;
 
 export const monorepo = 'oddurs/common-tools';
+
+/** Where the Homebrew tap keeps its casks; a cask is offered only once this says it exists. */
+const taps = 'https://raw.githubusercontent.com/oddurs/homebrew-common-tools/main/Casks';
 
 /**
  * The sections of one version in a Keep a Changelog file. Bullets may wrap onto indented lines.
@@ -106,11 +113,15 @@ export async function latestRelease(tool: Tool, fetch: Fetch, token?: string): P
 			{ headers }
 		);
 		const notes = changelog.ok ? changelogNotes(await changelog.text(), version) : [];
+		const dmg = release.assets.find((a) => a.name === tool.asset.replace(/\.zip$/, '.dmg'));
+		const brew = await fetch(`${taps}/${cask(tool)}.rb`, { headers });
 		return {
 			version,
 			date: release.published_at.slice(0, 10),
 			size: asset.size,
 			download: asset.browser_download_url,
+			dmg: dmg?.browser_download_url,
+			cask: brew.ok ? cask(tool) : undefined,
 			url: release.html_url,
 			notes
 		};

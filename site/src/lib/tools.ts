@@ -17,7 +17,9 @@ export type Tool = {
 	icon: `${Slug}/icon.png`;
 	/** The demo video's accessible description. */
 	demo: string;
-	/** The last step of getting started, after downloading and opening it. */
+	/** The privacy permission it can't work without, and why, finishing "needs … access …". */
+	permission?: { name: 'Accessibility' | 'Screen Recording'; why: string };
+	/** The last step of getting started, after downloading, opening, and allowing it. */
 	firstRun: string;
 };
 
@@ -27,6 +29,12 @@ export const site = 'https://oddurs.github.io/common-tools/';
 /** The monorepo every app lives in. */
 export const github = 'https://github.com/oddurs/common-tools';
 const legacy = 'https://github.com/oddurs';
+
+/** The Homebrew tap, github.com/oddurs/homebrew-common-tools; scripts/cask writes a cask per release. */
+export const tap = 'oddurs/common-tools';
+
+/** The install script the site serves (static/install.sh). */
+export const installScript = `${site}install.sh`;
 
 export const tools: Tool[] = [
 	{
@@ -54,7 +62,8 @@ export const tools: Tool[] = [
 		asset: 'CommonKeys.zip',
 		requires: 'macOS 14.4 or later · Every keyboard macOS has',
 		icon: 'keys/icon.png',
-		firstRun: 'Allow Accessibility access when asked, so it can see and fix what you type.',
+		permission: { name: 'Accessibility', why: 'to see what you type and fix it' },
+		firstRun: 'Type a word on the wrong keyboard and press space. It’s fixed, and the layout switches.',
 		demo: 'Typing þetta on the U.S. layout: Common Keys fixes it and switches to Icelandic. Then привет and 안녕하세요 typed on U.S. are fixed the same way, and each app keeps its own keyboard.'
 	},
 	{
@@ -131,6 +140,15 @@ export const releasesOf = (tool: { slug: string }) => `${github}/releases?q=${to
 export const download = (tool: Tool, release?: { download: string } | null) =>
 	release?.download ??
 	(tool.legacyRepo ? `${tool.legacyRepo}/releases/latest/download/${tool.asset}` : releasesOf(tool));
+
+/** The app's Homebrew cask token: "Common Bar" is `common-bar`. */
+export const cask = (tool: { name: string }) => tool.name.toLowerCase().replace(/ /g, '-');
+
+/** The Homebrew install line. */
+export const brewLine = (tool: Tool) => `brew install --cask ${tap}/${cask(tool)}`;
+
+/** The one-line install. */
+export const curlLine = (tool: Tool) => `curl -fsSL ${installScript} | sh -s -- ${tool.slug}`;
 
 export function tool(slug: string): Tool {
 	const found = tools.find((t) => t.slug === slug);
