@@ -3,6 +3,9 @@ name: Pages
 on:
   push:
     branches: [main]
+  # Rebuild daily, so a new app release shows its version and notes without a change here.
+  schedule:
+    - cron: '17 6 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -33,6 +36,8 @@ jobs:
         env:
           # Pages serves the site under /common-tools.
           BASE_PATH: /common-tools
+          # The build reads each app's latest release from the GitHub API.
+          GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build

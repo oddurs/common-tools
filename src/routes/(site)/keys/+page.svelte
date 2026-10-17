@@ -1,9 +1,17 @@
 <script lang="ts">
 	import DemoVideo from '#lib/DemoVideo.svelte';
 	import ToolHero from '#lib/ToolHero.svelte';
+	import GetStarted from '#lib/GetStarted.svelte';
+	import Meta from '#lib/Meta.svelte';
+	import MoreTools from '#lib/MoreTools.svelte';
+	import WhatsNew from '#lib/WhatsNew.svelte';
 	import { tool } from '#lib/tools.ts';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	const keys = tool('keys');
+	const release = $derived(data.releases.keys);
 
 	const accuracy = [
 		['U.S. + Icelandic', '0 of 300', '97% (most words read the same on both)'],
@@ -17,16 +25,15 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Common Keys — fixes words typed on the wrong keyboard</title>
-	<meta
-		name="description"
-		content="A native macOS menu bar app that fixes words typed on the wrong keyboard layout, for every keyboard macOS has. It learns how you type, and nothing leaves your Mac."
-	/>
-</svelte:head>
+<Meta
+	title="Common Keys — fixes words typed on the wrong keyboard"
+	description="A native macOS menu bar app that fixes words typed on the wrong keyboard layout, for every keyboard macOS has. It learns how you type, and nothing leaves your Mac."
+	path="keys/"
+	image="keys/poster.jpg"
+/>
 
 <main>
-	<ToolHero tool={keys} />
+	<ToolHero tool={keys} {release} />
 	<DemoVideo tool={keys} />
 
 	<section class="features ruled">
@@ -113,6 +120,10 @@
 dkssudgktpdy</code
 			></pre>
 	</section>
+
+	{#if release}<WhatsNew tool={keys} {release} />{/if}
+	<GetStarted tool={keys} />
+	<MoreTools tool={keys} />
 </main>
 
 <style>

@@ -19,6 +19,7 @@ A [SvelteKit](https://svelte.dev/docs/kit) site, prerendered with `adapter-stati
 
 - `src/lib/tools.ts`: the three apps: names, repositories, and release asset names. Download buttons point at `releases/latest/download/<asset>`, so they always get the newest build without a site change.
 - `src/routes/(site)/`: the pages. `<tool>/` is the product page, `<tool>/docs/` the documentation.
+- `src/lib/releases.ts`: at build time, each app's latest release (version, date, download size) from the GitHub API, and its notes from that release's `CHANGELOG.md`. The site rebuilds daily, so a new release appears without a change here. Without network access the pages still build, just without those details. Set `GITHUB_TOKEN` to raise the API rate limit; CI passes its own.
 - `src/lib/<tool>/`: each app's demo scene. A scene is a pure function of time (`demo.ts`) drawn by a Svelte component (`Demo.svelte`).
 - `src/routes/(demo)/<tool>/demo/`: the scene on its own, for recording.
 

@@ -30,6 +30,7 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 ## Code
 
 - `src/lib/tools.ts` is the single source of names, repositories, and release asset names. Download links use `releases/latest/download/<asset>`; if an app renames its asset, change it here and in that app's `release.yml` together.
+- Each app's CHANGELOG section for its latest release appears on its page as "What's new", so those notes are user-facing copy.
 - Every claim on a page must be true of the app's code. Read the app's source before writing about a feature; don't describe unmerged work.
 - Links go through `resolve()` with relative paths (`'stats/'`), and assets through `asset()`, so the `/common-tools` base path works.
 - Demo videos are films made with `src/lib/film/`. Write timing as a `direct((d) => …)` script (camera, point, click, hold/release, caption, mark, poster, end); never hand-roll timelines in a scene. Scene state reads `film.marks`. Draw entrances from the frame's time, never CSS animations, or recorded frames won't match. `src/lib/demos.test.ts` pins what each caption promises; update it with the script.
