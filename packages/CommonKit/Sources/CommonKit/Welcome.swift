@@ -81,6 +81,18 @@ public struct WelcomeView: View {
             }
             .padding(.top, 8)
 
+            // The family's promise, in the same words as docs/install.md.
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Completely free, forever: no trial, no subscription, no paid tier.")
+                Text("Open source under MIT: every line is on GitHub.")
+                Text(
+                    "Private: no network access, no analytics, no crash reports, no account, so nothing you do is ever reported and nothing leaves your Mac."
+                )
+            }
+            .font(.callout)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
             VStack(spacing: 0) {
                 if let permission = info.permission {
                     row(

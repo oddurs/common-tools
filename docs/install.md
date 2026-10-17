@@ -1,5 +1,7 @@
 # How the apps are installed
 
+The family's promise, which the Welcome window states in the same words: completely free, forever (no trial, no subscription, no paid tier); open source under MIT, every line on GitHub; private, with no network access, no analytics, no crash reports, and no account, so nothing you do is ever reported and nothing leaves your Mac.
+
 Every release of an app publishes, under the tag `<slug>-v<version>`:
 
 | File | Made by | For |
