@@ -20,6 +20,15 @@
 				style:opacity={icon.opacity}><Symbol name={icon.symbol} /></span
 			>
 		{/each}
+		{#if frame.line.opacity > 0}
+			<!-- Glyphs.line: a 1 × 12 pt hairline in its 4 pt marker item. -->
+			<span
+				class="icon"
+				style:left="{frame.line.x}px"
+				style:width="{metrics.marker}px"
+				style:opacity={frame.line.opacity}><i class="line"></i></span
+			>
+		{/if}
 		<span class="icon" style:left="{frame.chevron.x}px" style:width="{metrics.chevron}px">
 			<!-- Glyphs.swift: a 6 × 9 pt canvas, right-angled arms 3.5 pt from a tip inset 1 pt, 1.25 pt stroke. -->
 			<svg width="6" height="9" viewBox="0 0 6 9" aria-hidden="true">
@@ -55,6 +64,11 @@
 	.icon.lifted {
 		top: 3px;
 		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+	}
+	.line {
+		width: 1px;
+		height: 12px;
+		background: currentColor;
 	}
 	.note {
 		padding: 30px 36px;
