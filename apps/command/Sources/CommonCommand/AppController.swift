@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonKit
 import CommonUI
 
 /// Wires the shortcut, the panel, the menu bar item, and Settings together, and carries out what a
@@ -13,6 +14,9 @@ final class AppController: NSObject {
     private let hotKey = HotKey()
     private(set) lazy var panel = PanelController(preferences: preferences, library: library)
     private let settings = SettingsWindowHost(title: "Common Command Settings")
+    let updates = UpdateCheck(tool: CommonTool.thisApp!)
+    /// False while rendering a snapshot, which must not show Welcome or reach the network.
+    private let interactive: Bool
     private var statusItem: NSStatusItem?
     private(set) var hotKeyProblem: String?
     /// Spotlight's and Alfred's shortcuts, read when the shortcut is set and when Settings opens.
@@ -27,6 +31,7 @@ final class AppController: NSObject {
     init(snapshot: Snapshot.Request? = nil) {
         // A snapshot mustn't change the real settings.
         preferences = snapshot == nil ? Preferences() : Preferences(defaults: UserDefaults(suiteName: "snapshot")!)
+        interactive = snapshot == nil
         super.init()
         library.commands = [
             Candidate(
@@ -214,6 +219,16 @@ final class AppController: NSObject {
 }
 
 extension AppController: NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        guard interactive else { return }
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(
+                line:
+                    "A small, fast launcher: apps, System Settings, files, sums, and web searches from one quiet panel."
+            ))
+        updates.start()
+    }
+
     /// Opening the app again while it runs is how people look for its settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings()

@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A Welcome window on first launch: what Common Stats does, Open at login, the Common Tools family, and the family's promise.
+- An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - Average over 3, 10, or 30 seconds (Settings › General): a trailing time average that steadies the menu bar's numbers, gauges, and graphs. It's applied when drawing, so the stored readings stay exact and the menu always shows them as measured.
 - Color settings: graphs, gauges, and legends can follow the system accent color, use a color per metric, or use one of eight system colors. An optional "Color in menu bar" switch carries the color into the menu bar; it is off by default, which keeps the bar monochrome like the system's own icons.
 

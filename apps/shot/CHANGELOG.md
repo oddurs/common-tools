@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A Welcome window on first launch: what Common Shot does, the Screen Recording permission it needs with a live check and a button to System Settings, Open at login, and the Common Tools family.
+- An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - A global shortcut (⇧⌘2 by default, recordable in Settings) that freezes every display and shows an overlay over them.
 - Drag for an area, with its size in pixels and a loupe; click for the window under the pointer, captured on its own; Return for the whole screen; Escape, right-click, or the shortcut again to cancel. A hint along the bottom names the keys.
 - Hold ⌥ to copy the text in an area, window, or screen instead of the image, read on the device with Vision. Monospaced text keeps its indentation, and `name. member` is read back as `name.member`.

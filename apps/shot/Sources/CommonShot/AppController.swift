@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import CommonUI
 import ShotKit
 
@@ -16,6 +17,7 @@ final class AppController: NSObject {
     private let toast = Toast()
     let history = History()
     private let settings = SettingsWindowHost(title: "Common Shot Settings")
+    let updates = UpdateCheck(tool: CommonTool.thisApp!)
     private var statusItem: NSStatusItem?
     private(set) var hotKeyProblem: String?
 
@@ -350,6 +352,14 @@ extension AppController: NSMenuDelegate {
 }
 
 extension AppController: NSApplicationDelegate {
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(
+                line: "Screenshots straight to the clipboard: press ⇧⌘2, drag, paste.",
+                permission: .screenRecording(reason: "to capture what is on your screen")))
+        updates.start()
+    }
+
     /// Opening the app again while it runs is how people look for its settings.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showSettings()

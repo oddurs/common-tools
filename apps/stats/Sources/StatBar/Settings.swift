@@ -5,6 +5,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var model: AppModel
+    let updates: UpdateCheck
     @State private var loginProblem: LoginItem.Problem?
 
     var body: some View {
@@ -39,6 +40,7 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: updates)
                 Picker("Update every", selection: $model.layout.interval) {
                     ForEach(BarLayout.intervals, id: \.self) { s in
                         Text(s == 1 ? "1 second" : "\(s.formatted()) seconds")
@@ -52,6 +54,7 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                     OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: updates)
                     SettingsFootnote(
                         "Averaging steadies the menu bar’s numbers and graphs. The menu always shows exact readings.")
                 }

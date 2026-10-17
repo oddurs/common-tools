@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A Welcome window on first launch: what Common Keys does, the Accessibility permission it needs with a live check and a button to System Settings, Open at login, and the Common Tools family.
+- An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - 24 more languages with a macOS keyboard but no spelling dictionary are fixed when typed on the wrong keyboard, among them Persian, Bengali, Kazakh, Slovak, Amharic and Sinhala.
 - Learns from your corrections on this Mac: words you type and keep stop being changed, and how readily it fixes follows how you correct it, within fixed limits.
 - Thai, Georgian and Armenian words typed on the wrong keyboard are fixed. Typed on U.S., they are now fixed every time in testing, against 58%, 0% and 51% before.
