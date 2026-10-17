@@ -1,5 +1,4 @@
 import AppKit
-import ServiceManagement
 import SwiftUI
 
 /// What the Welcome window says about this app. Everything else in it is the same for every app.
@@ -58,24 +57,11 @@ public enum Welcome {
     }
 }
 
-/// Whether the app starts at login, through the system's login items.
-public enum OpenAtLogin {
-    public static var isEnabled: Bool { SMAppService.mainApp.status == .enabled }
-
-    public static func set(_ enabled: Bool) throws {
-        if enabled {
-            try SMAppService.mainApp.register()
-        } else {
-            try SMAppService.mainApp.unregister()
-        }
-    }
-}
-
 public struct WelcomeView: View {
     let info: WelcomeInfo
     let done: () -> Void
     @State private var granted: Bool
-    @State private var openAtLogin = OpenAtLogin.isEnabled
+    @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginProblem: String?
 
     public init(info: WelcomeInfo, done: @escaping () -> Void) {
@@ -136,11 +122,11 @@ public struct WelcomeView: View {
         .frame(width: 460)
         .onChange(of: openAtLogin) { _, enabled in
             do {
-                try OpenAtLogin.set(enabled)
+                try LoginItem.setEnabled(enabled)
                 loginProblem = nil
             } catch {
                 loginProblem = error.localizedDescription
-                openAtLogin = OpenAtLogin.isEnabled
+                openAtLogin = LoginItem.isEnabled
             }
         }
         .task {
