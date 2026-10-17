@@ -41,6 +41,10 @@ Releases are signed ad-hoc today, so macOS shows "can't verify the developer" th
 
 8. **Release** as usual: `scripts/release bar 0.5.0`. The Release workflow's Package step has the secrets in its environment, so the zip, the command-line tools, and the disk image are all signed, notarized, and stapled.
 
+## Development builds
+
+Every build on a developer's Mac signs with the self-signed "Common Tools Development" identity, so an app's designated requirement (its bundle identifier and that certificate) stays the same from build to build and Accessibility and Screen Recording grants survive rebuilds. Run `scripts/dev-cert` once per Mac; `scripts/task build` stops with an error until it has, and only CI (`$CI` set) signs ad hoc. `scripts/dev-cert` resets the apps' permission records only on a run that creates or trusts the identity, since only then do the existing grants belong to another signature. A grant made for another signature shows its switch on, doesn't apply, and survives being flipped off and on; the apps' **Reset and Ask Again** (or `tccutil reset <service> <bundle id>`) removes it.
+
 ## After the first notarized release
 
 - Remove the Open Anyway text from the site: `site/src/lib/OpenAnyway.svelte` and the sentence about re-allowing permissions after each update in `Install.svelte`. With a stable signature, Accessibility and Screen Recording grants survive updates.

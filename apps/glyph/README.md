@@ -26,7 +26,7 @@ Requires macOS 14 or later.
    xattr -dr com.apple.quarantine "/Applications/Common Glyph.app"
    ```
 
-3. Settings opens on first launch. Turn on **Open at login** there.
+3. Turn on **Open at login** in the Welcome window, or later in **Settings…** from a glyph's menu.
 
 ## Usage
 

@@ -30,6 +30,8 @@
 	<Install tool={keys} />
 	<p class="callout">
 		Missed the prompt? Choose <b>Allow Accessibility Access…</b> from the menu; it opens the right pane.
+		If Common Keys is already on there, that switch belongs to an earlier copy: choose
+		<b>Reset and Ask Again…</b>.
 	</p>
 
 	<h2 id="fixing">How fixing works</h2>

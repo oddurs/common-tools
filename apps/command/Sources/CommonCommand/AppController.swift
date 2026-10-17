@@ -7,8 +7,6 @@ import CommonUI
 /// result does when chosen.
 @MainActor
 final class AppController: NSObject {
-    private static let onboardedKey = "onboarded"
-
     let preferences: Preferences
     private let library = Library()
     private let hotKey = HotKey()
@@ -52,13 +50,6 @@ final class AppController: NSObject {
         }
         registerHotKey()
         updateStatusItem()
-
-        if !UserDefaults.standard.bool(forKey: Self.onboardedKey) {
-            UserDefaults.standard.set(true, forKey: Self.onboardedKey)
-            DispatchQueue.main.async { [weak self] in
-                MainActor.assumeIsolated { self?.showSettings() }
-            }
-        }
     }
 
     // MARK: Shortcut
@@ -221,7 +212,7 @@ final class AppController: NSObject {
 extension AppController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard interactive else { return }
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(
                 line:
                     "A small, fast launcher: apps, System Settings, files, sums, and web searches from one quiet panel."

@@ -1,5 +1,6 @@
 import AppKit
 import Carbon
+import CommonKit
 import Observation
 import WorldKey
 import os
@@ -81,7 +82,8 @@ final class Engine {
                 self?.appDidActivate(pid.flatMap(NSRunningApplication.init(processIdentifier:)))
             }
         }
-        if trusted { installTap() } else { requestAccess() }
+        // Welcome asks for access when it's missing; a system prompt here would open on top of it.
+        if trusted { installTap() } else { awaitTrust() }
     }
 
     /// Writes pending memory now, for quitting.
@@ -91,9 +93,12 @@ final class Engine {
         save()
     }
 
-    /// Shows the system prompt, then waits for the user to flip the switch in System Settings.
-    func requestAccess() {
-        AXIsProcessTrustedWithOptions(["AXTrustedCheckOptionPrompt": true] as CFDictionary)
+    static let permission = Permission.accessibility(reason: "to see what you type and fix it")
+
+    /// Clears a record left by an earlier copy, whose switch shows on but doesn't apply to this one,
+    /// then asks again and waits for the switch.
+    func resetAccess() throws {
+        try Self.permission.resetAndRequest()
         awaitTrust()
     }
 

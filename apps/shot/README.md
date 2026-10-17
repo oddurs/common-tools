@@ -26,7 +26,7 @@ Requires macOS 14 or later.
    xattr -dr com.apple.quarantine "/Applications/Common Shot.app"
    ```
 
-3. Press ⇧⌘2. macOS asks for Screen Recording access; turn on Common Shot in **Privacy & Security › Screen & System Audio Recording**, then quit and reopen it.
+3. The Welcome window asks for Screen Recording access. Click **Open System Settings**, turn on Common Shot in **Privacy & Security › Screen & System Audio Recording**, then click **Quit and Reopen**: macOS applies the switch only after the app reopens. If Common Shot is already on there, that switch belongs to an earlier copy; click **Reset and Ask Again**.
 4. Turn on **Open at login** in Settings.
 
 ## Usage
@@ -60,7 +60,7 @@ scripts/task build shot  # universal build → build/shot/Common Shot.app
 mv "build/shot/Common Shot.app" /Applications/
 ```
 
-macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/dev-cert` once per Mac: it creates the self-signed "Common Tools Development" identity that every Common Tools app shares, trusts it for code signing (macOS asks for your password), and clears Common Shot's stale Screen Recording entry. `scripts/task build shot` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
+macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/dev-cert` once per Mac: it creates the self-signed "Common Tools Development" identity that every Common Tools app shares, trusts it for code signing (macOS asks for your password), and clears Common Shot's stale Screen Recording entry. `scripts/task build shot` signs with it from then on, so the grant survives rebuilds, and refuses to build without it rather than sign ad hoc. To undo it, delete that certificate in Keychain Access.
 
 ## Development
 

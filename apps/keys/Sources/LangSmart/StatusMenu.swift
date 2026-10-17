@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import SwiftUI
 import WorldKey
 
@@ -94,6 +95,17 @@ final class StatusMenu: NSObject, NSMenuDelegate {
             allow.subtitle = "Needed to see and fix what you type"
             allow.image = symbol("hand.raised.fill")
             menu.addItem(allow)
+            let reset = action("Reset and Ask Again…") { [engine] in
+                do {
+                    try engine.resetAccess()
+                } catch {
+                    NSApp.activate()
+                    NSAlert(error: error).runModal()
+                }
+            }
+            reset.subtitle = Engine.permission.staleSwitchNote(app: "Common Keys")
+            reset.image = symbol("arrow.counterclockwise")
+            menu.addItem(reset)
             menu.addItem(.separator())
         }
 

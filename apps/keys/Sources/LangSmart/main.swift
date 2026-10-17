@@ -14,10 +14,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.mainMenu = Self.mainMenu()
         engine.start()
         statusMenu = StatusMenu(engine: engine) { [weak self] in self?.showSettings() }
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(
                 line: "Fixes words typed on the wrong keyboard layout, for every keyboard macOS has.",
-                permission: .accessibility(reason: "to see what you type and fix it")))
+                permission: Engine.permission))
         updates.start()
     }
 

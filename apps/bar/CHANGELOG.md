@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 - Resting the pointer on a menu bar icon, or clicking one, no longer shows the hidden icons. On macOS 26 every icon counted as empty menu bar space; now only space no other app's icon takes up does, including the space beside the chevron where the hidden icons wait.
 - Always-hidden icons stay off-screen while the others show. The dotted line's stretch was measured once, and a reveal could slide it far enough right that icons past it sat on screen, out of sight behind the notch or the app's menus. It now stretches further whenever that happens.
 - No more blank gaps when hidden icons are showing. The hidden icons used to sit 16 pt away from the chevron, and with the always-hidden section off there was another 16 pt gap among them. A divider with nothing to do now takes up no room, without being removed from the menu bar, so opening and closing stay smooth however often you do it.

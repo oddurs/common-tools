@@ -8,8 +8,6 @@ import UniformTypeIdentifiers
 /// Keeps one status item for each visible glyph, adding and removing items as glyphs come and go.
 @MainActor
 final class MenuBarController: NSObject {
-    private static let onboardedKey = "onboarded"
-
     let library: GlyphLibrary
     private let settings = SettingsWindowHost(title: "Common Glyph Settings")
     private let updates = UpdateCheck(tool: CommonTool.thisApp!)
@@ -20,13 +18,6 @@ final class MenuBarController: NSObject {
         super.init()
         library.onChange = { [weak self] in self?.sync() }
         sync()
-
-        if !UserDefaults.standard.bool(forKey: Self.onboardedKey) {
-            UserDefaults.standard.set(true, forKey: Self.onboardedKey)
-            DispatchQueue.main.async { [weak self] in
-                MainActor.assumeIsolated { self?.showSettings(nil) }
-            }
-        }
     }
 
     private func sync() {
@@ -55,7 +46,7 @@ final class MenuBarController: NSObject {
 
 extension MenuBarController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        Welcome.showIfFirstLaunch(
+        Welcome.showIfNeeded(
             WelcomeInfo(line: "Put your own images in the menu bar: a character, a sticker, an emoji, or a word."))
         updates.start()
     }
