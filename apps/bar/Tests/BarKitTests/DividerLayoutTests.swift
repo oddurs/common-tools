@@ -28,6 +28,20 @@ import Testing
         #expect(DividerLayout.reach(dividerEnd: 2864, screenMinX: 1728, padding: 16) == 1184)
     }
 
+    @Test func aStretchedDividerStartingPastTheScreensEdgeClearsIt() {
+        #expect(DividerLayout.clearsScreen(windowMinX: -64, screenMinX: 0))
+        #expect(DividerLayout.clearsScreen(windowMinX: 1664, screenMinX: 1728))
+    }
+
+    @Test func aStretchedDividerWhoseEndSlidRightNoLongerClearsTheScreen() {
+        // Its reach was measured with its end at 600; a reveal slid it to 900, so the icons left
+        // of it would sit from x 236 on, behind the app's menus.
+        let reach = DividerLayout.reach(dividerEnd: 600, screenMinX: 0, padding: 16)
+        #expect(!DividerLayout.clearsScreen(windowMinX: 900 - (reach + 16), screenMinX: 0))
+        let again = DividerLayout.reach(dividerEnd: 900, screenMinX: 0, padding: 16)
+        #expect(DividerLayout.clearsScreen(windowMinX: 900 - (again + 16), screenMinX: 0))
+    }
+
     @Test func theReachNeverExceedsTheFullStretch() {
         #expect(DividerLayout.reach(dividerEnd: 20_000, screenMinX: 0, padding: 16) == DividerLayout.stretchedLength)
     }
@@ -115,6 +129,5 @@ import Testing
         #expect(ItemName.toggle == "toggle")
         #expect(ItemName.divider == "divider")
         #expect(ItemName.alwaysDivider == "alwaysDivider")
-        #expect(ItemName.all == ["toggle", "divider", "alwaysDivider"])
     }
 }

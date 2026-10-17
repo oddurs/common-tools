@@ -6,7 +6,6 @@ public enum ItemName {
     public static let toggle = "toggle"
     public static let divider = "divider"
     public static let alwaysDivider = "alwaysDivider"
-    public static let all: Set<String> = [toggle, divider, alwaysDivider]
 
     /// Spacers are numbered from 1: `spacer1`, `spacer2`, …
     public static func spacer(_ index: Int) -> String { "spacer\(index + 1)" }
@@ -62,6 +61,14 @@ public struct DividerLayout: Equatable, Sendable {
     }
 
     static let offscreenMargin: CGFloat = 64
+
+    /// Whether a stretched divider whose window starts at `windowMinX` has every icon left of it
+    /// off-screen. Its reach is measured when it stretches; a reveal can later slide its right end
+    /// further right, and a reach that was enough then would leave icons on screen behind the
+    /// app's menus or the notch.
+    public static func clearsScreen(windowMinX: CGFloat, screenMinX: CGFloat) -> Bool {
+        windowMinX <= screenMinX
+    }
 
     public var divider: DividerState
     public var alwaysDivider: DividerState
