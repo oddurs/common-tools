@@ -14,7 +14,12 @@ export type Tool = {
 	icon: `${Slug}/icon.png`;
 	/** The demo video's accessible description. */
 	demo: string;
+	/** The last step of getting started, after downloading and opening it. */
+	firstRun: string;
 };
+
+/** Where the site is published; links shared elsewhere must be absolute. */
+export const site = 'https://oddurs.github.io/common-tools/';
 
 const github = 'https://github.com/oddurs';
 
@@ -29,6 +34,7 @@ export const tools: Tool[] = [
 		asset: 'CommonStats.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'stats/icon.png',
+		firstRun: 'Pick what the menu bar shows in Settings, and turn on Open at login.',
 		demo: 'Common Stats in the menu bar showing CPU, memory, and network. Its menu opens with live graphs for each, hovering a graph reads back a past value, and the item switches between values, graphs, and gauges.'
 	},
 	{
@@ -41,6 +47,7 @@ export const tools: Tool[] = [
 		asset: 'CommonKeys.zip',
 		requires: 'macOS 14.4 or later · Every keyboard macOS has',
 		icon: 'keys/icon.png',
+		firstRun: 'Allow Accessibility access when asked, so it can see and fix what you type.',
 		demo: 'Typing þetta on the U.S. layout: Common Keys fixes it and switches to Icelandic. Then привет and 안녕하세요 typed on U.S. are fixed the same way, and each app keeps its own keyboard.'
 	},
 	{
@@ -53,6 +60,7 @@ export const tools: Tool[] = [
 		asset: 'CommonBar.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'bar/icon.png',
+		firstRun: 'Hold ⌘ and drag the icons you rarely use past the chevron.',
 		demo: 'A crowded menu bar. Clicking the Common Bar chevron hides the icons to its left; hovering brings them back. Holding ⌘ shows every icon, and one is dragged past the chevron to hide it.'
 	}
 ];

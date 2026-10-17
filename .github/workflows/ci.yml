@@ -24,6 +24,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: scripts/task check
+        env:
+          # The build reads each app's latest release from the GitHub API.
+          GITHUB_TOKEN: ${{ github.token }}
 
   required:
     # The single status check branch protection requires.

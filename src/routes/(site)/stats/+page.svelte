@@ -1,9 +1,17 @@
 <script lang="ts">
 	import DemoVideo from '#lib/DemoVideo.svelte';
 	import ToolHero from '#lib/ToolHero.svelte';
+	import GetStarted from '#lib/GetStarted.svelte';
+	import Meta from '#lib/Meta.svelte';
+	import MoreTools from '#lib/MoreTools.svelte';
+	import WhatsNew from '#lib/WhatsNew.svelte';
 	import { tool } from '#lib/tools.ts';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	const stats = tool('stats');
+	const release = $derived(data.releases.stats);
 
 	const sources = [
 		[
@@ -24,16 +32,15 @@
 	];
 </script>
 
-<svelte:head>
-	<title>Common Stats — system stats for the macOS menu bar</title>
-	<meta
-		name="description"
-		content="Native, minimal system stats for the macOS menu bar: CPU, GPU, memory, network, disk, storage, and battery. Free and open source."
-	/>
-</svelte:head>
+<Meta
+	title="Common Stats — system stats for the macOS menu bar"
+	description="Native, minimal system stats for the macOS menu bar: CPU, GPU, memory, network, disk, storage, and battery. Free and open source."
+	path="stats/"
+	image="stats/poster.jpg"
+/>
 
 <main>
-	<ToolHero tool={stats} />
+	<ToolHero tool={stats} {release} />
 	<DemoVideo tool={stats} />
 
 	<section class="features ruled">
@@ -96,6 +103,10 @@
 			worse than none.
 		</p>
 	</section>
+
+	{#if release}<WhatsNew tool={stats} {release} />{/if}
+	<GetStarted tool={stats} />
+	<MoreTools tool={stats} />
 </main>
 
 <style>

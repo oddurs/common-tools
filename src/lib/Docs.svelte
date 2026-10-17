@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
+	import Meta from './Meta.svelte';
 	import { download, type Tool } from './tools';
 
 	let {
@@ -10,10 +11,12 @@
 	}: { tool: Tool; sections: [id: string, title: string][]; children: Snippet } = $props();
 </script>
 
-<svelte:head>
-	<title>{tool.name} documentation</title>
-	<meta name="description" content="How to install and use {tool.name}. {tool.summary}" />
-</svelte:head>
+<Meta
+	title="{tool.name} documentation"
+	description="How to install and use {tool.name}. {tool.summary}"
+	path="{tool.slug}/docs/"
+	image="{tool.slug}/poster.jpg"
+/>
 
 <main>
 	<p class="crumb"><a href={resolve(`${tool.slug}/`)}>{tool.name}</a> › Documentation</p>

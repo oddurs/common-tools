@@ -1,21 +1,28 @@
 <script lang="ts">
 	import DemoVideo from '#lib/DemoVideo.svelte';
 	import ToolHero from '#lib/ToolHero.svelte';
+	import GetStarted from '#lib/GetStarted.svelte';
+	import Meta from '#lib/Meta.svelte';
+	import MoreTools from '#lib/MoreTools.svelte';
+	import WhatsNew from '#lib/WhatsNew.svelte';
 	import { tool } from '#lib/tools.ts';
+	import type { PageProps } from './$types';
+
+	let { data }: PageProps = $props();
 
 	const bar = tool('bar');
+	const release = $derived(data.releases.bar);
 </script>
 
-<svelte:head>
-	<title>Common Bar — hide menu bar icons behind one line</title>
-	<meta
-		name="description"
-		content="A tiny macOS menu bar app that hides the icons you rarely use behind an invisible divider. Click to show them, hold ⌘ to rearrange. Free and open source."
-	/>
-</svelte:head>
+<Meta
+	title="Common Bar — a tidy menu bar for macOS"
+	description="A tiny macOS menu bar app that tucks away the icons you rarely use, behind a chevron. Click to show them, hold ⌘ to arrange. Free and open source."
+	path="bar/"
+	image="bar/poster.jpg"
+/>
 
 <main>
-	<ToolHero tool={bar} />
+	<ToolHero tool={bar} {release} />
 	<DemoVideo tool={bar} />
 
 	<section class="features ruled">
@@ -72,6 +79,10 @@
 			<li><b>Done.</b> They hide again by themselves once you've moved on.</li>
 		</ol>
 	</section>
+
+	{#if release}<WhatsNew tool={bar} {release} />{/if}
+	<GetStarted tool={bar} />
+	<MoreTools tool={bar} />
 </main>
 
 <style>
