@@ -1,4 +1,5 @@
 import AppKit
+import CommonTesting
 import Darwin
 import Testing
 
@@ -9,20 +10,6 @@ import Testing
 /// loop or a per-tick allocation storm without flaking on a busy CI runner.
 @Suite(.serialized)
 struct PerformanceTests {
-    /// The median time of one call. A mean over a loop absorbs every time the
-    /// scheduler pre-empts the test, which on a loaded machine (load average
-    /// 35 on 14 cores was seen) inflated a 115 µs sample past the budget. The
-    /// median ignores those stalls but still moves if every call gets slower.
-    func medianMicroseconds(_ iterations: Int, _ body: () -> Void) -> Double {
-        body()  // warm caches and lazy registry matching
-        let times = (0..<iterations).map { _ in
-            let start = monotonicNanoseconds()
-            body()
-            return Double(monotonicNanoseconds() - start) / 1000
-        }.sorted()
-        return times[times.count / 2]
-    }
-
     func footprint() -> UInt64 {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
@@ -36,7 +23,7 @@ struct PerformanceTests {
 
     @Test func samplingEveryMetricIsCheap() {
         let monitor = Monitor { _ in }
-        let us = medianMicroseconds(200) { _ = monitor.sampleNow() }
+        let us = Benchmark.microseconds(iterations: 40) { _ = monitor.sampleNow() }
         print("sample all metrics: \(String(format: "%.0f", us)) µs")
         #expect(us < 3000)
     }
@@ -57,7 +44,7 @@ struct PerformanceTests {
                 bitsPerPixel: 0))
         rep.size = image.size
         let context = NSGraphicsContext(bitmapImageRep: rep)
-        let us = medianMicroseconds(200) {
+        let us = Benchmark.microseconds(iterations: 40) {
             NSGraphicsContext.saveGraphicsState()
             NSGraphicsContext.current = context
             renderer.image(readout)?.draw(at: .zero, from: .zero, operation: .copy, fraction: 1)

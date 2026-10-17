@@ -5,9 +5,10 @@ set -eu
 #
 #   scripts/task <verb> [area ...] [--changed]
 #
-# Verbs: fmt fmt:check lint test build package run check. Areas: site, kit (packages/CommonKit),
-# or an app by its slug (apps/<slug>); none means all of them, and --changed means only what
-# differs from origin/main (CommonKit changes count for every app, since they all depend on it).
+# Verbs: fmt fmt:check lint test build package run smoke cover check. Areas: site, kit
+# (packages/CommonKit), or an app by its slug (apps/<slug>); none means all of them, and --changed
+# means only what differs from origin/main (CommonKit changes count for every app, since they all
+# depend on it).
 
 cd "$(dirname "$0")/.."
 root="$(pwd)"
@@ -108,6 +109,15 @@ swift_package() {
         ;;
     # shellcheck disable=SC2046
     test) swift test $(test_flags) ${filter:+--filter "$filter"} ;;
+    cover)
+        # Line coverage from a test run. CommonKit's lines show in an app's report too, since the
+        # app's tests run them.
+        # shellcheck disable=SC2046
+        swift test $(test_flags) --enable-code-coverage ${filter:+--filter "$filter"}
+        bin="$(swift build --show-bin-path)"
+        xcrun llvm-cov report -instr-profile "$bin/codecov/default.profdata" \
+            -ignore-filename-regex='/Tests/|/\.build/' "$bin"/*.xctest/Contents/MacOS/*
+        ;;
     esac
 }
 
@@ -122,8 +132,14 @@ site() {
         pnpm run --silent check
         ;;
     test) pnpm exec vitest run ;;
-    build) pnpm exec vite build ;;
-    package | run) echo "    (nothing to $1 for the site)" ;;
+    build)
+        pnpm exec vite build
+        # Every app has a page, published or on the way; without one its links point nowhere.
+        for slug in $(all_apps); do
+            [ -f "build/$slug/index.html" ] || { echo "site: no page was built for $slug" >&2; exit 1; }
+        done
+        ;;
+    package | run | smoke | cover) echo "    (nothing to $1 for the site)" ;;
     check) site lint && site test && site build ;;
     esac
 }
@@ -131,9 +147,9 @@ site() {
 kit() {
     cd "$root/packages/CommonKit"
     case "$1" in
-    fmt | fmt:check | lint | test) swift_package "$1" ;;
+    fmt | fmt:check | lint | test | cover) swift_package "$1" ;;
     build) swift build -c release ;;
-    package | run) echo "    (nothing to $1 for CommonKit)" ;;
+    package | run | smoke) echo "    (nothing to $1 for CommonKit)" ;;
     check) kit lint && kit test ;;
     esac
 }
@@ -151,7 +167,24 @@ app() {
     cd "$root/apps/$slug"
     min_macos="$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' Resources/Info.plist)"
     case "$2" in
-    fmt | fmt:check | lint | test) swift_package "$2" ;;
+    fmt | fmt:check | lint | test | cover) swift_package "$2" ;;
+    smoke)
+        # Launch the built app and see it stay up. A resource the build forgot or a crash at startup
+        # is what unit tests can't catch. Run from inside the bundle, so Bundle.main is the app.
+        [ -d "$bundle" ] || app "$slug" build
+        echo "==> launching $name for 5 seconds"
+        "$bundle/Contents/MacOS/$executable" &
+        pid=$!
+        sleep 5
+        if ! kill -0 "$pid" 2>/dev/null; then
+            wait "$pid" && status=0 || status=$?
+            echo "smoke: $name quit within 5 seconds (status $status)" >&2
+            exit 1
+        fi
+        kill "$pid"
+        wait "$pid" || :
+        echo "==> $name stayed up"
+        ;;
     build)
         # One build per architecture, joined with lipo: `--arch a --arch b` needs Xcode's build
         # system, which Command Line Tools lack.
@@ -213,9 +246,9 @@ areas)
     fi
     exit 0
     ;;
-fmt | fmt:check | lint | test | build | package | run | check) ;;
+fmt | fmt:check | lint | test | build | package | run | smoke | cover | check) ;;
 *)
-    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|check} [site|kit|<app> ...] [--changed] [--filter=<test>]" >&2
+    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|smoke|cover|check} [site|kit|<app> ...] [--changed] [--filter=<test>]" >&2
     exit 2
     ;;
 esac

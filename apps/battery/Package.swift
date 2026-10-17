@@ -17,6 +17,9 @@ let package = Package(
                 .linkedFramework("ServiceManagement"), .linkedFramework("UserNotifications"),
             ]
         ),
-        .testTarget(name: "BatteryKitTests", dependencies: ["BatteryKit"]),
+        .testTarget(
+            name: "BatteryKitTests",
+            dependencies: ["BatteryKit", .product(name: "CommonTesting", package: "CommonKit")]),
+        .testTarget(name: "CommonBatteryTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

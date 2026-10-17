@@ -21,6 +21,9 @@ let package = Package(
                 .product(name: "CommonUI", package: "CommonKit"),
             ]
         ),
-        .testTarget(name: "StatKitTests", dependencies: ["StatKit"]),
+        .testTarget(
+            name: "StatKitTests",
+            dependencies: ["StatKit", .product(name: "CommonTesting", package: "CommonKit")]),
+        .testTarget(name: "CommonStatsTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )
