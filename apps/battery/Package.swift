@@ -9,7 +9,10 @@ let package = Package(
         .target(name: "BatteryKit", linkerSettings: [.linkedFramework("IOKit")]),
         .executableTarget(
             name: "CommonBattery",
-            dependencies: ["BatteryKit", .product(name: "CommonKit", package: "CommonKit")],
+            dependencies: [
+                "BatteryKit", .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ],
             linkerSettings: [
                 .linkedFramework("ServiceManagement"), .linkedFramework("UserNotifications"),
             ]

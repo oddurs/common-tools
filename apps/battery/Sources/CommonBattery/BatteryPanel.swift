@@ -1,4 +1,5 @@
 import BatteryKit
+import CommonUI
 import SwiftUI
 
 /// The menu's view of the live state.
@@ -17,38 +18,36 @@ struct PanelView: View {
     let history: ChargeHistory
     let now: Date
 
-    static let width: CGFloat = 300
-
     var body: some View {
         Card {
             if let reading {
-                VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     header(reading)
                     ChargeChart(history: history, now: now)
                     facts(reading)
                 }
             } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("No Battery").font(.system(size: 13, weight: .semibold))
-                    Text("This Mac runs on power from the wall.").font(.system(size: 11)).foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    Text("No Battery").font(.headline)
+                    Text("This Mac runs on power from the wall.").font(.subheadline).foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
-        .frame(width: Self.width)
+        .frame(width: Tokens.Layout.menuPanelWidth)
+        .padding(.horizontal, Tokens.Space.xs)
+        .padding(.vertical, Tokens.Space.xxs)
     }
 
     private func header(_ reading: BatteryReading) -> some View {
         HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Battery").font(.system(size: 13, weight: .semibold))
-                Text(Format.status(reading)).font(.system(size: 11)).foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                Text("Battery").font(.headline)
+                Text(Format.status(reading)).font(.subheadline).foregroundStyle(.secondary)
             }
             Spacer()
             Text(Format.percent(reading.percent))
-                .font(.system(size: 22, weight: .semibold).monospacedDigit())
-                .foregroundStyle(reading.isLow ? Color.red : .primary)
+                .font(.title.weight(Tokens.Weight.semibold).monospacedDigit())
+                .foregroundStyle(reading.isLow ? Tokens.Color.danger.color : Tokens.Text.primary.color)
         }
         .accessibilityElement(children: .combine)
     }
@@ -72,7 +71,7 @@ struct PanelView: View {
         if let temperature = reading.temperature {
             rows.append(("Temperature", Format.temperature(celsius: temperature)))
         }
-        return Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
+        return Grid(alignment: .leading, horizontalSpacing: Tokens.Space.sm, verticalSpacing: Tokens.Space.xxs) {
             ForEach(rows, id: \.0) { label, value in
                 GridRow {
                     Text(label).foregroundStyle(.secondary)
@@ -80,28 +79,13 @@ struct PanelView: View {
                 }
             }
         }
-        .font(.system(size: 11))
+        .font(.subheadline)
         .lineLimit(1)
     }
 
     private func source(_ reading: BatteryReading) -> String {
         guard reading.isOnPower else { return "Battery" }
         return reading.adapterWatts.map { "\($0) W Adapter" } ?? "Power Adapter"
-    }
-}
-
-/// A Control Center–style module, as in Common Stats: a softly filled rounded panel.
-private struct Card<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.06), lineWidth: 0.5))
     }
 }
 
@@ -112,7 +96,7 @@ struct ChargeChart: View {
     let now: Date
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: Tokens.Space.xxs) {
             Canvas { context, size in
                 let start = now.addingTimeInterval(-ChargeHistory.span)
                 func point(_ s: ChargeHistory.Sample) -> CGPoint {
@@ -123,7 +107,7 @@ struct ChargeChart: View {
                 // A 50% line gives the level a scale without an axis.
                 context.fill(
                     Path(CGRect(x: 0, y: size.height / 2 - 0.25, width: size.width, height: 0.5)),
-                    with: .color(.primary.opacity(0.1)))
+                    with: .color(Tokens.Color.border.color))
                 for run in history.runs() {
                     // Split where charging starts or stops; the boundary sample ends one stretch and
                     // starts the next, so the line stays continuous. Each stretch fills as one path, so
@@ -142,7 +126,9 @@ struct ChargeChart: View {
                     for stretch in stretches {
                         let points = stretch.map(point)
                         // A stretch takes the colour of what happened during it: its second sample's state.
-                        let ink: Color = (stretch.dropFirst().first ?? stretch[0]).charging ? .green : .accentColor
+                        // Charging is green, the system's; the rest is the user's accent.
+                        let ink: Color =
+                            (stretch.dropFirst().first ?? stretch[0]).charging ? .green : Tokens.Color.accent.color
                         guard points.count > 1 else {
                             let p = points[0]
                             context.fill(
@@ -163,15 +149,17 @@ struct ChargeChart: View {
                 }
             }
             .frame(height: 44)
-            .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 4, style: .continuous))
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .background(
+                Tokens.Surface.card.color, in: RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous))
 
             HStack {
                 Text("12 hours ago")
                 Spacer()
                 Text("Now")
             }
-            .font(.system(size: 9))
+            .font(.caption2)
             .foregroundStyle(.tertiary)
         }
         .accessibilityHidden(true)

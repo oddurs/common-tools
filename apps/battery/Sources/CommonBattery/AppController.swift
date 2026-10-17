@@ -1,5 +1,6 @@
 import AppKit
 import BatteryKit
+import CommonUI
 import IOKit.ps
 import SwiftUI
 
@@ -25,7 +26,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var alerts = AlertTracker()
     private var estimator = TimeEstimator(state: AppController.loadEstimator())
     private var savedLabels = 0
-    private lazy var settings = SettingsWindow(controller: self)
+    private let settings = SettingsWindowHost(title: "Common Battery Settings")
 
     private var item: NSStatusItem!
     private let menu = NSMenu()
@@ -87,8 +88,13 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     /// Launching the app again while it runs is the way back to Settings if the item is hidden.
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-        settings.show()
+        showSettings()
         return false
+    }
+
+    /// A fresh view each time, so Open at login reflects a change made elsewhere.
+    private func showSettings() {
+        settings.show { SettingsView(controller: self, preferences: preferences, state: state) }
     }
 
     func preferencesChanged() {
@@ -232,7 +238,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         for item in menu.items { item.view = nil }
     }
 
-    @objc private func openSettings() { settings.show() }
+    @objc private func openSettings() { showSettings() }
 
     @objc private func openBatterySettings() {
         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Battery-Settings.extension")!)
@@ -252,7 +258,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         guard !UserDefaults.standard.bool(forKey: key) else { return }
         UserDefaults.standard.set(true, forKey: key)
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
-            MainActor.assumeIsolated { self?.settings.show() }
+            MainActor.assumeIsolated { self?.showSettings() }
         }
     }
 

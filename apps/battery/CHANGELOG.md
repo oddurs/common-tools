@@ -13,4 +13,8 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings with a live preview, a shortcut to hide the system's battery icon, open at login, and the Common Tools section.
 - `--snapshot` renders every style and state, and the menu, for review.
 
+### Changed
+
+- Settings follows the Common Tools family layout: the same window, grouped sections, and footnotes as the other apps, and the menu's panel shares their card style.
+
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/battery

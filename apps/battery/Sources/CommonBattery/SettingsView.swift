@@ -1,6 +1,7 @@
 import AppKit
 import BatteryKit
 import CommonKit
+import CommonUI
 import SwiftUI
 
 /// Laid out by the Common Tools Settings standard: the app's own sections, then General, then
@@ -9,7 +10,6 @@ struct SettingsView: View {
     let controller: AppController
     @Bindable var preferences: Preferences
     let state: BatteryState
-    @State private var openAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
     @State private var notificationsBlocked = false
 
@@ -25,32 +25,27 @@ struct SettingsView: View {
             } header: {
                 Text("Menu Bar")
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
+                VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                     if !state.barVisible {
-                        Label {
-                            Text(
-                                "Common Battery is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Hold ⌘ and drag other menu bar items out of the way."
-                            )
-                        } icon: {
-                            Image(systemName: "eye.slash")
-                        }
+                        Label(
+                            "Common Battery is running but can’t be seen in the menu bar. It may be behind the camera housing or hidden by a menu bar manager. Hold ⌘ and drag other menu bar items out of the way.",
+                            systemImage: "eye.slash"
+                        )
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
                     }
-                    Text(
+                    SettingsFootnote(
                         "Time remaining learns from how you use your Mac, so it holds steady when you start something brief and knows your usual day. What it learns stays on this Mac."
                     )
                 }
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             Section {
-                LabeledContent("System battery icon") {
+                LabeledRow("System battery icon") {
                     Button("Open Control Center Settings…") { controller.openControlCenterSettings() }
                 }
             } footer: {
-                Text("To keep one battery in the menu bar, set Battery to Don’t Show in Menu Bar there.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                SettingsFootnote("To keep one battery in the menu bar, set Battery to Don’t Show in Menu Bar there.")
             }
 
             Section {
@@ -63,51 +58,32 @@ struct SettingsView: View {
             } header: {
                 Text("Notifications")
             } footer: {
-                Group {
-                    if notificationsBlocked {
-                        Text(
-                            "macOS isn’t delivering Common Battery’s notifications. If Common Battery is listed in System Settings › Notifications, allow it there."
-                        )
-                    } else {
-                        Text(
-                            "Each notification comes once, and again only after the battery has moved back past its level."
-                        )
-                    }
+                if notificationsBlocked {
+                    SettingsFootnote(
+                        "macOS isn’t delivering Common Battery’s notifications. If Common Battery is listed in System Settings › Notifications, allow it there."
+                    )
+                } else {
+                    SettingsFootnote(
+                        "Each notification comes once, and again only after the battery has moved back past its level.")
                 }
-                .font(.callout)
-                .foregroundStyle(.secondary)
             }
 
             Section {
-                Toggle("Open at login", isOn: $openAtLogin)
+                OpenAtLoginToggle(error: $loginError)
             } header: {
                 Text("General")
             } footer: {
-                if let loginError {
-                    Text(loginError).font(.callout).foregroundStyle(.secondary)
-                }
+                if let loginError { SettingsFootnote(loginError) }
             }
 
             CommonToolsSection()
         }
-        .formStyle(.grouped)
-        // Fixed, and scrolling past it: seven Common Tools rows make the form taller than a 13-inch screen.
-        .frame(width: 460, height: 720)
+        .settingsForm()
         .onChange(of: preferences.appearance) { controller.preferencesChanged() }
         .onChange(of: preferences.notifies) { controller.preferencesChanged() }
         .task { notificationsBlocked = await controller.notificationsBlocked }
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { notificationsBlocked = await controller.notificationsBlocked }
-        }
-        .onChange(of: openAtLogin) { _, enabled in
-            guard enabled != LoginItem.isEnabled else { return }
-            do {
-                try LoginItem.setEnabled(enabled)
-                loginError = nil
-            } catch {
-                loginError = error.localizedDescription
-                openAtLogin = LoginItem.isEnabled
-            }
         }
     }
 }
@@ -118,14 +94,15 @@ private struct BarPreview: View {
     let reading: BatteryReading?
 
     var body: some View {
-        HStack {
-            Spacer()
-            Image(nsImage: BarRenderer(appearance: appearance, height: 24).image(reading))
-                .foregroundStyle(.primary)
-            Spacer()
+        Card {
+            HStack {
+                Spacer()
+                // The renderer draws at the menu bar's own metrics, so the strip is a menu bar's height.
+                Image(nsImage: BarRenderer(appearance: appearance, height: 24).image(reading))
+                    .foregroundStyle(.primary)
+                Spacer()
+            }
         }
-        .padding(.vertical, 6)
-        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
         .accessibilityElement()
         .accessibilityLabel("Preview: \(BarRenderer.accessibilityText(reading))")
     }
