@@ -64,6 +64,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         panel.delegate = self
         panel.onKeyEquivalent = { [weak self] in self?.keyEquivalent($0) ?? false }
         panel.onPointerMove = { [weak self] in self?.model.pointerMoved = true }
+        model.onSelectionChange = { [weak self] in self?.updatePreview() }
         model.onResultsChange = { [weak self] in self?.resize() }
         library.onChange = { [weak self] in
             guard let self, panel.isVisible else { return }
@@ -105,11 +106,44 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
 
     func hide() {
+        closePreview()
         panel.orderOut(nil)
     }
 
     func windowDidResignKey(_ notification: Notification) {
         hide()
+    }
+
+    // MARK: Preview
+
+    /// Quick Look for the selected file, in a panel beside this one. It never takes focus, so typing, the
+    /// arrows, and Escape stay in the field, and the app you were in stays active throughout.
+    private var preview: PreviewPanel?
+
+    private func toggleQuickLook() {
+        if preview != nil {
+            closePreview()
+        } else if let url = model.selected?.fileURL {
+            let preview = PreviewPanel()
+            preview.appearance = panel.appearance
+            preview.show(url, beside: panel.frame, size: preferences.size)
+            panel.addChildWindow(preview, ordered: .above)
+            self.preview = preview
+        }
+    }
+
+    /// Follows the selection while the preview is open; a result without a file closes it.
+    private func updatePreview() {
+        guard let preview else { return }
+        guard let url = model.selected?.fileURL else { return closePreview() }
+        preview.show(url, beside: panel.frame, size: preferences.size)
+    }
+
+    private func closePreview() {
+        guard let preview else { return }
+        panel.removeChildWindow(preview)
+        preview.orderOut(nil)
+        self.preview = nil
     }
 
     func preferencesChanged() {
@@ -129,9 +163,86 @@ final class PanelController: NSObject, NSWindowDelegate {
         perform?(item, reveal)
     }
 
+    // MARK: Commands
+
+    /// What the action menu offers for the result at `index`.
+    func commands(for item: Item) -> [ItemCommand] {
+        let isRunning =
+            item.kind == .application
+            && NSWorkspace.shared.runningApplications.contains {
+                $0.bundleURL?.standardizedFileURL == item.fileURL?.standardizedFileURL
+            }
+        return ItemCommand.commands(for: item, isRunning: isRunning)
+    }
+
+    func run(_ command: ItemCommand, on index: Int) {
+        guard model.results.indices.contains(index) else { return }
+        let item = model.results[index].item
+        switch command {
+        case .open: choose(index)
+        case .showInFinder: choose(index, reveal: true)
+        case .quickLook:
+            model.selection = index
+            toggleQuickLook()
+        case .copyPath:
+            guard let url = item.fileURL else { return }
+            copy(url.path, url: url)
+        case .copyText(let text): copy(text, url: nil)
+        case .quit, .hide:
+            let apps = NSWorkspace.shared.runningApplications.filter {
+                $0.bundleURL?.standardizedFileURL == item.fileURL?.standardizedFileURL
+            }
+            hide()
+            for app in apps {
+                if command == .quit { app.terminate() } else { app.hide() }
+            }
+        }
+    }
+
+    /// Copies, and closes the panel the way Return does after a calculation.
+    private func copy(_ text: String, url: URL?) {
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        // A file goes on as a file too, so pasting into Finder or Mail attaches it.
+        if let url { pasteboard.writeObjects([url as NSURL]) }
+        pasteboard.setString(text, forType: .string)
+        hide()
+    }
+
+    /// ⌘K: the action menu for the selected result, opened under the field like a pull-down.
+    private func showActionMenu() {
+        guard let item = model.selected, let content = panel.contentView else { return }
+        let index = model.selection
+        let menu = NSMenu()
+        for command in commands(for: item) {
+            let entry = ActionMenuItem(command: command) { [weak self] in self?.run(command, on: index) }
+            menu.addItem(entry)
+        }
+        let size = preferences.size
+        menu.popUp(
+            positioning: menu.items.first,
+            at: NSPoint(x: size.width - size.fieldHeight * 2.4, y: size.fieldHeight + size.gap), in: content)
+    }
+
     private func keyEquivalent(_ event: NSEvent) -> Bool {
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
-        guard flags == .command, let key = event.charactersIgnoringModifiers else { return false }
+        guard let key = event.charactersIgnoringModifiers?.lowercased() else { return false }
+        if flags == [.command, .shift], key == "c", let item = model.selected {
+            if let copy = commands(for: item).first(where: { if case .copyText = $0 { true } else { $0 == .copyPath } })
+            {
+                run(copy, on: model.selection)
+            }
+            return true
+        }
+        guard flags == .command else { return false }
+        if key == "k" {
+            showActionMenu()
+            return true
+        }
+        if key == "y" {
+            toggleQuickLook()
+            return true
+        }
         if key == "\r" {
             choose(model.selection, reveal: true)
             return true
@@ -153,9 +264,12 @@ final class PanelController: NSObject, NSWindowDelegate {
         model.scope = model.scope == scope ? .all : scope
     }
 
-    /// Escape leaves a scope first, like deleting a search token, and closes the panel after that.
+    /// Escape closes the preview first, then leaves a scope, like deleting a search token, and closes the
+    /// panel after that.
     private func cancel() {
-        if model.scope != .all {
+        if preview != nil {
+            closePreview()
+        } else if model.scope != .all {
             model.scope = .all
         } else {
             hide()
@@ -187,7 +301,10 @@ final class PanelController: NSObject, NSWindowDelegate {
         let content = PanelContent(
             size: size, translucent: translucent,
             field: FieldView(model: model, preferences: preferences, commands: commands),
-            card: CardView(model: model, preferences: preferences) { [weak self] in self?.choose($0) })
+            card: CardView(
+                model: model, preferences: preferences, choose: { [weak self] in self?.choose($0) },
+                commands: { [weak self] in self?.commands(for: $0) ?? [] },
+                run: { [weak self] in self?.run($0, on: $1) }))
         self.content = content
         panel.contentView = content
     }
@@ -279,6 +396,7 @@ final class PanelController: NSObject, NSWindowDelegate {
             NSRect(x: panel.frame.midX - size.width / 2, y: top - height, width: size.width, height: height),
             display: false)
         refreshShadow()
+        updatePreview()
     }
 
     /// The shadow follows the window's shape as last drawn, so it's recomputed once the new frame has
