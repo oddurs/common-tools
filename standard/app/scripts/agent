@@ -144,7 +144,7 @@ ship)
         # gh pr checks exits 1 on a failure, 8 while pending; "no checks reported" means not started yet.
         checks=0
         report="$(gh pr checks "$branch" --required 2>&1)" || checks=$?
-        case "$report" in *"no checks reported"*) checks=8 ;; esac
+        case "$report" in *"no checks reported"* | *"no required checks reported"*) checks=8 ;; esac
         [ "$checks" -eq 1 ] && die "a check failed: $(gh pr view "$branch" --json url --jq .url)/checks"
         sleep 15
     done
