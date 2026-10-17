@@ -43,8 +43,8 @@
 		<div>
 			<h2>Hold ⌘ to arrange.</h2>
 			<p>
-				Hold <kbd>⌘</kbd> over the menu bar and every icon shows. Drag one past the chevron with the system's
-				own ⌘-drag, and it's hidden.
+				Hold <kbd>⌘</kbd> over the menu bar and every icon shows, with a thin line beside the chevron. Drag one
+				past the line with the system's own ⌘-drag, and it's hidden.
 			</p>
 		</div>
 		<div>
@@ -74,10 +74,8 @@
 	<section class="steps ruled">
 		<h2>How it works.</h2>
 		<ol>
-			<li><b>Hide.</b> Hold <kbd>⌘</kbd> and drag an icon past the chevron.</li>
-			<li>
-				<b>Show.</b> Click the chevron, hover over empty menu bar space, or scroll down on the bar.
-			</li>
+			<li><b>Hide.</b> Hold <kbd>⌘</kbd> and drag an icon past the line beside the chevron.</li>
+			<li><b>Show.</b> Click the chevron, hover over empty menu bar space, or scroll down on the bar.</li>
 			<li><b>Done.</b> They hide again by themselves once you've moved on.</li>
 		</ol>
 	</section>
