@@ -1,5 +1,6 @@
 import AppKit
 import CommandKit
+import CommonKit
 import SwiftUI
 
 /// Laid out by the Common Tools Settings standard: the app's own sections, then General, then

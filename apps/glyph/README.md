@@ -1,6 +1,6 @@
 # Common Glyph
 
-[![CI](https://github.com/oddurs/common-glyph/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-glyph/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Put your own images in the menu bar: a character, a tattoo design, a sticker, an emoji, or a word. As many as you like.
@@ -19,7 +19,7 @@ Free and open source under the MIT licence. No network access, no analytics, no 
 
 Requires macOS 14 or later.
 
-1. Download [CommonGlyph.zip](https://github.com/oddurs/common-glyph/releases/latest/download/CommonGlyph.zip) from the latest release, unzip it, and move **Common Glyph** to Applications.
+1. Download [CommonGlyph.zip](https://oddurs.github.io/common-tools/glyph/) from the latest release, unzip it, and move **Common Glyph** to Applications.
 2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -53,29 +53,24 @@ A glyph's image and its text each keep their own edits, so switching between the
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                          # universal build → build/Common Glyph.app
-mv "build/Common Glyph.app" /Applications/
+scripts/task build                          # universal build → build/glyph/Common Glyph.app
+mv "build/glyph/Common Glyph.app" /Applications/
 ```
 
 ## Development
 
+Common Glyph lives in `apps/glyph/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run glyph         # build, quit the running copy, open the new one
+scripts/task check glyph       # lint + test + build, what CI runs for this app
+scripts/task test glyph --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent commit "<type>: subject"` | Conventional Commit, checked by the hook |
-| `scripts/agent pr` | full check, push, open the pull request |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after merge: remove the worktree and branch |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release glyph <version>`.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).

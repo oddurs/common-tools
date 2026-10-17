@@ -4,6 +4,7 @@ import PackageDescription
 let package = Package(
     name: "CommonStats",
     platforms: [.macOS(.v14)],
+    dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
         .target(
             name: "StatKit",
@@ -14,7 +15,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "StatBar",
-            dependencies: ["StatKit"],
+            dependencies: ["StatKit", .product(name: "CommonKit", package: "CommonKit")],
             linkerSettings: [.linkedFramework("ServiceManagement")]
         ),
         .testTarget(name: "StatKitTests", dependencies: ["StatKit"]),

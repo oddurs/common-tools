@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/state';
 	import { download, type Tool } from './tools';
 
 	let { tool }: { tool: Tool } = $props();
+
+	const release = $derived(page.data.releases?.[tool.slug]);
 </script>
 
 <section class="ruled">
@@ -10,13 +13,15 @@
 	<ol>
 		<li>
 			<b>Download</b>
-			<span><a href={download(tool)}>{tool.asset}</a>, unzip it, and move {tool.name} to Applications.</span>
+			<span
+				><a href={download(tool, release)}>{tool.asset}</a>, unzip it, and move {tool.name} to Applications.</span
+			>
 		</li>
 		<li>
 			<b>Open it</b>
 			<span>
-				The first time, macOS can't verify the developer: choose <b>Open Anyway</b> in System Settings › Privacy
-				&amp; Security.
+				The first time, macOS can't verify the developer: choose <b>Open Anyway</b> in System Settings ›
+				Privacy &amp; Security.
 			</span>
 		</li>
 		<li>

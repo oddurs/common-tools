@@ -4,11 +4,12 @@ import PackageDescription
 let package = Package(
     name: "CommonCommand",
     platforms: [.macOS(.v14)],
+    dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
         .target(name: "CommandKit"),
         .executableTarget(
             name: "CommonCommand",
-            dependencies: ["CommandKit"],
+            dependencies: ["CommandKit", .product(name: "CommonKit", package: "CommonKit")],
             linkerSettings: [
                 .linkedFramework("Carbon"), .linkedFramework("IOKit"), .linkedFramework("ServiceManagement"),
             ]

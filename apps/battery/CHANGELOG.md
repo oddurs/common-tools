@@ -13,4 +13,4 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings with a live preview, a shortcut to hide the system's battery icon, open at login, and the Common Tools section.
 - `--snapshot` renders every style and state, and the menu, for review.
 
-[Unreleased]: https://github.com/oddurs/common-battery/commits/main
+[Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/battery

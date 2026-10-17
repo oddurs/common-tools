@@ -7,8 +7,11 @@ export type Tool = {
 	tagline: string;
 	/** What it does, in a sentence, for the home page and meta description. */
 	summary: string;
+	/** The app's folder in the monorepo. */
 	repo: string;
-	/** Release asset with a stable name, so this link always gets the newest build. */
+	/** Where the app lived before the monorepo; its releases serve the download until the first one here. */
+	legacyRepo?: string;
+	/** The release asset's name, the same in every release. */
 	asset: string;
 	requires: string;
 	icon: `${Slug}/icon.png`;
@@ -21,7 +24,9 @@ export type Tool = {
 /** Where the site is published; links shared elsewhere must be absolute. */
 export const site = 'https://oddurs.github.io/common-tools/';
 
-const github = 'https://github.com/oddurs';
+/** The monorepo every app lives in. */
+export const github = 'https://github.com/oddurs/common-tools';
+const legacy = 'https://github.com/oddurs';
 
 export const tools: Tool[] = [
 	{
@@ -30,7 +35,8 @@ export const tools: Tool[] = [
 		tagline: 'System stats for the menu bar. Small type, small graphs, nothing else.',
 		summary:
 			'CPU, GPU, memory, network, disk, storage, and battery in the menu bar, with a real menu of graphs under it.',
-		repo: `${github}/common-stats`,
+		repo: `${github}/tree/main/apps/stats`,
+		legacyRepo: `${legacy}/common-stats`,
 		asset: 'CommonStats.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'stats/icon.png',
@@ -43,7 +49,8 @@ export const tools: Tool[] = [
 		tagline: "Typed it on the wrong keyboard? It's already fixed.",
 		summary:
 			'Fixes words typed on the wrong keyboard layout, for every keyboard macOS has, and keeps each app on the language you write there.',
-		repo: `${github}/common-keys`,
+		repo: `${github}/tree/main/apps/keys`,
+		legacyRepo: `${legacy}/common-keys`,
 		asset: 'CommonKeys.zip',
 		requires: 'macOS 14.4 or later · Every keyboard macOS has',
 		icon: 'keys/icon.png',
@@ -56,7 +63,8 @@ export const tools: Tool[] = [
 		tagline: 'A tidy menu bar. The icons you rarely use wait behind the chevron.',
 		summary:
 			'Tucks away the menu bar icons you rarely use. Click the chevron to show them; ⌘-drag an icon past it to hide it.',
-		repo: `${github}/common-bar`,
+		repo: `${github}/tree/main/apps/bar`,
+		legacyRepo: `${legacy}/common-bar`,
 		asset: 'CommonBar.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'bar/icon.png',
@@ -72,8 +80,6 @@ export type Upcoming = {
 	tagline: string;
 	summary: string;
 	repo: string;
-	/** Whether the repository is public yet. */
-	published: boolean;
 	icon: `${Upcoming['slug']}/icon.png`;
 };
 
@@ -83,8 +89,7 @@ export const upcoming: Upcoming[] = [
 		name: 'Common Glyph',
 		tagline: 'Your own images in the menu bar.',
 		summary: 'A character, a tattoo design, a sticker, an emoji, or a word: as many as you like.',
-		repo: `${github}/common-glyph`,
-		published: false,
+		repo: `${github}/tree/main/apps/glyph`,
 		icon: 'glyph/icon.png'
 	},
 	{
@@ -93,8 +98,7 @@ export const upcoming: Upcoming[] = [
 		tagline: 'A small, fast launcher.',
 		summary:
 			'Press ⌥Space, type a few letters, press Return: apps, System Settings panes, files, sums, and web searches in one quiet panel.',
-		repo: `${github}/common-command`,
-		published: true,
+		repo: `${github}/tree/main/apps/command`,
 		icon: 'command/icon.png'
 	},
 	{
@@ -103,8 +107,7 @@ export const upcoming: Upcoming[] = [
 		tagline: 'Screenshots straight to the clipboard.',
 		summary:
 			'Press ⇧⌘2, drag over what you want, and paste it: into a chat, a terminal, a pull request, or a document.',
-		repo: `${github}/common-shot`,
-		published: false,
+		repo: `${github}/tree/main/apps/shot`,
 		icon: 'shot/icon.png'
 	},
 	{
@@ -113,13 +116,21 @@ export const upcoming: Upcoming[] = [
 		tagline: 'The battery in the menu bar, done properly.',
 		summary:
 			'The level, the time left, what the battery is doing, and alerts when it runs low or reaches your charge level.',
-		repo: `${github}/common-battery`,
-		published: false,
+		repo: `${github}/tree/main/apps/battery`,
 		icon: 'battery/icon.png'
 	}
 ];
 
-export const download = (tool: Tool) => `${tool.repo}/releases/latest/download/${tool.asset}`;
+/** Every release of one app, on GitHub. */
+export const releasesOf = (tool: { slug: string }) => `${github}/releases?q=${tool.slug}-v`;
+
+/**
+ * The app's download: the latest release's asset when the build found it, else the old repository's
+ * latest release for apps released before the move, else the release list.
+ */
+export const download = (tool: Tool, release?: { download: string } | null) =>
+	release?.download ??
+	(tool.legacyRepo ? `${tool.legacyRepo}/releases/latest/download/${tool.asset}` : releasesOf(tool));
 
 export function tool(slug: string): Tool {
 	const found = tools.find((t) => t.slug === slug);

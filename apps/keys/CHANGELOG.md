@@ -68,7 +68,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - The `WorldKey` library and the `worldkey` command: list input sources, convert text between layouts, detect the intended layout, and evaluate accuracy, with `--json` output.
 - Universal (Apple silicon and Intel) release builds of the app and the `worldkey` command.
 
-[Unreleased]: https://github.com/oddurs/common-keys/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/keys
 [0.2.0]: https://github.com/oddurs/common-keys/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/oddurs/common-keys/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/oddurs/common-keys/releases/tag/v0.1.0

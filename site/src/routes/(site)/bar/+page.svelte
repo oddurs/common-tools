@@ -36,37 +36,37 @@
 		<div>
 			<h2>Reach without aiming.</h2>
 			<p>
-				Rest the pointer on empty menu bar space, pull down on the bar, or click its empty space, and the
-				hidden icons appear. Push up to hide them again.
+				Rest the pointer on empty menu bar space, pull down on the bar, or click its empty space, and
+				the hidden icons appear. Push up to hide them again.
 			</p>
 		</div>
 		<div>
 			<h2>Hold ⌘ to arrange.</h2>
 			<p>
-				Hold <kbd>⌘</kbd> over the menu bar and every icon shows. Drag one past the chevron with the system's own
-				⌘-drag, and it's hidden.
+				Hold <kbd>⌘</kbd> over the menu bar and every icon shows. Drag one past the chevron with the system's
+				own ⌘-drag, and it's hidden.
 			</p>
 		</div>
 		<div>
 			<h2>Always hidden, if you like.</h2>
 			<p>
-				Turn on an always-hidden section for icons you almost never need. They stay out of every reveal until
-				you
+				Turn on an always-hidden section for icons you almost never need. They stay out of every
+				reveal until you
 				<kbd>⌥</kbd>-click the chevron.
 			</p>
 		</div>
 		<div>
 			<h2>Notch-aware.</h2>
 			<p>
-				It starts beside the system icons, clear of the camera housing, and never pushes the chevron or your
-				visible icons off-screen.
+				It starts beside the system icons, clear of the camera housing, and never pushes the chevron
+				or your visible icons off-screen.
 			</p>
 		</div>
 		<div>
 			<h2>Nothing to grant.</h2>
 			<p>
-				No Accessibility or Screen Recording permission, no network, no account. A small Settings window picks
-				how icons are revealed and how long they stay.
+				No Accessibility or Screen Recording permission, no network, no account. A small Settings
+				window picks how icons are revealed and how long they stay.
 			</p>
 		</div>
 	</section>
@@ -75,7 +75,9 @@
 		<h2>How it works.</h2>
 		<ol>
 			<li><b>Hide.</b> Hold <kbd>⌘</kbd> and drag an icon past the chevron.</li>
-			<li><b>Show.</b> Click the chevron, hover over empty menu bar space, or scroll down on the bar.</li>
+			<li>
+				<b>Show.</b> Click the chevron, hover over empty menu bar space, or scroll down on the bar.
+			</li>
 			<li><b>Done.</b> They hide again by themselves once you've moved on.</li>
 		</ol>
 	</section>

@@ -1,30 +1,8 @@
-# Working in this repository
+# Common Battery
 
 Common Battery is a native macOS menu bar battery indicator, a replacement for the system's, written in Swift (AppKit plus SwiftUI) with no package dependencies. It is part of the Common Tools family with Common Stats, Common Keys, Common Bar, Common Glyph, Common Command, and Common Shot.
 
-## The seam
-
-Do all automation through `scripts/task`. CI and the git hooks call nothing else.
-
-```sh
-scripts/task fmt       # format in place
-scripts/task fmt:check # swift format lint --strict, format only
-scripts/task lint      # fmt:check, then a debug build with warnings as errors
-scripts/task test      # unit, accuracy, and performance tests
-scripts/task build     # universal build/Common Battery.app
-scripts/task check     # lint + test + build
-```
-
-## Workflow
-
-- Never commit to `main`. It only moves forward when a pull request is merged; the `pre-push` hook and branch protection both enforce this.
-- One unit of work gets one worktree, one branch, and one pull request: `scripts/agent start <type>/<slug>`, then work in the printed path and finish with `scripts/agent ship "<type>(scope): subject" "<why>" --body-file <pr.md>`, where the body states the problem, the approach, and where a reviewer should be sceptical.
-- Branch types: `feat fix chore docs perf refactor test`.
-- Run `scripts/task check` until it is green before opening a pull request. Never use `--no-verify`.
-
-## Commits
-
-Conventional Commits: `type(scope): subject`. Write the subject in the imperative, at most 72 characters, with no trailing period. The body says why. Never add assistant or tool attribution: no co-author trailers, no "generated with" footers. The `commit-msg` hook rejects them.
+This is one app of the Common Tools monorepo. The workflow, the `scripts/task` seam, and the commit rules are in the root CLAUDE.md; this file holds what is specific to Common Battery. Its area is `battery`: `scripts/task check battery`, `scripts/task run battery`, `scripts/release battery <version>`.
 
 ## Code
 
@@ -36,5 +14,16 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 - `CommonTools.swift` is shared word for word across the Common Tools apps. Change it in all of them together.
 - A bug fix comes with the test that would have caught it. Sampler changes need an accuracy test against a system tool where one exists (`pmset`, `ioreg`).
 - Performance budgets are enforced in `PerformanceTests`. Don't loosen a budget to make a change pass.
-- For visual review: `swift build && .build/debug/CommonBattery --snapshot out.png` and inspect `out.png` and `out-menu.png`. It renders offscreen, so no windows open.
-- The app icon comes from `swift scripts/make-icon.swift`, which writes `Resources/AppIcon.icns`, `docs/icon.png`, and `Resources/CommonTools/battery.png`. Edit the script, not the images.
+- For visual review: `scripts/task build battery && apps/battery/.build/debug/CommonBattery --snapshot out.png` and inspect `out.png` and `out-menu.png`. It renders offscreen, so no windows open.
+- The app icon comes from `scripts/make-icon battery`, which writes `Resources/AppIcon.icns`, `docs/icon.png`, and `Resources/CommonTools/battery.png`. Edit the script, not the images.
+
+
+## Checks
+
+Changes to a sampler need an accuracy argument: explain what IOKit reports and why your reading matches it.
+
+## Pull requests
+
+Besides the shared checklist:
+
+- [ ] UI changes include before/after snapshots (`.build/debug/CommonBattery --snapshot`)

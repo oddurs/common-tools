@@ -63,27 +63,29 @@
 		<div>
 			<h2>Light.</h2>
 			<p>
-				About 0.1 ms to sample everything and 12 MB of memory. It stops drawing when you can't see it and
-				samples less in Low Power Mode.
+				About 0.1 ms to sample everything and 12 MB of memory. It stops drawing when you can't see it
+				and samples less in Low Power Mode.
 			</p>
 		</div>
 		<div>
 			<h2>Yours to arrange.</h2>
 			<p>
-				Each metric shows as a value, a graph, a gauge, or not at all. Drag to reorder. Pick a density and how
-				often it updates.
+				Each metric shows as a value, a graph, a gauge, or not at all. Drag to reorder. Pick a density
+				and how often it updates.
 			</p>
 		</div>
 		<div>
 			<h2>Graphs that tell the truth.</h2>
 			<p>
-				Monotone curves, so smoothing never invents a peak. Rate graphs show their scale, and hovering reads
-				back any past value.
+				Monotone curves, so smoothing never invents a peak. Rate graphs show their scale, and hovering
+				reads back any past value.
 			</p>
 		</div>
 		<div>
 			<h2>Private.</h2>
-			<p>No network access, no analytics, no helper tools, no root. It reads counters and draws them.</p>
+			<p>
+				No network access, no analytics, no helper tools, no root. It reads counters and draws them.
+			</p>
 		</div>
 	</section>
 
@@ -99,8 +101,8 @@
 			</tbody>
 		</table>
 		<p class="muted">
-			No temperatures or fans: Apple silicon has no public API for them, and a figure that's silently wrong is
-			worse than none.
+			No temperatures or fans: Apple silicon has no public API for them, and a figure that's silently
+			wrong is worse than none.
 		</p>
 	</section>
 

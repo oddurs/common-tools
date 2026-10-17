@@ -1,6 +1,6 @@
 # Common Command
 
-[![CI](https://github.com/oddurs/common-command/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-command/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A small, fast launcher for macOS. Press ⌥Space, type a few letters, press Return. Apps, System Settings panes, files, sums, and web searches, in one quiet panel a little smaller than Spotlight's.
@@ -18,7 +18,7 @@ Free and open source under the MIT licence. No network access except the web sea
 
 Requires macOS 14 or later.
 
-1. Download [CommonCommand.zip](https://github.com/oddurs/common-command/releases/latest/download/CommonCommand.zip) from the [latest release](https://github.com/oddurs/common-command/releases/latest), unzip it, and move **Common Command** to Applications.
+1. Download [CommonCommand.zip](https://oddurs.github.io/common-tools/command/) from the [latest release](https://oddurs.github.io/common-tools/command/), unzip it, and move **Common Command** to Applications.
 2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -85,32 +85,23 @@ Measured on an M4 Pro with a release build:
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                 # universal build → build/Common Command.app
-mv "build/Common Command.app" /Applications/
+scripts/task build command  # universal build → build/command/Common Command.app
+mv "build/command/Common Command.app" /Applications/
 ```
 
 ## Development
 
+Common Command lives in `apps/command/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/dev-cert        # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run command       # build, quit the running copy, open the new one
+scripts/task check command     # lint + test + build, what CI runs for this app
+scripts/task test command --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task run` | build, quit the running copy, open the new one |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/task test <name>` | only the tests whose name matches |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
-| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-| `scripts/release <version>` | a release: dated notes, version bump, tag, published download, checked |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release command <version>`.
 
 `swift build && .build/debug/CommonCommand --snapshot out.png "query" --theme dark` draws the panel with the query typed into `out.png` and quits. It renders offscreen, so nothing appears on screen and nothing takes focus; glass shows as a solid fill. It uses its own settings, so it never changes yours.
 
@@ -122,4 +113,4 @@ Layout:
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).

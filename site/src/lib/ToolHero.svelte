@@ -11,7 +11,7 @@
 	<h1>{tool.name}</h1>
 	<p class="lede">{tool.tagline}</p>
 	<div class="actions">
-		<a class="button" href={download(tool)}>Download for Mac</a>
+		<a class="button" href={download(tool, release)}>Download for Mac</a>
 		{#if docs}<a class="link" href={resolve(`${tool.slug}/docs/`)}>Read the docs ›</a>{/if}
 		<a class="link" href={tool.repo}>View on GitHub ›</a>
 	</div>

@@ -1,6 +1,6 @@
 # Common Bar
 
-[![CI](https://github.com/oddurs/common-bar/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-bar/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Hide menu bar items behind one chevron. Hold ⌘ to rearrange. **[oddurs.github.io/common-tools/bar](https://oddurs.github.io/common-tools/bar/)**
@@ -20,7 +20,7 @@ Free and open source under the MIT licence. No network access, no analytics, no 
 
 Requires macOS 14 or later.
 
-1. Download [CommonBar.zip](https://github.com/oddurs/common-bar/releases/latest/download/CommonBar.zip) from the latest release, unzip it, and move **Common Bar** to Applications.
+1. Download [CommonBar.zip](https://oddurs.github.io/common-tools/bar/) from the latest release, unzip it, and move **Common Bar** to Applications.
 2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -54,35 +54,26 @@ More in the [documentation](https://oddurs.github.io/common-tools/bar/docs/).
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                          # universal build → build/Common Bar.app
-mv "build/Common Bar.app" /Applications/
+scripts/task build                          # universal build → build/bar/Common Bar.app
+mv "build/bar/Common Bar.app" /Applications/
 ```
 
 ## Development
 
+Common Bar lives in `apps/bar/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/dev-cert        # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run bar           # build, quit the running copy, open the new one
+scripts/task check bar         # lint + test + build, what CI runs for this app
+scripts/task test bar --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task run` | build, quit the running copy, open the new one |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/task test <name>` | only the tests whose name matches |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
-| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-| `scripts/release <version>` | a release: dated notes, version bump, tag, published download, checked |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release bar <version>`.
 
 The app was called Reasonal before 0.1.0. The executable, bundle identifier, and preference keys keep that name so an existing install keeps its item positions and settings.
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).

@@ -30,7 +30,7 @@ current_branch() { git rev-parse --abbrev-ref HEAD; }
 # The full check, recorded against HEAD when the tree is clean, so the pre-push hook can skip running
 # the same check again on exactly the commit being pushed.
 check_and_record() {
-    "$root/scripts/task" check
+    "$root/scripts/task" check --changed
     if [ -z "$(git status --porcelain)" ]; then
         git rev-parse HEAD >"$(git rev-parse --git-dir)/agent-checked"
     fi
@@ -47,11 +47,12 @@ doctor)
         problems=$((problems + 1))
     }
     echo "==> checking tools"
-    for tool in git gh node pnpm; do
+    for tool in git gh swift node pnpm; do
         if command -v "$tool" >/dev/null 2>&1; then echo "  ✓ $tool"; else report "$tool not found on PATH"; fi
     done
     if gh auth status >/dev/null 2>&1; then echo "  ✓ gh authenticated"; else report "gh not authenticated: run 'gh auth login'"; fi
-    if [ -d "$root/node_modules" ]; then echo "  ✓ dependencies"; else report "dependencies missing: run 'pnpm install'"; fi
+    if swift format --version >/dev/null 2>&1; then echo "  ✓ swift format"; else report "swift format unavailable: install Swift 6 or later"; fi
+    if [ -d "$root/site/node_modules" ]; then echo "  ✓ site dependencies"; else report "site dependencies missing: run 'pnpm install' in site/"; fi
     echo "==> checking repository"
     if [ "$(git config core.hooksPath || true)" = ".githooks" ]; then
         echo "  ✓ hooks path"
@@ -80,7 +81,7 @@ start)
     echo "cd $path"
     ;;
 check)
-    exec "$root/scripts/task" check
+    exec "$root/scripts/task" check --changed
     ;;
 commit)
     [ $# -ge 1 ] || die "usage: scripts/agent commit '<type>(scope): subject' [body]"

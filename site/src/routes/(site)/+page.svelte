@@ -54,7 +54,7 @@
 				<p class="tagline">{t.tagline}</p>
 				<p class="muted">{t.summary}</p>
 				<div class="actions">
-					<a class="button" href={download(t)}>Download</a>
+					<a class="button" href={download(t, release)}>Download</a>
 					<a class="link" href={resolve(`${t.slug}/`)}>Learn more ›</a>
 				</div>
 				<p class="fine">

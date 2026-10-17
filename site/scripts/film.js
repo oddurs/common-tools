@@ -135,14 +135,20 @@ switch (command) {
 						try {
 							const { page, still } = await open(browser, base, tool, dark);
 							const count = Math.ceil((film.duration / 1000) * fps);
-							console.log(`==> ${tool}${suffix}: ${count} frames (${(film.duration / 1000).toFixed(1)} s)`);
+							console.log(
+								`==> ${tool}${suffix}: ${count} frames (${(film.duration / 1000).toFixed(1)} s)`
+							);
 							for (let index = 0; index < count; index++) {
 								await still((index * 1000) / fps, {
 									path: join(frames, `${String(index).padStart(5, '0')}.png`)
 								});
 								if (index % 150 === 0) console.log(`    ${index}/${count}`);
 							}
-							await still(film.poster, { path: join(out, `poster${suffix}.jpg`), type: 'jpeg', quality: 88 });
+							await still(film.poster, {
+								path: join(out, `poster${suffix}.jpg`),
+								type: 'jpeg',
+								quality: 88
+							});
 							console.log(`==> encoding static/${tool}/demo${suffix}.mp4`);
 							// prettier-ignore
 							await run('ffmpeg', [

@@ -4,11 +4,12 @@ import PackageDescription
 let package = Package(
     name: "CommonGlyph",
     platforms: [.macOS(.v14)],
+    dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
         .target(name: "GlyphKit"),
         .executableTarget(
             name: "CommonGlyph",
-            dependencies: ["GlyphKit"],
+            dependencies: ["GlyphKit", .product(name: "CommonKit", package: "CommonKit")],
             linkerSettings: [.linkedFramework("ServiceManagement"), .linkedFramework("Vision")]
         ),
         .testTarget(name: "GlyphKitTests", dependencies: ["GlyphKit"]),

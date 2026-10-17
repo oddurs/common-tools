@@ -23,11 +23,9 @@
 		<p class="lede">{app.tagline}</p>
 		<p class="summary">{app.summary}</p>
 		<p class="fine">
-			{#if app.published}
-				Not released yet. <a href={app.repo}>Follow it on GitHub ›</a>
-			{:else}
-				Not released yet. It will be free and open source, like every Common Tools app.
-			{/if}
+			Not released yet. It's free and open source, like every Common Tools app. <a href={app.repo}
+				>Follow it on GitHub ›</a
+			>
 		</p>
 	</header>
 	<MoreTools slug={app.slug} />

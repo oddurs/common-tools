@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import Meta from './Meta.svelte';
+	import { page } from '$app/state';
 	import { download, type Tool } from './tools';
 
 	let {
@@ -9,6 +10,8 @@
 		sections,
 		children
 	}: { tool: Tool; sections: [id: string, title: string][]; children: Snippet } = $props();
+
+	const release = $derived(page.data.releases?.[tool.slug]);
 </script>
 
 <Meta
@@ -28,7 +31,7 @@
 					<li><a href="#{id}">{title}</a></li>
 				{/each}
 			</ul>
-			<a class="button" href={download(tool)}>Download</a>
+			<a class="button" href={download(tool, release)}>Download</a>
 		</nav>
 		<article>{@render children()}</article>
 	</div>

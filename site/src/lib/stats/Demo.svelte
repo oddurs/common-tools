@@ -20,7 +20,14 @@
 	/** Other apps' menu bar extras, left of Common Stats. */
 	const others: SymbolName[] = ['icloud.fill', 'music.note'];
 
-	type Tile = { name: string; symbol: SymbolName; tint: string; level: number; label: string; note: string };
+	type Tile = {
+		name: string;
+		symbol: SymbolName;
+		tint: string;
+		level: number;
+		label: string;
+		note: string;
+	};
 	const tiles: Tile[] = $derived([
 		{
 			name: 'GPU',
@@ -73,16 +80,20 @@
 			>
 				<section class="card">
 					<header>
-						<span class="tile" style:background="#0a84ff"><Symbol name="cpu" /></span><b>CPU</b><span
-							class="big">{percent(r.cpu)}</span
-						>
+						<span class="tile" style:background="#0a84ff"><Symbol name="cpu" /></span><b>CPU</b
+						><span class="big">{percent(r.cpu)}</span>
 					</header>
 					<svg class="chart" width={g.width} height={g.height} viewBox="0 0 {g.width} {g.height}">
 						<path d={graph(r.cpuHistory, g.width, g.height, 100, true)} class="area" />
 						<path d={graph(r.cpuHistory, g.width, g.height, 100)} class="line" />
 						{#if frame.hover !== null}
 							<line x1={hoverX} x2={hoverX} y1="0" y2={g.height} class="rule" />
-							<circle cx={hoverX} cy={g.height - (hoverValue / 100) * g.height} r="4" class="dot" />
+							<circle
+								cx={hoverX}
+								cy={g.height - (hoverValue / 100) * g.height}
+								r="4"
+								class="dot"
+							/>
 						{/if}
 					</svg>
 					{#if frame.hover !== null}
@@ -97,7 +108,9 @@
 					</p>
 					<div class="cores">
 						{#each r.cores as load, i (i)}
-							<span class:gap={i === 4}><i style:height="{Math.max(0.12, load) * 100}%"></i></span>
+							<span class:gap={i === 4}
+								><i style:height="{Math.max(0.12, load) * 100}%"></i></span
+							>
 						{/each}
 					</div>
 					<p class="legend small">
@@ -108,14 +121,13 @@
 
 				<section class="card">
 					<header>
-						<span class="tile" style:background="#ff375f"><Symbol name="memorychip" /></span><b>Memory</b
+						<span class="tile" style:background="#ff375f"><Symbol name="memorychip" /></span><b
+							>Memory</b
 						><span class="big">{(r.memory * 24).toFixed(0)} GB <small>of 24 GB</small></span>
 					</header>
 					<div class="membar">
-						<i style:width="{r.memory * 45}%"></i><i class="w" style:width="{r.memory * 18}%"></i><i
-							class="c"
-							style:width="{r.memory * 37}%"
-						></i>
+						<i style:width="{r.memory * 45}%"></i><i class="w" style:width="{r.memory * 18}%"
+						></i><i class="c" style:width="{r.memory * 37}%"></i>
 					</div>
 					<p class="legend">
 						<span><i class="u"></i>App <b>{(r.memory * 24 * 0.45).toFixed(1)} GB</b></span>
@@ -126,9 +138,11 @@
 
 				<section class="card">
 					<header>
-						<span class="tile" style:background="#5ac8fa"><Symbol name="network" /></span><b>Network</b><em
-							>en0</em
-						><span class="rates"><span>↓ {rate(r.down)}</span><span>↑ {rate(r.up)}</span></span>
+						<span class="tile" style:background="#5ac8fa"><Symbol name="network" /></span><b
+							>Network</b
+						><em>en0</em><span class="rates"
+							><span>↓ {rate(r.down)}</span><span>↑ {rate(r.up)}</span></span
+						>
 					</header>
 					<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
 						<path d={graph(r.netHistory, g.width, 30, 6, true)} class="area" />
@@ -138,9 +152,11 @@
 
 				<section class="card">
 					<header>
-						<span class="tile" style:background="#ff9f0a"><Symbol name="arrow.up.arrow.down" /></span><b
-							>Disk</b
-						><span class="rates"><span>R {rate(r.read)}</span><span>W {rate(r.write)}</span></span>
+						<span class="tile" style:background="#ff9f0a"
+							><Symbol name="arrow.up.arrow.down" /></span
+						><b>Disk</b><span class="rates"
+							><span>R {rate(r.read)}</span><span>W {rate(r.write)}</span></span
+						>
 					</header>
 					<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
 						<path d={graph(r.diskHistory, g.width, 30, 150, true)} class="area" />
@@ -152,7 +168,8 @@
 					{#each tiles as t (t.name)}
 						<section class="card ringcard">
 							<header class="mini">
-								<span class="tile" style:background={t.tint}><Symbol name={t.symbol} /></span><b>{t.name}</b>
+								<span class="tile" style:background={t.tint}><Symbol name={t.symbol} /></span
+								><b>{t.name}</b>
 							</header>
 							<svg width="60" height="60" viewBox="0 0 60 60">
 								<circle cx="30" cy="30" r="24" class="track" />

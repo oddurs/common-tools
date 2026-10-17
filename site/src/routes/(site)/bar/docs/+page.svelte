@@ -20,15 +20,15 @@
 	<h2 id="install">Install</h2>
 	<Install tool={bar}>
 		<li>
-			A chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b> guide. Right-click the
-			chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
+			A chevron appears beside the system icons, with a short <b>Tidy Your Menu Bar</b> guide.
+			Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
 		</li>
 	</Install>
 
 	<h2 id="hide">Hide icons</h2>
 	<p>
-		The chevron is the boundary. Icons to its right always show; icons to its left are tucked away whenever
-		the bar is collapsed.
+		The chevron is the boundary. Icons to its right always show; icons to its left are tucked away
+		whenever the bar is collapsed.
 	</p>
 	<ol>
 		<li>Hold <kbd>⌘</kbd> with the pointer over the menu bar. After a moment every hidden icon shows.</li>
@@ -53,9 +53,10 @@
 
 	<h2 id="always">Always-hidden icons</h2>
 	<p>
-		For icons you almost never need, turn on <b>Always-hidden section</b> in <a href="#settings">Settings</a>.
-		It's off by default. A dotted line then appears further left; icons past it stay hidden even when the
-		others show, which matters on a notched display where there's little room.
+		For icons you almost never need, turn on <b>Always-hidden section</b> in
+		<a href="#settings">Settings</a>. It's off by default. A dotted line then appears further left; icons
+		past it stay hidden even when the others show, which matters on a notched display where there's little
+		room.
 	</p>
 	<ul>
 		<li>
@@ -77,7 +78,8 @@
 	<h3>Show Hidden Icons When</h3>
 	<p>
 		Turn off any way of revealing you don't want: <b>Hovering over empty menu bar space</b>,
-		<b>Scrolling down on the menu bar</b>, or <b>Clicking empty menu bar space</b>. The chevron always works.
+		<b>Scrolling down on the menu bar</b>, or <b>Clicking empty menu bar space</b>. The chevron always
+		works.
 	</p>
 	<h3>General</h3>
 	<ul>
@@ -91,7 +93,8 @@
 	<h3>Common Tools</h3>
 	<p>The other Common Tools apps, to open or get, and the version of Common Bar you're running.</p>
 	<p>
-		These are ordinary preferences, so <code>defaults write com.oddurs.reasonal</code> works too. The keys are
+		These are ordinary preferences, so <code>defaults write com.oddurs.reasonal</code> works too. The keys
+		are
 		<code>showOnHover</code>, <code>showOnScroll</code>, and <code>showOnClick</code> (booleans), and
 		<code>autoHide</code> (seconds; <code>0</code> means Never).
 	</p>
@@ -100,8 +103,8 @@
 	<h3>I can't see the chevron.</h3>
 	<p>
 		On a crowded notched display it can end up behind the camera housing. Hold <kbd>⌘</kbd> and drag other icons
-		out of the way, or quit apps you don't need in the menu bar. Common Bar places itself beside the system icons
-		on first launch to avoid this.
+		out of the way, or quit apps you don't need in the menu bar. Common Bar places itself beside the system
+		icons on first launch to avoid this.
 	</p>
 	<h3>Does it need any permissions?</h3>
 	<p>No. It watches pointer position and modifier keys, which macOS allows without Accessibility access.</p>
@@ -109,8 +112,9 @@
 	<h2 id="source">Build from source</h2>
 	<p>The Command Line Tools are enough; Xcode is not required.</p>
 	<pre><code
-			>git clone {bar.repo}
-cd common-bar
-scripts/task build      # universal build → build/Common Bar.app</code
+			>git clone https://github.com/oddurs/common-tools
+cd common-tools
+scripts/task build bar      # universal build → build/bar/Common Bar.app
+		></code
 		></pre>
 </Docs>

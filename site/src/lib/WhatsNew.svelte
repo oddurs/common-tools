@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { inlineMarkdown, shortDate, type Release } from './releases';
-	import type { Tool } from './tools';
+	import { releasesOf, type Tool } from './tools';
 
 	let { tool, release }: { tool: Tool; release: Release } = $props();
 </script>
@@ -9,7 +9,9 @@
 	<section class="ruled">
 		<div class="head">
 			<h2>What's new in {release.version}</h2>
-			<span class="muted">{shortDate(release.date)} · <a href="{tool.repo}/releases">All releases ›</a></span>
+			<span class="muted"
+				>{shortDate(release.date)} · <a href={releasesOf(tool)}>All releases ›</a></span
+			>
 		</div>
 		<div class="notes">
 			{#each release.notes as { heading, items } (heading)}

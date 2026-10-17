@@ -3,6 +3,7 @@ name: Pages
 on:
   push:
     branches: [main]
+    paths: ['site/**', 'apps/*/CHANGELOG.md', '.github/workflows/pages.yml']
   # Rebuild daily, so a new app release shows its version and notes without a change here.
   schedule:
     - cron: '17 6 * * *'
@@ -29,10 +30,10 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: .node-version
+          node-version-file: site/.node-version
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: scripts/task build
+          cache-dependency-path: site/pnpm-lock.yaml
+      - run: scripts/task build site
         env:
           # Pages serves the site under /common-tools.
           BASE_PATH: /common-tools
@@ -40,6 +41,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: build
+          path: site/build
       - id: deployment
         uses: actions/deploy-pages@v4

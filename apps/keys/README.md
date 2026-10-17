@@ -1,6 +1,6 @@
 # Common Keys
 
-[![CI](https://github.com/oddurs/common-keys/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-keys/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A menu bar app that fixes words typed on the wrong keyboard layout, for every keyboard macOS has. **[oddurs.github.io/common-tools/keys](https://oddurs.github.io/common-tools/keys/)** · [Docs](https://oddurs.github.io/common-tools/keys/docs/)
@@ -20,7 +20,7 @@ Free and open source under the MIT licence. No network access, and what it learn
 
 Requires macOS 14.4 or later.
 
-1. Download [CommonKeys.zip](https://github.com/oddurs/common-keys/releases/latest/download/CommonKeys.zip), unzip it, and move **Common Keys** to Applications.
+1. Download [CommonKeys.zip](https://oddurs.github.io/common-tools/keys/), unzip it, and move **Common Keys** to Applications.
 2. Open it. The build is not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -33,7 +33,7 @@ Release builds are signed ad-hoc, so macOS treats each update as a new app. Afte
 
 ### The `worldkey` command
 
-Download [worldkey.zip](https://github.com/oddurs/common-keys/releases/latest/download/worldkey.zip), unzip it, and put `worldkey` on your `PATH`:
+Download [worldkey.zip](https://oddurs.github.io/common-tools/keys//download/worldkey.zip), unzip it, and put `worldkey` on your `PATH`:
 
 ```sh
 unzip worldkey.zip
@@ -172,8 +172,8 @@ The Command Line Tools are enough; Xcode is not required.
 
 ```sh
 scripts/dev-cert                          # once: a stable signing identity, see below
-scripts/task build                        # universal build → build/Common Keys.app and build/worldkey
-mv "build/Common Keys.app" /Applications/
+scripts/task build                        # universal build → build/keys/Common Keys.app and build/worldkey
+mv "build/keys/Common Keys.app" /Applications/
 ```
 
 `scripts/dev-cert` puts a self-signed "LangSmart Development" certificate in your login keychain, and
@@ -183,26 +183,17 @@ the grant again.
 
 ## Development
 
+Common Keys lives in `apps/keys/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/dev-cert        # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run keys          # build, quit the running copy, open the new one
+scripts/task check keys        # lint + test + build, what CI runs for this app
+scripts/task test keys --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task run` | build, quit the running copy, open the new one |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/task test <name>` | only the tests whose name matches |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
-| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-| `scripts/release <version>` | a release: dated notes, version bump, tag, published download, checked |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release keys <version>`.
 
 `swift build && .build/debug/LangSmart --snapshot out.png` renders the menu's cards in light and dark
 without opening the menu. `swift scripts/make-icon.swift` redraws the app icon.
@@ -218,7 +209,7 @@ Layout:
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).
 
 The word lists in `Sources/WorldKey/WordLists` are derived from the [Leipzig Corpora
 Collection](https://wortschatz.uni-leipzig.de) (CC BY 4.0). Their corpora are built from Wikipedia

@@ -1,6 +1,6 @@
 # Common Battery
 
-[![CI](https://github.com/oddurs/common-battery/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-battery/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 The battery in the macOS menu bar, done properly: the level, the time left, and what the battery is doing, plus alerts when it runs low or reaches your charge level. It replaces the system's battery icon. **[oddurs.github.io/common-tools/battery](https://oddurs.github.io/common-tools/battery/)**
@@ -23,7 +23,7 @@ Free and open source under the MIT licence. No network access, no analytics, no 
 
 Requires macOS 14 or later.
 
-1. Download [CommonBattery.zip](https://github.com/oddurs/common-battery/releases/latest/download/CommonBattery.zip) from the [latest release](https://github.com/oddurs/common-battery/releases/latest), unzip it, and move **Common Battery** to Applications.
+1. Download [CommonBattery.zip](https://oddurs.github.io/common-tools/battery/) from the [latest release](https://oddurs.github.io/common-tools/battery/), unzip it, and move **Common Battery** to Applications.
 2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -87,8 +87,8 @@ Every source is public and unprivileged. A value that can't be read isn't shown,
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                 # universal build → build/Common Battery.app
-mv "build/Common Battery.app" /Applications/
+scripts/task build battery  # universal build → build/battery/Common Battery.app
+mv "build/battery/Common Battery.app" /Applications/
 ```
 
 Notifications need the built app: run bare from `.build`, the app has no bundle and stays quiet.
@@ -97,23 +97,17 @@ Notifications need the built app: run bare from `.build`, the app has no bundle 
 
 ## Development
 
+Common Battery lives in `apps/battery/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run battery       # build, quit the running copy, open the new one
+scripts/task check battery     # lint + test + build, what CI runs for this app
+scripts/task test battery --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent commit "<type>: subject"` | Conventional Commit, checked by the hook |
-| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
-| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release battery <version>`.
 
 `swift build && .build/debug/CommonBattery --snapshot out.png` renders every style in every state to `out.png`, and the menu (this Mac's battery now, a made-up afternoon, and a Mac without a battery) to `out-menu.png`, each in light and dark. The images above were made this way.
 
@@ -125,4 +119,4 @@ Layout:
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).

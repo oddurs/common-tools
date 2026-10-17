@@ -33,7 +33,10 @@ const changelog = `# Changelog
 describe('changelogNotes', () => {
 	it('reads one version, joining wrapped bullets and dropping empty sections', () => {
 		expect(changelogNotes(changelog, '0.3.0')).toEqual([
-			{ heading: 'Changed', items: ['Settings follows the shared layout: **Items**, then **General**.'] },
+			{
+				heading: 'Changed',
+				items: ['Settings follows the shared layout: **Items**, then **General**.']
+			},
 			{ heading: 'Added', items: ['A `Common Tools` section.'] }
 		]);
 	});
@@ -57,20 +60,52 @@ describe('inlineMarkdown', () => {
 describe('latestRelease', () => {
 	const stats = tool('stats');
 	const respond = (body: unknown, ok = true) =>
-		({ ok, status: ok ? 200 : 403, json: async () => body, text: async () => body }) as unknown as Response;
+		({
+			ok,
+			status: ok ? 200 : 403,
+			json: async () => body,
+			text: async () => body
+		}) as unknown as Response;
+	const release = (tag: string, name: string) => ({
+		tag_name: tag,
+		published_at: '2026-10-16T07:51:46Z',
+		html_url: `https://github.com/x/releases/tag/${tag}`,
+		draft: false,
+		prerelease: false,
+		assets: [
+			{
+				name,
+				size: 1_688_975,
+				browser_download_url: `https://github.com/x/releases/download/${tag}/${name}`
+			}
+		]
+	});
 
-	it('combines the release and its changelog section', async () => {
+	it('takes the newest monorepo release tagged for the app', async () => {
 		const fake = (async (url: string) =>
-			url.includes('/releases/latest')
-				? respond({
-						tag_name: 'v0.3.0',
-						published_at: '2026-10-16T07:51:46Z',
-						assets: [{ name: 'CommonStats.zip', size: 1_688_975 }]
-					})
-				: respond(changelog)) as typeof fetch;
-		const release = await latestRelease(stats, fake);
-		expect(release).toMatchObject({ version: '0.3.0', date: '2026-10-16', size: 1_688_975 });
-		expect(release?.notes.map((n) => n.heading)).toEqual(['Changed', 'Added']);
+			url.includes('common-tools/releases')
+				? respond([
+						release('bar-v0.4.0', 'CommonBar.zip'),
+						release('stats-v0.4.0', 'CommonStats.zip'),
+						release('stats-v0.3.5', 'CommonStats.zip')
+					])
+				: respond(changelog.replace('0.3.0', '0.4.0'))) as typeof fetch;
+		const found = await latestRelease(stats, fake);
+		expect(found).toMatchObject({ version: '0.4.0', date: '2026-10-16', size: 1_688_975 });
+		expect(found?.download).toMatch(/stats-v0\.4\.0\/CommonStats\.zip$/);
+		expect(found?.notes.map((n) => n.heading)).toEqual(['Changed', 'Added']);
+	});
+
+	it('falls back to the old repository before the first monorepo release', async () => {
+		const fake = (async (url: string) =>
+			url.includes('common-tools/releases')
+				? respond([release('bar-v0.4.0', 'CommonBar.zip')])
+				: url.includes('common-stats/releases')
+					? respond([release('v0.3.0', 'CommonStats.zip')])
+					: respond(changelog)) as typeof fetch;
+		const found = await latestRelease(stats, fake);
+		expect(found?.version).toBe('0.3.0');
+		expect(found?.download).toMatch(/v0\.3\.0\/CommonStats\.zip$/);
 	});
 
 	it('gives null rather than failing the build when GitHub refuses', async () => {

@@ -1,30 +1,8 @@
-# Working in this repository
+# Common Glyph
 
 Common Glyph is a native macOS menu bar app written in Swift (AppKit plus SwiftUI) with no package dependencies. It shows any number of images or pieces of text of the user's choosing as status items, one each, managed and edited in Settings.
 
-## The seam
-
-Do all automation through `scripts/task`. CI and the git hooks call nothing else.
-
-```sh
-scripts/task fmt       # format in place
-scripts/task lint      # swift-format lint --strict, then a build with warnings as errors
-scripts/task test      # GlyphKit and bundle tests
-scripts/task build     # universal "build/Common Glyph.app"
-scripts/task check     # lint + test + build
-```
-
-## Workflow
-
-- Never commit to `main`. It only moves forward when a pull request is merged; the `pre-push` hook and branch protection both enforce this.
-- One unit of work gets one worktree, one branch, and one pull request: `scripts/agent start <type>/<slug>`, then work in the printed path, `scripts/agent commit`, `scripts/agent pr`, and `scripts/agent done` after the merge.
-- Branch types: `feat fix chore docs perf refactor test`.
-- Run `scripts/task check` until it is green before opening a pull request. Never use `--no-verify`.
-- In the pull request description, state the problem, the approach, and where a reviewer should be sceptical.
-
-## Commits
-
-Conventional Commits: `type(scope): subject`. Write the subject in the imperative, at most 72 characters, with no trailing period. The body says why. Never add assistant or tool attribution: no co-author trailers, no "generated with" footers. The `commit-msg` hook rejects them.
+This is one app of the Common Tools monorepo. The workflow, the `scripts/task` seam, and the commit rules are in the root CLAUDE.md; this file holds what is specific to Common Glyph. Its area is `glyph`: `scripts/task check glyph`, `scripts/task run glyph`, `scripts/release glyph <version>`.
 
 ## Code
 
@@ -39,4 +17,15 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 - Settings follows the Common Tools standard shared with Common Stats, Common Keys, and Common Bar: one grouped `Form` 460 points wide, a live preview first, the app's own sections with footnote footers, then General, then `CommonToolsSection`. A glyph's editor is a sheet over it. Menus follow the same family: cards first, then actions with SF Symbol icons on macOS 26, then Settings… and Quit.
 - Nothing needs a permission prompt; keep it that way, and don't add private APIs.
 - A behaviour change goes into GlyphKit with a test first. A bug fix comes with the test that would have caught it.
-- The app icon comes from `swift scripts/make-icon.swift`, which writes `Resources/AppIcon.icns`, `docs/icon.png`, and `Resources/CommonTools/glyph.png`. Edit the script, not the images.
+- The app icon comes from `scripts/make-icon glyph`, which writes `Resources/AppIcon.icns`, `docs/icon.png`, and `Resources/CommonTools/glyph.png`. Edit the script, not the images.
+
+
+## Checks
+
+Behaviour that depends on the live menu bar belongs in the app target; decisions that can be made from plain values belong in a type the tests can reach.
+
+## Pull requests
+
+Besides the shared checklist:
+
+- [ ] UI changes include before/after screenshots

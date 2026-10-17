@@ -38,4 +38,4 @@ All notable changes to this project are documented here. The format follows [Kee
 
 - A file Spotlight listed twice showed as two rows.
 
-[Unreleased]: https://github.com/oddurs/common-command/commits/main
+[Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/command

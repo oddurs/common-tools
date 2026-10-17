@@ -90,7 +90,9 @@ function readingsAt(t: number): Readings {
 		up: 0.02 + 0.2 * noise(now, 11),
 		read: diskSample(now),
 		write: diskSample(now + 1000) * 0.4,
-		cores: Array.from({ length: 14 }, (_, i) => clamp((cpu / 100) * (0.6 + 0.8 * noise(now * 14 + i, 12)))),
+		cores: Array.from({ length: 14 }, (_, i) =>
+			clamp((cpu / 100) * (0.6 + 0.8 * noise(now * 14 + i, 12)))
+		),
 		cpuHistory: history(cpuSample),
 		netHistory: history(netSample),
 		diskHistory: history(diskSample)

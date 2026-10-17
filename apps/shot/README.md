@@ -1,6 +1,6 @@
 # Common Shot
 
-[![CI](https://github.com/oddurs/common-shot/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-shot/actions/workflows/ci.yml)
+[![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 Screenshots straight to the clipboard, for macOS. Press ⇧⌘2, drag over what you want, and paste it: into Claude, a terminal, a chat, a pull request, or a document.
@@ -19,7 +19,7 @@ Free and open source under the MIT licence. No network access, no analytics, and
 
 Requires macOS 14 or later.
 
-1. Download [CommonShot.zip](https://github.com/oddurs/common-shot/releases/latest/download/CommonShot.zip) from the [latest release](https://github.com/oddurs/common-shot/releases/latest), unzip it, and move **Common Shot** to Applications.
+1. Download [CommonShot.zip](https://oddurs.github.io/common-tools/shot/) from the [latest release](https://oddurs.github.io/common-tools/shot/), unzip it, and move **Common Shot** to Applications.
 2. Open it. The build is signed but not notarized, so the first time macOS will say it can't verify the developer. Go to **System Settings › Privacy & Security** and click **Open Anyway**. Alternatively, run:
 
    ```sh
@@ -56,34 +56,25 @@ Text recognition runs on your Mac with Vision. It reads code well but not perfec
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build                 # universal build → build/Common Shot.app
-mv "build/Common Shot.app" /Applications/
+scripts/task build shot  # universal build → build/shot/Common Shot.app
+mv "build/shot/Common Shot.app" /Applications/
 ```
 
-macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/dev-cert` once per Mac: it creates the self-signed "Common Tools Development" identity that every Common Tools app shares, trusts it for code signing (macOS asks for your password), and clears Common Shot's stale Screen Recording entry. `scripts/task build` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
+macOS ties Screen Recording access to the app's signature. An ad hoc signature names only the exact binary, so without more, every rebuild needs access again, and the switch already on in Privacy & Security silently applies to the old build. Run `scripts/dev-cert` once per Mac: it creates the self-signed "Common Tools Development" identity that every Common Tools app shares, trusts it for code signing (macOS asks for your password), and clears Common Shot's stale Screen Recording entry. `scripts/task build shot` signs with it from then on, so the grant survives rebuilds. To undo it, delete that certificate in Keychain Access.
 
 ## Development
 
+Common Shot lives in `apps/shot/` of [oddurs/common-tools](https://github.com/oddurs/common-tools), the monorepo for every Common Tools app, and shares [CommonKit](../../packages/CommonKit) with them. From the repository root:
+
 ```sh
-scripts/setup           # once: wire the git hooks
-scripts/dev-cert        # optional, once: a stable signing identity, so permissions survive rebuilds
-scripts/agent doctor    # check tools and repository state
+scripts/setup                       # once: wire the git hooks
+scripts/dev-cert                    # optional, once: a stable signing identity, so permissions survive rebuilds
+scripts/task run shot          # build, quit the running copy, open the new one
+scripts/task check shot        # lint + test + build, what CI runs for this app
+scripts/task test shot --filter=X  # only the tests whose name matches
 ```
 
-| Command | Does |
-| --- | --- |
-| `scripts/task run` | build, quit the running copy, open the new one |
-| `scripts/task check` | lint + test + build, exactly what CI runs |
-| `scripts/task test <name>` | only the tests whose name matches |
-| `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
-| `scripts/agent ship "<type>: subject"` | commit, check, open the PR with auto-merge, wait for the merge, clean up |
-| `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
-| `scripts/agent sync` | rebase onto `origin/main` |
-| `scripts/agent done` | after a merge: remove the worktree and branch, update the main checkout |
-| `scripts/agent list` | worktrees, branches, and pull request state |
-| `scripts/release <version>` | a release: dated notes, version bump, tag, published download, checked |
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release shot <version>`.
 
 Two flags check changes without pressing the shortcut. Both need Screen Recording access for the terminal running them, and neither touches your settings:
 
@@ -98,4 +89,4 @@ Layout:
 
 ## Licence
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](../../LICENSE).

@@ -21,7 +21,7 @@ all_apps() { ls apps 2>/dev/null || :; }
 app_field() { plutil -extract "$1.$2" raw -o - apps.json; }
 
 changed_areas() {
-    base="$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)"
+    base="${changed_base:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)}"
     { git diff --name-only "$base"; git diff --name-only; git ls-files --others --exclude-standard; } | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
         /^site\//            { site = 1; next }
         /^packages\//        { kit = 1; everyapp = 1; next }
@@ -50,9 +50,11 @@ existing_areas() {
 
 areas=""
 changed=0
+filter=""
 for arg in "$@"; do
     case "$arg" in
     --changed) changed=1 ;;
+    --filter=*) filter="${arg#--filter=}" ;;
     *) areas="$areas $arg" ;;
     esac
 done
@@ -101,7 +103,7 @@ swift_package() {
         swift build -Xswiftc -warnings-as-errors
         ;;
     # shellcheck disable=SC2046
-    test) swift test $(test_flags) ;;
+    test) swift test $(test_flags) ${filter:+--filter "$filter"} ;;
     esac
 }
 
@@ -198,9 +200,18 @@ app() {
 }
 
 case "$verb" in
+areas)
+    # The areas a change touches, for CI: `areas <base>` against a ref, or `areas --all`.
+    if [ "${1:-}" = "--all" ]; then
+        printf '%s\n' site kit $(all_apps)
+    else
+        changed_base="$(git merge-base "${1:-origin/main}" HEAD)" changed_areas | existing_areas
+    fi
+    exit 0
+    ;;
 fmt | fmt:check | lint | test | build | package | run | check) ;;
 *)
-    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|check} [site|kit|<app> ...] [--changed]" >&2
+    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|check} [site|kit|<app> ...] [--changed] [--filter=<test>]" >&2
     exit 2
     ;;
 esac

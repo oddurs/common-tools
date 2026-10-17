@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import ServiceManagement
 import StatKit
 import SwiftUI

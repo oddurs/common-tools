@@ -47,36 +47,36 @@
 		<div>
 			<h2>Learns you.</h2>
 			<p>
-				Erase a word and type it again on another layout, and it remembers the word and the keys you mix up.
-				Press <kbd>⌘Z</kbd> after a fix and it leaves that word alone from then on.
+				Erase a word and type it again on another layout, and it remembers the word and the keys you
+				mix up. Press <kbd>⌘Z</kbd> after a fix and it leaves that word alone from then on.
 			</p>
 		</div>
 		<div>
 			<h2>Knows your apps.</h2>
 			<p>
-				Switch apps and you get the layout you last used there, or the one you usually write in. A switch in
-				one app never leaks into the next.
+				Switch apps and you get the layout you last used there, or the one you usually write in. A
+				switch in one app never leaks into the next.
 			</p>
 		</div>
 		<div>
 			<h2>Careful.</h2>
 			<p>
-				It changes a word only when the evidence is clear: dictionaries, spelling rules no word breaks, and
-				what you've taught it. Paths, links and passwords are left alone.
+				It changes a word only when the evidence is clear: dictionaries, spelling rules no word
+				breaks, and what you've taught it. Paths, links and passwords are left alone.
 			</p>
 		</div>
 		<div>
 			<h2>Private.</h2>
 			<p>
-				Every keystroke stays on your Mac. No network, no telemetry, no account. What it learns is one file
-				you can read or delete.
+				Every keystroke stays on your Mac. No network, no telemetry, no account. What it learns is one
+				file you can read or delete.
 			</p>
 		</div>
 		<div>
 			<h2>Set and forget.</h2>
 			<p>
-				Nothing to configure. A flag in the menu bar, a menu that shows your day, and a settings page with two
-				shortcuts on it. Judging a word takes about 0.13 ms.
+				Nothing to configure. A flag in the menu bar, a menu that shows your day, and a settings page
+				with two shortcuts on it. Judging a word takes about 0.13 ms.
 			</p>
 		</div>
 	</section>
@@ -84,8 +84,8 @@
 	<section class="ruled">
 		<h2>Measured, not promised.</h2>
 		<p class="muted">
-			<code>worldkey eval</code> types 150 dictionary words per language on the right keyboard and on the wrong
-			one, and counts what happens.
+			<code>worldkey eval</code> types 150 dictionary words per language on the right keyboard and on the
+			wrong one, and counts what happens.
 		</p>
 		<table>
 			<thead>
@@ -98,8 +98,8 @@
 			</tbody>
 		</table>
 		<p class="muted">
-			Most misses are short words that are real in both languages, like <em>an</em> and <em>αν</em>, where
-			leaving them alone is right.
+			Most misses are short words that are real in both languages, like <em>an</em> and <em>αν</em>,
+			where leaving them alone is right.
 		</p>
 	</section>
 
@@ -107,8 +107,8 @@
 		<div>
 			<h2>WorldKey inside.</h2>
 			<p class="muted">
-				The engine that reads keys on any keyboard is a Swift library and a command-line tool, so scripts and
-				other input tools can use it too.
+				The engine that reads keys on any keyboard is a Swift library and a command-line tool, so
+				scripts and other input tools can use it too.
 			</p>
 		</div>
 		<pre><code
