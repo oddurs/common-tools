@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 import ShotKit
 
 /// Wires the shortcut, the overlay, the menu bar item, and Settings together, and sends each shot to
@@ -14,7 +15,7 @@ final class AppController: NSObject {
     private let hotKey = HotKey()
     private let toast = Toast()
     let history = History()
-    private lazy var settings = SettingsWindow(controller: self)
+    private let settings = SettingsWindowHost(title: "Common Shot Settings")
     private var statusItem: NSStatusItem?
     private(set) var hotKeyProblem: String?
 
@@ -250,8 +251,9 @@ final class AppController: NSObject {
 
     // MARK: Settings
 
+    /// A fresh view each time, so Open at login reflects a change made elsewhere.
     @objc func showSettings() {
-        settings.show()
+        settings.show { SettingsView(controller: self, preferences: preferences) }
     }
 
     func preferencesChanged() {

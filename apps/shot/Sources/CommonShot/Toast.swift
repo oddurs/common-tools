@@ -1,4 +1,5 @@
 import AppKit
+import CommonUI
 
 /// A thumbnail of the last shot in the screen's corner for a moment, so you know what's on the clipboard
 /// without pasting to find out. Hovering keeps it; dragging the thumbnail drops the PNG as a file, which
@@ -9,7 +10,7 @@ final class Toast {
     private var hideTask: Task<Void, Never>?
 
     private static let maximumSide: CGFloat = 180
-    private static let margin: CGFloat = 20
+    private static let margin = Tokens.Space.lg
     private static let shownFor = Duration.milliseconds(2000)
 
     func show(
@@ -27,16 +28,18 @@ final class Toast {
         imageView.onFinish = { [weak self] in self?.dismiss() }
         imageView.imageScaling = .scaleProportionallyUpOrDown
         imageView.wantsLayer = true
-        imageView.layer?.cornerRadius = 6
+        imageView.layer?.cornerRadius = Tokens.Radius.sm
+        imageView.layer?.cornerCurve = .continuous
         imageView.layer?.masksToBounds = true
         if file != nil { imageView.toolTip = "Drag into a terminal, a chat, or Finder" }
-        var views: [NSView] = [imageView, Self.label(caption, color: .labelColor)]
-        if let detail { views.append(Self.label(detail, color: .secondaryLabelColor)) }
+        var views: [NSView] = [imageView, Self.label(caption, color: Tokens.Text.primary)]
+        if let detail { views.append(Self.label(detail, color: Tokens.Text.secondary)) }
         let stack = NSStackView(views: views)
         stack.orientation = .vertical
-        stack.spacing = 4
-        stack.setCustomSpacing(8, after: imageView)
-        stack.edgeInsets = NSEdgeInsets(top: 10, left: 10, bottom: 9, right: 10)
+        stack.spacing = Tokens.Space.xxs
+        stack.setCustomSpacing(Tokens.Space.xs, after: imageView)
+        let inset = Tokens.Space.sm
+        stack.edgeInsets = NSEdgeInsets(top: inset, left: inset, bottom: inset, right: inset)
         imageView.widthAnchor.constraint(equalToConstant: thumbnail.width).isActive = true
         imageView.heightAnchor.constraint(equalToConstant: thumbnail.height).isActive = true
 
@@ -44,7 +47,7 @@ final class Toast {
         background.material = .popover
         background.state = .active
         background.wantsLayer = true
-        background.layer?.cornerRadius = 12
+        background.layer?.cornerRadius = Tokens.Radius.md
         background.layer?.cornerCurve = .continuous
         background.layer?.masksToBounds = true
         background.onHover = { [weak self] inside in
@@ -82,7 +85,7 @@ final class Toast {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup {
-            $0.duration = 0.12; panel.animator().alphaValue = 1
+            $0.duration = Self.fade(Tokens.Motion.fast); panel.animator().alphaValue = 1
         }
         self.panel = panel
         scheduleHide(after: Self.shownFor)
@@ -95,7 +98,7 @@ final class Toast {
             try? await Task.sleep(for: delay)
             guard !Task.isCancelled else { return }
             await NSAnimationContext.runAnimationGroup {
-                $0.duration = 0.3; panel.animator().alphaValue = 0
+                $0.duration = Self.fade(Tokens.Motion.base); panel.animator().alphaValue = 0
             }
             guard !Task.isCancelled else { return }
             panel.orderOut(nil)
@@ -109,10 +112,16 @@ final class Toast {
         panel = nil
     }
 
-    private static func label(_ text: String, color: NSColor) -> NSTextField {
+    /// The motion tokens' duration, or none while the user asks for reduced motion.
+    private static func fade(_ duration: TimeInterval) -> TimeInterval {
+        NSWorkspace.shared.accessibilityDisplayShouldReduceMotion ? 0 : duration
+    }
+
+    private static func label(_ text: String, color: SemanticColor) -> NSTextField {
         let label = NSTextField(labelWithString: text)
-        label.font = .systemFont(ofSize: 11, weight: .medium)
-        label.textColor = color
+        // The subheadline's size, a little heavier so it reads over the blurred material.
+        label.font = .systemFont(ofSize: NSFont.preferredFont(forTextStyle: .subheadline).pointSize, weight: .medium)
+        label.textColor = color.nsColor
         return label
     }
 }

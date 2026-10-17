@@ -9,7 +9,10 @@ let package = Package(
         .target(name: "ShotKit"),
         .executableTarget(
             name: "CommonShot",
-            dependencies: ["ShotKit", .product(name: "CommonKit", package: "CommonKit")],
+            dependencies: [
+                "ShotKit", .product(name: "CommonKit", package: "CommonKit"),
+                .product(name: "CommonUI", package: "CommonKit"),
+            ],
             linkerSettings: [
                 .linkedFramework("Carbon"), .linkedFramework("ScreenCaptureKit"),
                 .linkedFramework("ServiceManagement"), .linkedFramework("Vision"),
