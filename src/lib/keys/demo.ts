@@ -5,8 +5,8 @@
 //
 // The scene is a pure function of time, so the recorder can step through it frame by frame.
 
-import { screen, viewport, wide } from '../mac/geometry';
-import { cameraAt, clampCamera, ramp, type Camera } from '../scene';
+import { direct, type BaseFrame } from '../film/director';
+import { screen, wide } from '../mac/geometry';
 
 export type WindowID = 'notes' | 'chat';
 
@@ -17,10 +17,10 @@ export type Word = {
 	fixed?: { original: string; replacement: string; flag: string };
 };
 
-export type Frame = {
+/** The engine's frame, with the typing on top. Its caption comes from the typing script. */
+export type Frame = Omit<BaseFrame, 'keys'> & {
 	front: WindowID;
 	flag: string;
-	caption: string;
 	windows: Record<WindowID, Word[]>;
 	/** The fixed word wearing the bubble. */
 	bubble: { window: WindowID; index: number } | null;
@@ -30,11 +30,6 @@ export type Frame = {
 	/** Milliseconds since the menu bar flag changed and since the bubble appeared, for their entrances. */
 	sinceFlag: number;
 	sinceBubble: number;
-	/** 0 to 1, for the words fading out and in between loops. */
-	opacity: number;
-	camera: Camera;
-	/** 0 to 1 as the closing card comes up. */
-	end: number;
 };
 
 type Step =
@@ -135,22 +130,26 @@ const onNotes = { x: windows.notes.x + 330, y: windows.notes.y + 150, zoom: 1.55
 const onChat = { x: windows.chat.x + 300, y: windows.chat.y + 140, zoom: 1.55 };
 const onFlag = { x: screen.width, y: 0, zoom: 2.1 };
 const endAt = duration - endFor - 400;
-const shots = [
-	{ at: 0, ...wide },
-	{ at: 300, ...medium },
-	{ at: when((step) => step.kind === 'type' && !!step.showKeys) - 400, ...onNotes },
-	{ at: captionAt('Every script') - 200, ...onChat },
-	{ at: captionAt('Korean') - 200, ...onNotes, y: onNotes.y + 40 },
-	{ at: captionAt('And every app'), ...onFlag },
-	{ at: endAt - 500, ...wide }
-];
 
-/** A moment worth a still: the first fix, bubble showing. */
-export const posterTime = timeline.events.find((event) => event.step.kind === 'fix')!.at + 600;
+/** The camera and the closing card; captions and keys come from the typing script above. */
+export const film = direct((d) => {
+	d.camera(wide);
+	d.at(300).camera(medium);
+	d.at(when((step) => step.kind === 'type' && !!step.showKeys) - 400).camera(onNotes);
+	d.at(captionAt('Every script') - 200).camera(onChat);
+	d.at(captionAt('Korean') - 200).camera({ ...onNotes, y: onNotes.y + 40 });
+	d.at(captionAt('And every app')).camera(onFlag);
+	d.at(endAt - 500).camera(wide);
+	// The first fix, bubble showing.
+	d.at(timeline.events.find((event) => event.step.kind === 'fix')!.at + 600).poster();
+	d.at(endAt).end(duration - endAt);
+});
 
 export function frameAt(time: number): Frame {
-	const t = ((time % duration) + duration) % duration;
+	const base = film.frame(time);
+	const { t } = base;
 	const frame: Frame = {
+		...base,
 		front: 'notes',
 		flag: '🇺🇸',
 		caption: '',
@@ -159,10 +158,7 @@ export function frameAt(time: number): Frame {
 		keys: '',
 		caretOn: true,
 		sinceFlag: Infinity,
-		sinceBubble: Infinity,
-		opacity: Math.min(1, t / fadeFor, (duration - t) / fadeFor),
-		camera: clampCamera(cameraAt(shots, t), screen, viewport),
-		end: ramp(t, endAt, 500)
+		sinceBubble: Infinity
 	};
 	let bubbleAt = -Infinity;
 	let flagAt = -Infinity;

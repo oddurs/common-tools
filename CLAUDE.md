@@ -32,8 +32,8 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 - `src/lib/tools.ts` is the single source of names, repositories, and release asset names. Download links use `releases/latest/download/<asset>`; if an app renames its asset, change it here and in that app's `release.yml` together.
 - Every claim on a page must be true of the app's code. Read the app's source before writing about a feature; don't describe unmerged work.
 - Links go through `resolve()` with relative paths (`'stats/'`), and assets through `asset()`, so the `/common-tools` base path works.
-- Demo scenes are pure functions of time in `src/lib/<tool>/demo.ts`. Draw entrances from the scene clock, never CSS animations, or the recorder's frames won't match. `src/lib/demos.test.ts` pins what each caption promises; update it with the scene.
-- Scenes are built from `src/lib/mac/` (Screen, Window, Overlay, Stage) on the measured geometry in `geometry.ts`. Don't invent menu bar sizes or glyphs: add an SF Symbol to `scripts/render-glyphs.swift` and run `pnpm glyphs`.
-- Every scene takes `dark`; check both. A camera shot must stay inside the screen (`clampCamera`); the tests check this.
-- After changing a scene, re-record it: `pnpm dev`, then `pnpm record <tool>` (records light and dark), and look at both posters and a few frames before committing the video. Don't edit `src/` while recording: a hot reload kills the run.
+- Demo videos are films made with `src/lib/film/`. Write timing as a `direct((d) => …)` script (camera, point, click, hold/release, caption, mark, poster, end); never hand-roll timelines in a scene. Scene state reads `film.marks`. Draw entrances from the frame's time, never CSS animations, or recorded frames won't match. `src/lib/demos.test.ts` pins what each caption promises; update it with the script.
+- Scenes are drawn with `Film.svelte` on `src/lib/mac/` (Screen, Window, Symbol) and the geometry in `geometry.ts`. Don't invent menu bar sizes or glyphs: add an SF Symbol to `scripts/render-glyphs.swift` and run `pnpm glyphs`.
+- Every film takes `dark`; check both with `pnpm shot <tool> <moment> [--dark]`. Camera shots must stay inside the screen (`clampCamera`); the tests check this.
+- After changing a film, `pnpm record <tool>` (light and dark) and look at both posters before committing the videos.
 - The dev server runs on port 5371 (`--strictPort`), so it never collides with other projects.

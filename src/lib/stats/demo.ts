@@ -3,20 +3,9 @@
 // quiet machine with one busy stretch. The scene is a pure function of time, so the recorder can
 // step through it frame by frame.
 
-import { extrasRight, menuBarHeight, screen, viewport, wide } from '../mac/geometry';
-import {
-	along,
-	cameraAt,
-	captionAt,
-	clamp,
-	clampCamera,
-	clickPulse,
-	loopOpacity,
-	noise,
-	ramp,
-	type Camera,
-	type Point
-} from '../scene';
+import { direct, type BaseFrame } from '../film/director';
+import { clamp, noise, ramp } from '../film/motion';
+import { extrasRight, menuBarHeight, screen, wide } from '../mac/geometry';
 
 export type Metric = 'cpu' | 'gpu' | 'memory' | 'network' | 'disk' | 'storage' | 'battery';
 export type Style = 'value' | 'graph' | 'graphValue' | 'gauge' | 'gaugeValue';
@@ -61,19 +50,12 @@ export type Readings = {
 	diskHistory: number[];
 };
 
-export type Frame = {
-	opacity: number;
-	caption: string;
-	camera: Camera;
-	cursor: Point;
-	pulse: number;
+export type Frame = BaseFrame & {
 	/** 0 closed, 1 open, for the menu's entrance and exit. */
 	menu: number;
 	/** The sample under the pointer in the CPU graph, counted back from now, or null when not hovering. */
 	hover: number | null;
 	layout: number;
-	/** 0 to 1 as the closing card comes up. */
-	end: number;
 	readings: Readings;
 };
 
@@ -126,61 +108,52 @@ export const stage = {
 	graph: { x: extrasRight - menuWidth + 19, y: menuBarHeight + 5 + 53, width: 282, height: 64 }
 };
 
-const times = { open: 4200, hover: 6400, hoverOff: 9400, close: 13_700, styles: 14_400, end: 19_600 };
-export const duration = 21_800;
-
-const clicks = [times.open, times.close];
 const g = stage.graph;
-const path = [
-	{ at: 2700, x: 1270, y: 250 },
-	{ at: 4000, ...stage.itemCenter },
-	{ at: 5600, ...stage.itemCenter },
-	{ at: 6400, x: g.x + g.width - 30, y: g.y + 34 },
-	{ at: 9000, x: g.x + 80, y: g.y + 38 },
-	{ at: 9800, x: stage.menu.x + menuWidth + 60, y: 260 },
-	{ at: 13_200, x: stage.menu.x + menuWidth + 60, y: 260 },
-	{ at: 13_700, x: 1250, y: 300 },
-	{ at: duration, x: 1250, y: 300 }
-];
+const parked = { x: stage.menu.x + menuWidth + 60, y: 260 };
+const out = { x: 1250, y: 300 };
 
 /** Close on the bar, back out for the menu, in again for the styles. */
 const bar = { x: screen.width, y: 0, zoom: 2.3 };
 const menuShot = { x: stage.menu.x + menuWidth / 2, y: 0, zoom: 1.08 };
 const styles = { x: screen.width, y: 0, zoom: 1.85 };
-const shots = [
-	{ at: 0, ...wide },
-	{ at: 700, ...bar },
-	{ at: times.open - 300, ...menuShot },
-	{ at: times.close - 100, ...styles },
-	{ at: times.end - 600, ...wide }
-];
 
-const captions: [number, string][] = [
-	[700, 'System stats, right in the menu bar.'],
-	[times.open, 'Click for live graphs of everything.'],
-	[times.hover, 'Hover a graph to read back any moment.'],
-	[spike.from + 300, 'Something busy? You see it at once.'],
-	[times.styles, 'Each one a value, a graph, or a gauge.']
-];
+export const film = direct((d) => {
+	d.camera(wide);
+	d.at(700).camera(bar).caption('System stats, right in the menu bar.');
+	d.at(2700).point({ x: 1270, y: 250 });
+	d.at(3900).camera(menuShot);
+	d.at(4000).point(stage.itemCenter);
+	d.at(4200).click().mark('open').caption('Click for live graphs of everything.');
+	d.at(5600).point(stage.itemCenter);
+	d.at(6400)
+		.point({ x: g.x + g.width - 30, y: g.y + 34 })
+		.mark('hover');
+	d.caption('Hover a graph to read back any moment.');
+	d.at(8200).poster();
+	d.at(9000).point({ x: g.x + 80, y: g.y + 38 });
+	d.at(9400).mark('hoverOff');
+	d.at(9800).point(parked);
+	d.at(spike.from + 300).caption('Something busy? You see it at once.');
+	d.at(13_200).point(parked);
+	d.at(13_600).camera(styles);
+	d.at(13_700).point(out).click().mark('close');
+	d.at(14_400).mark('styles').caption('Each one a value, a graph, or a gauge.');
+	d.at(19_000).camera(wide);
+	d.at(19_600).end(2200);
+});
 
-/** The menu open, the graph under the pointer. */
-export const posterTime = 8200;
+const m = film.marks;
 
 export function frameAt(time: number): Frame {
-	const t = ((time % duration) + duration) % duration;
-	const cursor = along(path, t);
-	const hovering = t >= times.hover && t < times.hoverOff;
-	const graphX = (cursor.x - g.x) / g.width;
+	const base = film.frame(time);
+	const { t } = base;
+	const hovering = t >= m.hover && t < m.hoverOff;
+	const graphX = (base.cursor!.x - g.x) / g.width;
 	return {
-		opacity: loopOpacity(t, duration),
-		caption: captionAt(captions, t),
-		camera: clampCamera(cameraAt(shots, t), screen, viewport),
-		cursor,
-		pulse: clickPulse(clicks, t),
-		menu: Math.min(ramp(t, times.open, 160), 1 - ramp(t, times.close, 160)),
+		...base,
+		menu: Math.min(ramp(t, m.open, 160), 1 - ramp(t, m.close, 160)),
 		hover: hovering ? Math.round((1 - clamp(graphX)) * (historyLength - 1)) : null,
-		layout: t < times.styles + 1200 ? 0 : t < times.styles + 3000 ? 1 : 2,
-		end: ramp(t, times.end, 500),
+		layout: t < m.styles + 1200 ? 0 : t < m.styles + 3000 ? 1 : 2,
 		readings: readingsAt(t)
 	};
 }

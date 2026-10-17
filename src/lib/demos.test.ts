@@ -13,12 +13,12 @@ describe.each([
 	['bar', bar]
 ] as const)('%s demo', (_, demo) => {
 	it('loops seamlessly', () => {
-		expect(demo.frameAt(1234)).toEqual(demo.frameAt(1234 + demo.duration));
+		expect(demo.frameAt(1234)).toEqual(demo.frameAt(1234 + demo.film.duration));
 	});
 	it('has a poster inside the loop, fully faded in', () => {
-		expect(demo.posterTime).toBeGreaterThan(0);
-		expect(demo.posterTime).toBeLessThan(demo.duration);
-		expect(demo.frameAt(demo.posterTime).opacity).toBe(1);
+		expect(demo.film.poster).toBeGreaterThan(0);
+		expect(demo.film.poster).toBeLessThan(demo.film.duration);
+		expect(demo.frameAt(demo.film.poster).opacity).toBe(1);
 	});
 });
 
@@ -41,7 +41,7 @@ describe('Common Bar demo', () => {
 		expect(right).toEqual(['icloud.fill', 'message.fill', 'music.note']);
 	});
 	it('never moves the chevron off the right side of the menu bar', () => {
-		for (let t = 0; t < bar.duration; t += 100) {
+		for (let t = 0; t < bar.film.duration; t += 100) {
 			expect(bar.frameAt(t).chevron.x).toBeGreaterThan(screen.width / 2);
 		}
 	});
@@ -49,7 +49,7 @@ describe('Common Bar demo', () => {
 
 describe('Common Stats demo', () => {
 	it('reads back a sample that exists while hovering', () => {
-		const frame = stats.frameAt(stats.posterTime);
+		const frame = stats.frameAt(stats.film.poster);
 		expect(frame.hover).not.toBeNull();
 		expect(frame.hover!).toBeGreaterThanOrEqual(0);
 		expect(frame.hover!).toBeLessThan(stats.historyLength);
@@ -66,7 +66,7 @@ describe.each([
 	['bar', bar]
 ] as const)('%s demo camera', (_, demo) => {
 	it('never shows past the edge of the screen', () => {
-		for (let t = 0; t < demo.duration; t += 50) {
+		for (let t = 0; t < demo.film.duration; t += 50) {
 			const { x, y, zoom } = demo.frameAt(t).camera;
 			expect(x - viewport.width / 2 / zoom).toBeGreaterThanOrEqual(-0.001);
 			expect(y - viewport.height / 2 / zoom).toBeGreaterThanOrEqual(-0.001);
@@ -75,6 +75,6 @@ describe.each([
 		}
 	});
 	it('ends on the closing card', () => {
-		expect(demo.frameAt(demo.duration - 700).end).toBe(1);
+		expect(demo.frameAt(demo.film.duration - 700).end).toBe(1);
 	});
 });

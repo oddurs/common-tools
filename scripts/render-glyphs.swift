@@ -1,5 +1,5 @@
 // Renders the SF Symbols and the arrow cursor the demo scenes draw, so the menu bar in the videos
-// uses the same glyphs as the real one. Run on a Mac: pnpm glyphs
+// uses the same glyphs as the real one. Run on a Mac: pnpm glyphs (pnpm film glyphs)
 //
 // Each symbol is written black on transparent at 4x; scenes use it as a CSS mask, so one file
 // serves light and dark menu bars. static/symbols/symbols.json records each one's size in points.

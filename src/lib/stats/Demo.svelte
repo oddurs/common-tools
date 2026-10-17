@@ -1,12 +1,8 @@
 <script lang="ts">
-	import Cursor from '../Cursor.svelte';
-	import Overlay from '../mac/Overlay.svelte';
-	import Screen from '../mac/Screen.svelte';
-	import Stage from '../mac/Stage.svelte';
+	import Film from '../film/Film.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import { statusSlot } from '../mac/geometry';
 	import type { SymbolName } from '../mac/symbols';
-	import { tool } from '../tools';
 	import Bar from './Bar.svelte';
 	import { frameAt, historyLength, layouts, stage } from './demo';
 	import { graph, percent, rate } from './format';
@@ -53,137 +49,131 @@
 	]);
 </script>
 
-<Stage {dark} opacity={frame.opacity}>
-	<Screen {dark} camera={frame.camera} app="Finder" menus={['File', 'Edit', 'View', 'Go', 'Window', 'Help']}>
-		{#snippet extras()}
-			<div class="extras" style:right="{1728 - stage.itemRight}px">
-				{#each others as symbol (symbol)}
-					<span class="other" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
-				{/each}
-				<span class="item" class:open={frame.menu > 0.5}>
-					<Bar items={layouts[frame.layout]} readings={r} />
-				</span>
-			</div>
-		{/snippet}
+<Film {frame} {dark} slug="stats" app="Finder" menus={['File', 'Edit', 'View', 'Go', 'Window', 'Help']}>
+	{#snippet extras()}
+		<div class="extras" style:right="{1728 - stage.itemRight}px">
+			{#each others as symbol (symbol)}
+				<span class="other" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
+			{/each}
+			<span class="item" class:open={frame.menu > 0.5}>
+				<Bar items={layouts[frame.layout]} readings={r} />
+			</span>
+		</div>
+	{/snippet}
 
-		{#snippet top()}
-			{#if frame.menu > 0}
-				<div
-					class="menu"
-					style:left="{stage.menu.x}px"
-					style:top="{stage.menu.y}px"
-					style:width="{stage.menu.width}px"
-					style:opacity={frame.menu}
-					style:transform="translateY({(1 - frame.menu) * -4}px)"
-				>
-					<section class="card">
-						<header>
-							<span class="tile" style:background="#0a84ff"><Symbol name="cpu" /></span><b>CPU</b><span
-								class="big">{percent(r.cpu)}</span
-							>
-						</header>
-						<svg class="chart" width={g.width} height={g.height} viewBox="0 0 {g.width} {g.height}">
-							<path d={graph(r.cpuHistory, g.width, g.height, 100, true)} class="area" />
-							<path d={graph(r.cpuHistory, g.width, g.height, 100)} class="line" />
-							{#if frame.hover !== null}
-								<line x1={hoverX} x2={hoverX} y1="0" y2={g.height} class="rule" />
-								<circle cx={hoverX} cy={g.height - (hoverValue / 100) * g.height} r="4" class="dot" />
-							{/if}
-						</svg>
+	{#snippet top()}
+		{#if frame.menu > 0}
+			<div
+				class="menu"
+				style:left="{stage.menu.x}px"
+				style:top="{stage.menu.y}px"
+				style:width="{stage.menu.width}px"
+				style:opacity={frame.menu}
+				style:transform="translateY({(1 - frame.menu) * -4}px)"
+			>
+				<section class="card">
+					<header>
+						<span class="tile" style:background="#0a84ff"><Symbol name="cpu" /></span><b>CPU</b><span
+							class="big">{percent(r.cpu)}</span
+						>
+					</header>
+					<svg class="chart" width={g.width} height={g.height} viewBox="0 0 {g.width} {g.height}">
+						<path d={graph(r.cpuHistory, g.width, g.height, 100, true)} class="area" />
+						<path d={graph(r.cpuHistory, g.width, g.height, 100)} class="line" />
 						{#if frame.hover !== null}
-							<span class="tip" style:left="{Math.min(Math.max(hoverX - 70, 0), g.width - 150)}px"
-								><b>{(frame.hover * 0.5).toFixed(0)}s ago</b> CPU {percent(hoverValue)}</span
-							>
+							<line x1={hoverX} x2={hoverX} y1="0" y2={g.height} class="rule" />
+							<circle cx={hoverX} cy={g.height - (hoverValue / 100) * g.height} r="4" class="dot" />
 						{/if}
-						<p class="legend">
-							<span><i class="u"></i>User <b>{percent(r.user)}</b></span>
-							<span><i class="s"></i>System <b>{percent(r.system)}</b></span>
-							<span>Idle <b>{percent(100 - r.cpu)}</b></span>
-						</p>
-						<div class="cores">
-							{#each r.cores as load, i (i)}
-								<span class:gap={i === 4}><i style:height="{Math.max(0.12, load) * 100}%"></i></span>
-							{/each}
-						</div>
-						<p class="legend small">
-							<span>Efficiency <b>{percent(r.cpu * 0.9)}</b></span>
-							<span>Performance <b>{percent(r.cpu * 1.05)}</b></span>
-						</p>
-					</section>
-
-					<section class="card">
-						<header>
-							<span class="tile" style:background="#ff375f"><Symbol name="memorychip" /></span><b>Memory</b
-							><span class="big">{(r.memory * 24).toFixed(0)} GB <small>of 24 GB</small></span>
-						</header>
-						<div class="membar">
-							<i style:width="{r.memory * 45}%"></i><i class="w" style:width="{r.memory * 18}%"></i><i
-								class="c"
-								style:width="{r.memory * 37}%"
-							></i>
-						</div>
-						<p class="legend">
-							<span><i class="u"></i>App <b>{(r.memory * 24 * 0.45).toFixed(1)} GB</b></span>
-							<span><i class="s"></i>Wired <b>{(r.memory * 24 * 0.18).toFixed(1)} GB</b></span>
-							<span>Pressure <b class="ok">Normal</b></span>
-						</p>
-					</section>
-
-					<section class="card">
-						<header>
-							<span class="tile" style:background="#5ac8fa"><Symbol name="network" /></span><b>Network</b><em
-								>en0</em
-							><span class="rates"><span>↓ {rate(r.down)}</span><span>↑ {rate(r.up)}</span></span>
-						</header>
-						<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
-							<path d={graph(r.netHistory, g.width, 30, 6, true)} class="area" />
-							<path d={graph(r.netHistory, g.width, 30, 6)} class="line" />
-						</svg>
-					</section>
-
-					<section class="card">
-						<header>
-							<span class="tile" style:background="#ff9f0a"><Symbol name="arrow.up.arrow.down" /></span><b
-								>Disk</b
-							><span class="rates"><span>R {rate(r.read)}</span><span>W {rate(r.write)}</span></span>
-						</header>
-						<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
-							<path d={graph(r.diskHistory, g.width, 30, 150, true)} class="area" />
-							<path d={graph(r.diskHistory, g.width, 30, 150)} class="line" />
-						</svg>
-					</section>
-
-					<div class="tiles">
-						{#each tiles as t (t.name)}
-							<section class="card ringcard">
-								<header class="mini">
-									<span class="tile" style:background={t.tint}><Symbol name={t.symbol} /></span><b>{t.name}</b
-									>
-								</header>
-								<svg width="60" height="60" viewBox="0 0 60 60">
-									<circle cx="30" cy="30" r="24" class="track" />
-									<circle
-										cx="30"
-										cy="30"
-										r="24"
-										class="arc"
-										stroke-dasharray="{ring * t.level} {ring}"
-										transform="rotate(-90 30 30)"
-									/>
-									<text x="30" y="35">{t.label}</text>
-								</svg>
-								<small>{t.note}</small>
-							</section>
+					</svg>
+					{#if frame.hover !== null}
+						<span class="tip" style:left="{Math.min(Math.max(hoverX - 70, 0), g.width - 150)}px"
+							><b>{(frame.hover * 0.5).toFixed(0)}s ago</b> CPU {percent(hoverValue)}</span
+						>
+					{/if}
+					<p class="legend">
+						<span><i class="u"></i>User <b>{percent(r.user)}</b></span>
+						<span><i class="s"></i>System <b>{percent(r.system)}</b></span>
+						<span>Idle <b>{percent(100 - r.cpu)}</b></span>
+					</p>
+					<div class="cores">
+						{#each r.cores as load, i (i)}
+							<span class:gap={i === 4}><i style:height="{Math.max(0.12, load) * 100}%"></i></span>
 						{/each}
 					</div>
-				</div>
-			{/if}
-			<Cursor x={frame.cursor.x} y={frame.cursor.y} pulse={frame.pulse} />
-		{/snippet}
-	</Screen>
+					<p class="legend small">
+						<span>Efficiency <b>{percent(r.cpu * 0.9)}</b></span>
+						<span>Performance <b>{percent(r.cpu * 1.05)}</b></span>
+					</p>
+				</section>
 
-	<Overlay caption={frame.caption} end={frame.end} tool={tool('stats')} />
-</Stage>
+				<section class="card">
+					<header>
+						<span class="tile" style:background="#ff375f"><Symbol name="memorychip" /></span><b>Memory</b
+						><span class="big">{(r.memory * 24).toFixed(0)} GB <small>of 24 GB</small></span>
+					</header>
+					<div class="membar">
+						<i style:width="{r.memory * 45}%"></i><i class="w" style:width="{r.memory * 18}%"></i><i
+							class="c"
+							style:width="{r.memory * 37}%"
+						></i>
+					</div>
+					<p class="legend">
+						<span><i class="u"></i>App <b>{(r.memory * 24 * 0.45).toFixed(1)} GB</b></span>
+						<span><i class="s"></i>Wired <b>{(r.memory * 24 * 0.18).toFixed(1)} GB</b></span>
+						<span>Pressure <b class="ok">Normal</b></span>
+					</p>
+				</section>
+
+				<section class="card">
+					<header>
+						<span class="tile" style:background="#5ac8fa"><Symbol name="network" /></span><b>Network</b><em
+							>en0</em
+						><span class="rates"><span>↓ {rate(r.down)}</span><span>↑ {rate(r.up)}</span></span>
+					</header>
+					<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
+						<path d={graph(r.netHistory, g.width, 30, 6, true)} class="area" />
+						<path d={graph(r.netHistory, g.width, 30, 6)} class="line" />
+					</svg>
+				</section>
+
+				<section class="card">
+					<header>
+						<span class="tile" style:background="#ff9f0a"><Symbol name="arrow.up.arrow.down" /></span><b
+							>Disk</b
+						><span class="rates"><span>R {rate(r.read)}</span><span>W {rate(r.write)}</span></span>
+					</header>
+					<svg class="chart" width={g.width} height="30" viewBox="0 0 {g.width} 30">
+						<path d={graph(r.diskHistory, g.width, 30, 150, true)} class="area" />
+						<path d={graph(r.diskHistory, g.width, 30, 150)} class="line" />
+					</svg>
+				</section>
+
+				<div class="tiles">
+					{#each tiles as t (t.name)}
+						<section class="card ringcard">
+							<header class="mini">
+								<span class="tile" style:background={t.tint}><Symbol name={t.symbol} /></span><b>{t.name}</b>
+							</header>
+							<svg width="60" height="60" viewBox="0 0 60 60">
+								<circle cx="30" cy="30" r="24" class="track" />
+								<circle
+									cx="30"
+									cy="30"
+									r="24"
+									class="arc"
+									stroke-dasharray="{ring * t.level} {ring}"
+									transform="rotate(-90 30 30)"
+								/>
+								<text x="30" y="35">{t.label}</text>
+							</svg>
+							<small>{t.note}</small>
+						</section>
+					{/each}
+				</div>
+			</div>
+		{/if}
+	{/snippet}
+</Film>
 
 <style>
 	.extras {
