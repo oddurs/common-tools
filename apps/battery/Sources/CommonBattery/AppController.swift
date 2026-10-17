@@ -1,5 +1,6 @@
 import AppKit
 import BatteryKit
+import CommonKit
 import CommonUI
 import IOKit.ps
 import SwiftUI
@@ -27,6 +28,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var estimator = TimeEstimator(state: AppController.loadEstimator())
     private var savedLabels = 0
     private let settings = SettingsWindowHost(title: "Common Battery Settings")
+    let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     private var item: NSStatusItem!
     private let menu = NSMenu()
@@ -79,6 +81,12 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
         refresh()
         schedule()
         if preferences.notifies { notifier.requestAccess() }
+        Welcome.showIfFirstLaunch(
+            WelcomeInfo(
+                line:
+                    "The battery in the menu bar: level, time left, what it's doing, and alerts at the levels you choose."
+            ))
+        updates.start()
         showSettingsOnFirstLaunch()
     }
 

@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A Welcome window on first launch: what Common Command does, Open at login, and the Common Tools family.
+- An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - A launcher panel opened with a global shortcut (⌥Space by default, recordable in Settings). It doesn't activate the app, so the app you were in stays frontmost.
 - Search across apps, System Settings panes, Common Command's own commands, files and folders from the Spotlight index, and the web.
 - Fuzzy matching on word starts and runs of letters, with case and accent folding and bold matched letters.

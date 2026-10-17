@@ -13,6 +13,7 @@ struct SettingsView: View {
     @AppStorage(Preferences.alwaysHiddenSection) private var alwaysHiddenSection = false
     @AppStorage(Preferences.spacers) private var spacerCount = 0
     @State private var loginProblem: LoginItem.Problem?
+    let updates: UpdateCheck
 
     var body: some View {
         Form {
@@ -40,6 +41,7 @@ struct SettingsView: View {
 
             Section {
                 OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: updates)
                 Picker("Hide again after", selection: $autoHide) {
                     ForEach(AutoHide.allCases) { delay in
                         Text(Self.title(for: delay)).tag(delay)
@@ -51,6 +53,7 @@ struct SettingsView: View {
             } footer: {
                 VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                     OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: updates)
                     SettingsFootnote("Icons left of the dotted line show only with ⌥-click or while holding ⌘.")
                 }
             }
