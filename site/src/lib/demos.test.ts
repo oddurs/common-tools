@@ -40,6 +40,14 @@ describe('Common Bar demo', () => {
 		const right = frame.icons.filter((i) => i.x > frame.chevron.x).map((i) => i.symbol);
 		expect(right).toEqual(['icloud.fill', 'message.fill', 'music.note']);
 	});
+	it('shows the hairline only while ⌘ is held, and drops the icon past it', () => {
+		const m = bar.film.marks;
+		expect(bar.frameAt(m.command - 100).line.opacity).toBe(0);
+		const mid = bar.frameAt(m.drop - 100);
+		expect(mid.line.opacity).toBe(1);
+		expect(mid.cursor!.x).toBeLessThan(mid.line.x);
+		expect(bar.frameAt(m.commandUp + 400).line.opacity).toBe(0);
+	});
 	it('never moves the chevron off the right side of the menu bar', () => {
 		for (let t = 0; t < bar.film.duration; t += 100) {
 			expect(bar.frameAt(t).chevron.x).toBeGreaterThan(screen.width / 2);

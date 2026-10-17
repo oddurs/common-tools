@@ -36,13 +36,17 @@ export type Placed = { symbol: SymbolName; x: number; opacity: number; lifted?: 
 export type Frame = BaseFrame & {
 	icons: Placed[];
 	chevron: { x: number; open: boolean };
+	/** The hairline marking where hidden icons begin, shown only while ⌘ is held. */
+	line: { x: number; opacity: number };
 };
 
 export const metrics = {
 	right: extrasRight,
 	slot: statusSlot,
 	/** The chevron item: 10 pt long (Glyphs.swift), 26 pt on screen with the menu bar's padding. */
-	chevron: 26
+	chevron: 26,
+	/** The divider while arranging: a 4 pt marker item (DividerLayout), 20 pt on screen. */
+	marker: 20
 };
 
 const dragged: SymbolName = 'music.note';
@@ -67,8 +71,9 @@ function order(t: number): [SymbolName, Section][] {
 }
 
 /** Lays the items out from the right edge, as the menu bar does. */
-function layout(t: number, cursor: Point): Pick<Frame, 'icons' | 'chevron'> {
+function layout(t: number, cursor: Point): Pick<Frame, 'icons' | 'chevron' | 'line'> {
 	const r = reveal(t);
+	const arranging = Math.min(ramp(t, marks.command + 200, 220), 1 - ramp(t, marks.commandUp, 220));
 	const m = metrics;
 	let x = m.right;
 	const items = [...order(t)].reverse();
@@ -80,16 +85,19 @@ function layout(t: number, cursor: Point): Pick<Frame, 'icons' | 'chevron'> {
 	}
 	x -= m.chevron;
 	const chevron = { x, open: r > 0.5 };
+	// The divider beside the chevron takes no room until ⌘ is held; then it opens to a marker.
+	x -= m.marker * arranging;
+	const line = { x, opacity: arranging };
 	for (const [symbol, section] of items) {
 		if (section !== 'hidden') continue;
 		x -= m.slot;
-		// Collapsing stretches an invisible divider beside the chevron, pushing these off the screen.
+		// Collapsing stretches that divider, pushing these off the screen.
 		icons.push({ symbol, x: x - (1 - r) * 700, opacity: clamp(r * 1.4 - 0.2) });
 	}
 	if (t >= marks.pickUp && t < marks.drop) {
 		icons.push({ symbol: dragged, x: cursor.x - m.slot / 2 - 6, opacity: 1, lifted: true });
 	}
-	return { icons, chevron };
+	return { icons, chevron, line };
 }
 
 const y = menuBarHeight / 2;
@@ -99,7 +107,11 @@ const chevronAt = (visible: number) => ({
 });
 // The dragged icon starts as the leftmost visible one, and lands just left of the chevron.
 const pickAt = { x: metrics.right - 2.5 * metrics.slot, y };
-const dropAt = { x: metrics.right - 2 * metrics.slot - metrics.chevron - metrics.slot / 2 - 4, y };
+// Past the hairline, not just past the chevron: icons dropped between the two stay visible.
+const dropAt = {
+	x: metrics.right - 2 * metrics.slot - metrics.chevron - metrics.marker - metrics.slot / 2 - 4,
+	y
+};
 const crowded = { x: screen.width, y: 0, zoom: 1.25 };
 const close = { x: screen.width, y: 0, zoom: 2.0 };
 
