@@ -36,7 +36,7 @@ jobs:
           echo "areas: $areas"
           echo "site=$(echo "$areas" | grep -qx site && echo true || echo false)" >>"$GITHUB_OUTPUT"
           echo "kit=$(echo "$areas" | grep -qx kit && echo true || echo false)" >>"$GITHUB_OUTPUT"
-          echo "apps=$(echo "$areas" | grep -vx 'site\|kit' | jq -R . | jq -sc .)" >>"$GITHUB_OUTPUT"
+          echo "apps=$(echo "$areas" | grep -vx 'site\|kit' | grep -v '^$' | jq -R . | jq -sc .)" >>"$GITHUB_OUTPUT"
 
   site:
     needs: plan
