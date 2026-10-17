@@ -1,4 +1,5 @@
 import AppKit
+import CommonKit
 import StatKit
 import SwiftUI
 
@@ -8,7 +9,8 @@ import SwiftUI
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let model: AppModel
     private let showSettings: () -> Void
-    private let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+    // The pre-rename name: macOS keys the item's saved menu bar position on it.
+    private let item = NSStatusBar.system.commonItem(autosaveName: "StatBar", length: NSStatusItem.variableLength)
     private let menu = NSMenu()
     private var renderer: BarRenderer?
     private var menuOpen = false
@@ -17,8 +19,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         self.model = model
         self.showSettings = showSettings
         super.init()
-        // The pre-rename name: macOS keys the item's saved menu bar position on it.
-        item.autosaveName = "StatBar"
         item.button?.imagePosition = .imageOnly
         menu.delegate = self
         item.menu = menu

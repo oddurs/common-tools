@@ -48,8 +48,7 @@ final class AppController: NSObject, NSApplicationDelegate, NSMenuDelegate {
             return
         }
 
-        item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.autosaveName = "CommonBattery"
+        item = NSStatusBar.system.commonItem(autosaveName: "CommonBattery", length: NSStatusItem.variableLength)
         item.button?.imagePosition = .imageOnly
         menu.delegate = self
         item.menu = menu

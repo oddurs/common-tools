@@ -14,15 +14,8 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     init(engine: Engine, openSettings: @escaping () -> Void) {
         self.engine = engine
         self.openSettings = openSettings
-        // New items go to the far left of the menu bar, which on a full bar with a notch means
-        // hidden off-screen. Start next to the system icons instead; ⌘-dragging moves it from there.
-        // Keyed by the old name, as is autosaveName below, so the item keeps its place after the rename.
-        let position = "NSStatusItem Preferred Position LangSmart"
-        if UserDefaults.standard.object(forKey: position) == nil {
-            UserDefaults.standard.set(Self.startPosition, forKey: position)
-        }
-        item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.autosaveName = "LangSmart"
+        // The pre-rename name, so the item keeps its place after the rename.
+        item = NSStatusBar.system.commonItem(autosaveName: "LangSmart", length: NSStatusItem.variableLength)
         super.init()
         let menu = NSMenu()
         menu.delegate = self
@@ -31,7 +24,6 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     }
 
     /// Points from the right edge of the screen: just left of Control Center and the clock.
-    private static let startPosition = 300
 
     /// Redraws the button whenever anything it shows changes.
     private func render() {
