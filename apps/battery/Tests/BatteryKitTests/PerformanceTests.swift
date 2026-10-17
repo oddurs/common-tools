@@ -1,4 +1,5 @@
 import AppKit
+import CommonTesting
 import Testing
 
 @testable import BatteryKit
@@ -8,21 +9,9 @@ import Testing
 /// flaking on a busy CI runner.
 @Suite(.serialized)
 struct PerformanceTests {
-    /// The median time of one call, which ignores the scheduler's stalls but still moves if every
-    /// call gets slower.
-    func medianMicroseconds(_ iterations: Int, _ body: () -> Void) -> Double {
-        body()  // warm caches and the registry match
-        let times = (0..<iterations).map { _ in
-            let start = DispatchTime.now().uptimeNanoseconds
-            body()
-            return Double(DispatchTime.now().uptimeNanoseconds - start) / 1000
-        }.sorted()
-        return times[times.count / 2]
-    }
-
     @Test func samplingIsCheap() {
         let sampler = BatterySampler()
-        let us = medianMicroseconds(50) { _ = sampler.sample() }
+        let us = Benchmark.microseconds(iterations: 10) { _ = sampler.sample() }
         print("sample: \(String(format: "%.0f", us)) µs")
         #expect(us < 10_000)
     }
@@ -36,7 +25,7 @@ struct PerformanceTests {
                 hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0))
         let context = try #require(NSGraphicsContext(bitmapImageRep: rep))
         let reading = BatteryReading(level: 0.45, state: .charging, minutesRemaining: 52)
-        let us = medianMicroseconds(200) {
+        let us = Benchmark.microseconds(iterations: 40) {
             NSGraphicsContext.saveGraphicsState()
             NSGraphicsContext.current = context
             renderer.image(reading).draw(in: CGRect(origin: .zero, size: renderer.size))

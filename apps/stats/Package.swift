@@ -18,6 +18,9 @@ let package = Package(
             dependencies: ["StatKit", .product(name: "CommonKit", package: "CommonKit")],
             linkerSettings: [.linkedFramework("ServiceManagement")]
         ),
-        .testTarget(name: "StatKitTests", dependencies: ["StatKit"]),
+        .testTarget(
+            name: "StatKitTests",
+            dependencies: ["StatKit", .product(name: "CommonTesting", package: "CommonKit")]),
+        .testTarget(name: "CommonStatsTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

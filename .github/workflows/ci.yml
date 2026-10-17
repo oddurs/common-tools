@@ -78,7 +78,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: swift --version
-      - run: scripts/task check ${{ matrix.app }}
+      - run: scripts/task check ${{ matrix.app }} 2>&1 | tee check.log
+        # bash, not the default sh: the pipe must fail when check does.
+        shell: bash
+      # The built app has to start and stay up; nothing in check launches it.
+      - run: scripts/task smoke ${{ matrix.app }}
+      - if: always()
+        run: grep -h "Test run with" check.log >>"$GITHUB_STEP_SUMMARY" || echo "no tests ran" >>"$GITHUB_STEP_SUMMARY"
 
   required:
     # The single status check branch protection requires. It passes when every job that ran passed.

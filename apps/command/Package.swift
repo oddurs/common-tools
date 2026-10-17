@@ -14,6 +14,9 @@ let package = Package(
                 .linkedFramework("Carbon"), .linkedFramework("IOKit"), .linkedFramework("ServiceManagement"),
             ]
         ),
-        .testTarget(name: "CommandKitTests", dependencies: ["CommandKit"]),
+        .testTarget(
+            name: "CommandKitTests",
+            dependencies: ["CommandKit", .product(name: "CommonTesting", package: "CommonKit")]),
+        .testTarget(name: "CommonCommandTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

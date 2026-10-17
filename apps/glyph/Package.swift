@@ -13,6 +13,6 @@ let package = Package(
             linkerSettings: [.linkedFramework("ServiceManagement"), .linkedFramework("Vision")]
         ),
         .testTarget(name: "GlyphKitTests", dependencies: ["GlyphKit"]),
-        .testTarget(name: "CommonGlyphTests"),
+        .testTarget(name: "CommonGlyphTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

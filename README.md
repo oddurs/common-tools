@@ -43,7 +43,7 @@ scripts/task check        # everything: the site, CommonKit, every app
 
 | Command | Does |
 | --- | --- |
-| `scripts/task <verb> [area ...] [--changed]` | `fmt`, `fmt:check`, `lint`, `test`, `build`, `package`, `run`, `check` for `site`, `kit`, or an app |
+| `scripts/task <verb> [area ...] [--changed]` | `fmt`, `fmt:check`, `lint`, `test`, `build`, `package`, `run`, `smoke`, `cover`, `check` for `site`, `kit`, or an app |
 | `scripts/agent start <type>/<slug>` | new worktree and branch from `origin/main` |
 | `scripts/agent ship "<type>(scope): subject"` | commit, check what changed, open the PR with auto-merge, wait for the merge, clean up |
 | `scripts/agent pr` | check, push, open the PR with auto-merge, without waiting |
@@ -53,7 +53,7 @@ scripts/task check        # everything: the site, CommonKit, every app
 | `scripts/release <app> <version>` | a release: dated notes, version bump, tag, published download, checked |
 | `scripts/make-icon <app>` | render an app's icon from `shared/icon-lib.swift` and its `icon.swift` |
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and [docs/testing.md](docs/testing.md) for what the tests cover and how to run one.
 
 ## Licence
 

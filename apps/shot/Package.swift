@@ -16,6 +16,6 @@ let package = Package(
             ]
         ),
         .testTarget(name: "ShotKitTests", dependencies: ["ShotKit"]),
-        .testTarget(name: "CommonShotTests"),
+        .testTarget(name: "CommonShotTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

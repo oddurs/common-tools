@@ -16,6 +16,8 @@ let package = Package(
             name: "LangSmart", dependencies: ["WorldKey", .product(name: "CommonKit", package: "CommonKit")]),
         .executableTarget(name: "WorldKeyCLI", dependencies: ["WorldKey"]),
         .testTarget(name: "WorldKeyTests", dependencies: ["WorldKey"]),
-        .testTarget(name: "LangSmartTests", dependencies: ["LangSmart"]),
+        .testTarget(
+            name: "LangSmartTests",
+            dependencies: ["LangSmart", .product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

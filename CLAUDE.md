@@ -10,7 +10,16 @@ Do all automation through `scripts/task`. CI and the git hooks call nothing else
 scripts/task <verb> [area ...] [--changed] [--filter=<test>]
 ```
 
-Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors), `test`, `build` (a universal, signed `build/<app>/<Name>.app`), `package` (`dist/<app>/`, what a release publishes), `run` (build, quit the running copy, open the new one), `check` (lint + test + build). Areas: `site`, `kit`, or an app's slug; none means all, `--changed` means what differs from `origin/main`, and CommonKit changes count for every app. CI runs `check` on the changed areas of a pull request and on everything for `main`.
+Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors), `test`, `build` (a universal, signed `build/<app>/<Name>.app`), `package` (`dist/<app>/`, what a release publishes), `run` (build, quit the running copy, open the new one), `smoke` (launch the built app and fail if it quits within five seconds), `cover` (line coverage of a Swift area), `check` (lint + test + build). Areas: `site`, `kit`, or an app's slug; none means all, `--changed` means what differs from `origin/main`, and CommonKit changes count for every app. CI runs `check` and then `smoke` on the changed areas of a pull request and on everything for `main`.
+
+## Tests
+
+- Swift Testing only (`@Test`, `#expect`), no XCTest. An app's library target (`<Name>Kit`) holds the logic and carries the suite; the app target keeps only what needs AppKit.
+- Every app has a `ContractTests.swift` with one test that runs `AppContract` from CommonTesting (`packages/CommonKit/Sources/CommonTesting/`): `apps.json`, `CommonTool.all` and `Info.plist` agree, and what the build copies into the bundle exists. Never write bundle or Info.plist tests by hand; a rule every app should keep goes in `AppContract`.
+- Performance tests are regression gates, not benchmarks: `Benchmark.microseconds` from CommonTesting in a `@Suite(.serialized)`, budgets about ten times a quiet M-series measurement, so a busy CI runner can't fail them.
+- A test finishes in well under a second unless it must ask the system (Keys' spell checker). Nothing reaches the network, and nothing depends on which apps or layouts this Mac has unless that is what the test is about.
+- `scripts/task test <area> --filter=<Suite or test>` runs one. `scripts/task cover <area>` prints line coverage. `scripts/task smoke <app>` launches the built app for five seconds; CI runs it after `check`, and `check` itself never launches anything, so it is safe while the app is running.
+- A bug fix arrives with the test that would have caught it, in the suite nearest the code.
 
 ## Workflow
 
