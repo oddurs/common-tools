@@ -13,7 +13,7 @@ Put your own images in the menu bar: a character, a tattoo design, a sticker, an
 - **Drop it on the menu bar.** Drag an image from Finder onto a glyph to replace its image, or paste one from the glyph's menu.
 - **Starts where you can see it.** A new glyph appears beside the clock, right of the divider a menu bar manager such as Common Bar uses, instead of off screen at the far left. If one still can't be seen, Settings says so.
 
-Free and open source under the MIT licence. No network access, no analytics, no permission prompts.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, no permission prompts.
 
 ## Install
 

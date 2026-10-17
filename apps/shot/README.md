@@ -13,7 +13,7 @@ Screenshots straight to the clipboard, for macOS. Press ⇧⌘2, drag over what 
 - **Recent shots in the menu.** The menu bar menu shows the last few as thumbnails with their size and token cost; click one to copy it again. Settings decides how many are kept.
 - **A preview in the corner** shows what was copied and roughly what it costs in tokens. It fades on its own; hover to keep it, drag the thumbnail out as a file, or click to dismiss it.
 
-Free and open source under the MIT licence. No network access, no analytics, and one permission: Screen Recording, which every screenshot tool needs.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, and one permission: Screen Recording, which every screenshot tool needs.
 
 ## Install
 

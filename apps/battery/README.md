@@ -17,7 +17,7 @@ Common Battery is built to feel like part of macOS:
 - **VoiceOver reads it:** "Battery 72%, 2:41 remaining".
 - **Numbers follow your region:** "12,4 W" in Germany, 85°F in the US.
 
-Free and open source under the MIT licence. No network access, no analytics, no helper tools, no root.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, no helper tools, no root.
 
 ## Install
 

@@ -14,7 +14,7 @@ Hide menu bar items behind one chevron. Hold ⌘ to rearrange. **[oddurs.github.
 - **Tidies up after itself.** Hidden items go away again after a few seconds, but never while you're still working in the menu bar or one of its menus.
 - **No gaps, nothing reshuffled.** While hidden icons show, the divider that hides them takes up no room. Common Bar never removes or recreates its items, so your arrangement stays exactly where you put it.
 
-Free and open source under the MIT licence. No network access, no analytics, no permission prompts.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, no permission prompts.
 
 ## Install
 

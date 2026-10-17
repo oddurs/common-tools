@@ -15,7 +15,7 @@ Common Stats is built to feel like part of macOS:
 - **VoiceOver reads it:** "CPU 21%, Memory 82%, Network down 6.1 KB/s, up 1.0 KB/s".
 - **Numbers follow your region:** "4,0 MB/s" in Germany, "4.0 MB/s" in the US.
 
-Free and open source under the MIT licence. No network access, no analytics, no helper tools, no root.
+Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, no helper tools, no root.
 
 ## Install
 

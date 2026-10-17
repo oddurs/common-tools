@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { asset, resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { promise } from '#lib/promise.ts';
 	import { tools } from '#lib/tools.ts';
 	import type { LayoutProps } from './$types';
 
@@ -29,7 +30,7 @@
 {@render children()}
 
 <footer>
-	<span>© 2026 Oddur Sigurdsson · MIT License</span>
+	<span>© 2026 Oddur Sigurdsson · MIT License · {promise.short}</span>
 	<a href="https://github.com/oddurs/common-tools">Source for this site</a>
 </footer>
 

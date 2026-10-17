@@ -15,7 +15,7 @@ Small, native utilities for the Mac. Each does one thing and gets out of the way
 | [Common Shot](apps/shot) | Screenshots straight to the clipboard | in development |
 | [Common Battery](apps/battery) | The battery in the menu bar, done properly | in development |
 
-Free and open source under the MIT licence. No network access, no analytics, no account; nothing leaves your Mac.
+**Free forever.** No trial, no subscription, no paid tier. **Open source** under the MIT licence: every line is here to read, build, and change. **Private:** no network access, no analytics, no crash reports, no account. Nothing you do is ever reported, and nothing leaves your Mac.
 
 ## This repository
 

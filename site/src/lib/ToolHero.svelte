@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { asset, resolve } from '$app/paths';
+	import { promise } from './promise';
 	import { megabytes, type Release } from './releases';
 	import { download, type Tool } from './tools';
 
@@ -17,7 +18,7 @@
 	</div>
 	<p class="fine">
 		{#if release}Version {release.version} · {megabytes(release.size)} ·
-		{/if}Free and open source · {tool.requires}
+		{/if}{promise.short} · {tool.requires}
 	</p>
 </header>
 
