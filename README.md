@@ -66,7 +66,7 @@ node scripts/standard.js settings check              # GitHub settings: merges, 
 node scripts/standard.js settings apply bar          # set them
 ```
 
-To change something every app has: edit `standard/`, then apply it to each app in a worktree and ship it there. `apply` also adopts an app that predates the standard: its own text moves into the marked regions. A new app joins by adding it to `standard/apps.json` and running `apply`.
+To change something every app has: edit `standard/`, then apply it to each app in a worktree and ship it there. `apply` also adopts an app that predates the standard: its own text moves into the marked regions. A new app joins by adding it to `standard/apps.json`, adding its 128 px icon to `standard/app/Resources/CommonTools/`, its entry to `CommonTools.swift`, and its page to the site, then running `apply` in every app.
 
 ## Development
 
