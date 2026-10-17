@@ -51,6 +51,23 @@ pnpm glyphs                          # re-render static/symbols/ after adding a 
 
 `shot` and `record` start their own dev server with file watching off, so editing while a recording runs is safe. They need Google Chrome; `record` also needs ffmpeg. The site shows the video matching the viewer's appearance. Open `http://localhost:5371/<tool>/demo/` (add `?dark`) to watch a film live while editing it.
 
+## The app standard
+
+The three apps share one setup, kept here in `standard/` and checked daily by the Standard workflow:
+
+- `standard/app/` holds the repository files every app has: dotfiles, git hooks, CI, release and Dependabot workflows, `scripts/agent`, `task`, `setup`, `dev-cert`, and `release`, the licence and community files, CLAUDE.md, CONTRIBUTING, SECURITY, the PR template, the icon renderer, and the Common Tools Settings section with its icons. Text between `standard:begin <name>` and `standard:end <name>` markers is each app's own; everything else must match.
+- `standard/apps.json` holds what differs: names, bundle identifiers, the deployment target, extra command-line tools, topics.
+- Each app's README, CHANGELOG, Package.swift, Info.plist, and issue forms are its own, checked for the structure the site and release tooling rely on.
+
+```sh
+node scripts/standard.js check                       # drift in each app's main branch (reads ../<app>)
+node scripts/standard.js apply bar <worktree>        # write the standard into a worktree of an app
+node scripts/standard.js settings check              # GitHub settings: merges, protection, security, topics
+node scripts/standard.js settings apply bar          # set them
+```
+
+To change something every app has: edit `standard/`, then apply it to each app in a worktree and ship it there.
+
 ## Development
 
 ```sh
