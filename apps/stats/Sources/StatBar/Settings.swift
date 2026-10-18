@@ -67,7 +67,8 @@ struct SettingsView: View {
 }
 
 /// Colour swatches in the style of System Settings' accent colour picker.
-/// The selected swatch carries a white dot; its name shows beneath.
+/// The selected swatch carries a white dot. Beneath it, its name beside the
+/// steps the menu will draw in it.
 private struct PaletteSwatches: View {
     @Binding var selection: Palette
 
@@ -91,22 +92,23 @@ private struct PaletteSwatches: View {
                     .accessibilityAddTraits(palette == selection ? .isSelected : [])
                 }
             }
-            Text(selection.name).font(.caption).foregroundStyle(.secondary)
+            HStack(spacing: Tokens.Space.xs) {
+                PalettePreview(palette: selection)
+                Text(selection.name).font(.caption).foregroundStyle(.secondary)
+            }
         }
     }
 
     @ViewBuilder private func swatch(_ palette: Palette) -> some View {
         let circle = Circle().frame(width: 16, height: 16)
         Group {
-            switch palette {
-            case .accent:
-                circle.foregroundStyle(Tokens.Color.accent.color)
-            case .metric:
+            if palette == .metric {
                 // Per Metric shows every metric's colour, like the system's Multicolor swatch.
                 circle.foregroundStyle(
                     AngularGradient(
-                        colors: (Metric.allCases + [Metric.cpu]).map { Color(nsColor: $0.tint) }, center: .center))
-            default:
+                        colors: (Metric.allCases + [Metric.cpu]).map { Color(nsColor: palette.color(for: $0)) },
+                        center: .center))
+            } else {
                 circle.foregroundStyle(Color(nsColor: palette.color(for: .cpu)))
             }
         }
@@ -114,8 +116,27 @@ private struct PaletteSwatches: View {
     }
 }
 
+/// The palette as the menu draws it, in the bar the Memory card uses: a card's three steps, or
+/// under Per Metric each metric's own colour.
+private struct PalettePreview: View {
+    let palette: Palette
+
+    var body: some View {
+        let colors =
+            palette == .metric
+            ? Metric.allCases.map { palette.color(for: $0) }
+            : Shade.allCases.map { palette.color(for: .cpu, $0) }
+        HStack(spacing: 1.5) {
+            ForEach(colors.indices, id: \.self) { Rectangle().fill(Color(nsColor: colors[$0])) }
+        }
+        .frame(width: 42, height: 6)
+        .clipShape(Capsule())
+        .accessibilityHidden(true)
+    }
+}
+
 extension IconBadge {
-    /// A metric's icon: its SF Symbol on its own tint, the identity it keeps in Settings and the menu.
+    /// A metric's icon in Settings: its SF Symbol on its own tint. The menu shows the bare symbol.
     init(metric: Metric, size: CGFloat) {
         self.init(symbol: metric.symbol, tint: Color(nsColor: metric.tint), size: size)
     }

@@ -46,7 +46,7 @@
 		src={asset('stats/bar-menu.png')}
 		alt="The menu in light and dark: CPU, Memory, Network, and Disk cards with graphs, and GPU, Storage, and Battery rings."
 		width="1424"
-		height="1474"
+		height="1520"
 	/>
 	<ul>
 		<li>
@@ -64,7 +64,8 @@
 		</li>
 	</ul>
 	<p>
-		Hover any graph to read back a past value. Charts use your accent colour. <kbd>⌘,</kbd> opens Settings
+		Hover any graph to read back a past value. Graphs, gauges, and legends use the colour chosen in
+		Settings; only a warning or a critical state shows its own orange or red. <kbd>⌘,</kbd> opens Settings
 		and
 		<kbd>⌘Q</kbd> quits, as in any menu.
 	</p>
@@ -83,8 +84,11 @@
 	</p>
 	<h3>Appearance</h3>
 	<p>
-		<b>Show labels</b> turns the small CPU / MEM captions on or off. <b>Density</b> is Compact, Regular, or
-		Spacious.
+		<b>Show labels</b> turns the small CPU / MEM captions on or off. <b>Density</b> is Compact, Regular,
+		or Spacious. <b>Color</b> is your accent colour, a colour per metric, or one of eight system colours,
+		for the menu's graphs, gauges, and legends; beneath the swatches, a bar shows the shades the menu will
+		use.
+		<b>Color in menu bar</b> carries it into the menu bar, which otherwise stays monochrome.
 	</p>
 	<h3>General</h3>
 	<p><b>Open at login</b>, and <b>Update every</b> 0.5, 1, 2, 3, or 5 seconds.</p>

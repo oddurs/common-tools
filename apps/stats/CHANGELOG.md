@@ -13,6 +13,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The menu's icons are plain symbols in the secondary label colour, so the graphs and numbers are what stand out. Everything coloured in the menu, including legend dots and the memory bar, now follows the color chosen in Settings; only a warning (memory pressure rising, a disk nearly full) or a critical state shows its own orange or red, and normal memory pressure is neutral. The lighter shades get stronger under Increase Contrast, and the Color setting shows the shades the menu will use.
 - The menu bar icon first appears beside the system's icons, where it can be seen, instead of at the far left, where Common Bar, the notch or an app's menus would hide it.
 - Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the family's shared layout: the same window, section spacing, footnotes, and Open at login switch as the other Common Tools apps, and the menu's cards and icons match them too.

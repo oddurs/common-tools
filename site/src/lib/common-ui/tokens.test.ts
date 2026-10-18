@@ -80,7 +80,7 @@ describe('colour', () => {
 					expect(pairs.has(`${text}|${name}`), `${text} on ${name} is unchecked`).toBe(true);
 	});
 	it('names a macOS semantic colour wherever the system has one', () => {
-		// Text, the window, the accent, rules, and errors are the system's; ours are the gaps.
+		// Text, the window, the accent, rules, and states are the system's; ours are the gaps.
 		const system = Object.entries(all)
 			.filter(([, t]) => t.macos)
 			.map(([name]) => name);
@@ -94,6 +94,7 @@ describe('colour', () => {
 			'color.border',
 			'color.focus',
 			'color.danger',
+			'color.warning',
 			'color.success'
 		]);
 	});

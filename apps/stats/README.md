@@ -10,7 +10,7 @@ System stats in the macOS menu bar: CPU, GPU, memory, network, disk activity, st
 Common Stats is built to feel like part of macOS:
 
 - **The menu bar draws it.** The bar is a template image, so macOS tints it for light and dark menu bars, dims it on inactive displays, and adjusts it for Increase Contrast, like the clock or Wi‑Fi.
-- **The dropdown is a real menu.** It opens, tracks, highlights, and dismisses like every other menu bar extra, with ⌘, and ⌘Q. Charts use your accent colour, and each chart has a legend.
+- **The dropdown is a real menu.** It opens, tracks, highlights, and dismisses like every other menu bar extra, with ⌘, and ⌘Q. Charts use the colour chosen in Settings (your accent colour by default), and each chart has a legend.
 - **Settings looks like System Settings.** Each metric gets a style (Value, Graph, Gauge, or Don't Show). Drag to reorder, or use Move Up and Move Down from the context menu or VoiceOver actions.
 - **VoiceOver reads it:** "CPU 21%, Memory 82%, Network down 6.1 KB/s, up 1.0 KB/s".
 - **Numbers follow your region:** "4,0 MB/s" in Germany, "4.0 MB/s" in the US.

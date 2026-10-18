@@ -48,12 +48,12 @@ struct PanelView: View {
             switch panel {
             case .card(let metric):
                 MetricCard(
-                    readout: readout, metric: metric, interval: interval, ink: Ink(palette.color(for: metric)),
+                    readout: readout, metric: metric, interval: interval, ink: Ink(palette, metric),
                     previewHover: previewHover)
             case .tiles(let metrics):
                 HStack(spacing: Tokens.Space.xs) {
                     ForEach(metrics, id: \.self) {
-                        MetricTile(readout: readout, metric: $0, ink: Ink(palette.color(for: $0)))
+                        MetricTile(readout: readout, metric: $0, ink: Ink(palette, $0))
                     }
                 }
             }
@@ -77,7 +77,7 @@ private struct MetricCard: View {
         Card {
             VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                 HStack(alignment: .center, spacing: Tokens.Space.xs) {
-                    IconBadge(metric: metric, size: 20)
+                    MetricSymbol(metric: metric, font: .body, width: 18)
                     Text(metric == .disk ? "Disk" : metric.name).font(.headline)
                         .lineLimit(1)
                     if metric == .network, let source = readout.latest.network?.source {
@@ -219,7 +219,7 @@ private struct MetricTile: View {
         Card {
             VStack(spacing: Tokens.Space.xs) {
                 HStack(spacing: Tokens.Space.xxs) {
-                    IconBadge(metric: metric, size: 16)
+                    MetricSymbol(metric: metric, font: .subheadline, width: 16)
                     Text(metric.name).font(.subheadline.weight(.semibold))
                         .lineLimit(1)
                 }
@@ -266,7 +266,7 @@ private struct MetricTile: View {
                 return Tokens.Color.danger.color
             }
         case .storage:
-            if let s = readout.latest.storage, s.usedFraction >= 0.9 { return .orange }
+            if let s = readout.latest.storage, s.usedFraction >= 0.9 { return Tokens.Color.warning.color }
         default: break
         }
         return ink.strong
@@ -303,38 +303,46 @@ private struct Ring<Label: View>: View {
 
 // MARK: - Shared pieces
 
-/// Three steps of one palette colour, used consistently: the strongest is
-/// always the primary series and the legend dots match the marks. Over a
-/// dark menu, translucency darkens, so the lighter steps carry more alpha
-/// there to stay distinguishable.
+/// A metric's palette steps (`Shade`) as SwiftUI colours, for one card.
 struct Ink {
     let strong: Color
     let medium: Color
     let soft: Color
 
-    init(_ base: NSColor) {
-        strong = Color(nsColor: base)
-        medium = Self.tint(base, light: 0.62, dark: 0.72)
-        soft = Self.tint(base, light: 0.36, dark: 0.5)
-    }
-
-    private static func tint(_ base: NSColor, light: CGFloat, dark: CGFloat) -> Color {
-        Color(
-            nsColor: NSColor(name: nil) { appearance in
-                let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
-                return base.withAlphaComponent(isDark ? dark : light)
-            })
+    init(_ palette: Palette, _ metric: Metric) {
+        strong = Color(nsColor: palette.color(for: metric, .strong))
+        medium = Color(nsColor: palette.color(for: metric, .medium))
+        soft = Color(nsColor: palette.color(for: metric, .soft))
     }
 }
 
+/// A metric's symbol beside its name: plain, secondary, at the name's text size. The graphs carry
+/// the colour; the symbol only says which card this is, so it stays out of their way. The fixed
+/// width keeps names aligned from card to card, whatever each symbol's own width.
+private struct MetricSymbol: View {
+    let metric: Metric
+    let font: Font
+    let width: CGFloat
+
+    var body: some View {
+        Image(systemName: metric.symbol)
+            .font(font)
+            .foregroundStyle(.secondary)
+            .frame(width: width)
+            .accessibilityHidden(true)
+    }
+}
+
+/// Memory pressure. Only warning and critical take a colour, from the shared tokens; normal stays
+/// neutral, because in a red or orange palette a coloured "Normal" would read as the alarm.
 private struct PressurePill: View {
     let pressure: MemoryReading.Pressure
 
     var body: some View {
         let (name, color): (String, Color) =
             switch pressure {
-            case .normal: ("Normal", .green)
-            case .warning: ("Warning", .orange)
+            case .normal: ("Normal", Tokens.Text.secondary.color)
+            case .warning: ("Warning", Tokens.Color.warning.color)
             case .critical: ("Critical", Tokens.Color.danger.color)
             }
         HStack(spacing: Tokens.Space.xxs) {
