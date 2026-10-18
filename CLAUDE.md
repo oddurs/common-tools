@@ -24,6 +24,7 @@ Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors)
 
 ## Workflow
 
+- The roadmap and issues live in cairn (`cairn.toml`, `cairn/items/`, rendered to `ROADMAP.md`); `AGENTS.md` has the loop. Find or create the item before starting work, claim it, tick its criteria as they become true, and close it in the pull request that finishes it. Never hand-edit `ROADMAP.md`.
 - Never commit to `main`. It only moves forward when a pull request is merged; the `pre-push` hook and branch protection both enforce this.
 - One unit of work gets one worktree, one branch, and one pull request: `scripts/agent start <type>/<slug>`, then work in the printed path and finish with `scripts/agent ship "<type>(scope): subject" "<why>" --body-file <pr.md>`, where the body states the problem, the approach, and where a reviewer should be sceptical. It commits, checks what changed, opens the pull request with auto-merge, keeps it rebased while CI runs, and cleans up after the merge. If it stops on a failed check or a conflict, fix the cause and run it again.
 - Branch types: `feat fix chore docs perf refactor test`. The branch's first commit names the pull request and the squash commit on `main`. Scope commits and branches to one area where you can: `feat(bar): …`, `fix(site): …`, `refactor(kit): …`.
