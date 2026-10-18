@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+# A pull or fast-forward of the default branch in the primary checkout installs the apps it changed
+# into /Applications, in the background, on a Mac that opted in (scripts/install --after-merge).
+# The merge has already happened, so nothing here can fail it.
+
+[ "$(git rev-parse --path-format=absolute --git-dir)" = "$(git rev-parse --path-format=absolute --git-common-dir)" ] || exit 0
+default="$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD)" || exit 0
+[ "$(git rev-parse --abbrev-ref HEAD)" = "${default#origin/}" ] || exit 0
+old="$(git rev-parse --verify --quiet ORIG_HEAD)" || exit 0
+[ -x scripts/install ] || exit 0
+exec scripts/install --after-merge "$old"

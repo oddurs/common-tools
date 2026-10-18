@@ -209,11 +209,18 @@ done)
     git -C "$main" branch --quiet -D "$branch"
     git -C "$main" worktree prune
     git -C "$main" fetch --quiet --prune origin
+    # Where the primary checkout's $base was before this merge: what an install compares against.
+    old="$(git -C "$main" rev-parse --verify --quiet "refs/heads/$base")" || old="$(git -C "$main" rev-parse "origin/$base")"
     # Bring the primary checkout up to date, unless someone is working in it.
     if [ "$(git -C "$main" rev-parse --abbrev-ref HEAD)" = "$base" ] && [ -z "$(git -C "$main" status --porcelain)" ]; then
         git -C "$main" merge --quiet --ff-only "origin/$base" && echo "==> $main is at origin/$base"
     else
         echo "==> left $main as it is: not on $base, or it has changes"
+    fi
+    # Installs the merged apps into /Applications in the background, on a Mac that opted in
+    # (scripts/install). This worktree is gone by now, so it's the primary checkout's copy.
+    if [ -x "$main/scripts/install" ]; then
+        "$main/scripts/install" --after-merge "$old" || echo "==> the install was not queued; see above"
     fi
     echo "==> done; cd $main"
     ;;
