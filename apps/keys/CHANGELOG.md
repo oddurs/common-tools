@@ -15,6 +15,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- In an app pinned to a layout, the menu bar shows that layout's flag with a lock beside it instead of a dimmed flag, even if Common Keys is paused in that app, and the tooltip says “Locked to 🇮🇸 Icelandic in Mail”. The flag is dimmed only while nothing is being fixed: no Accessibility access, fixing paused, or an app paused without a pin. The front app’s **In …** submenu shows the pin while the app is paused, too.
 - Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - App icons in **Exceptions** are back at 20 pt, the size they had before the shared row; the key caps in the menu are rounded a little less; the correction bubble fades on the family’s motion and holds still under Reduce Motion.
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Bar.

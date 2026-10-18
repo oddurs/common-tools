@@ -43,7 +43,7 @@ mv worldkey /usr/local/bin/
 
 ## Usage
 
-Common Keys lives in the menu bar as the flag of the current layout. The menu shows the day's words and fixes, your languages, the keys you mix up most, and the enabled keyboards to switch between.
+Common Keys lives in the menu bar as the flag of the current layout, with a lock beside it in an app you pinned to that layout, and dimmed while it isn't fixing: no Accessibility access, fixing paused, or an app paused without a pin. The menu shows the day's words and fixes, your languages, the keys you mix up most, and the enabled keyboards to switch between.
 
 - **Fixing as you type** happens when a word ends. **Pause Fixing** in the menu stops it; the convert shortcut still works.
 - **Convert last word**: double-tap right ⌥ by default; Settings offers double-tap ⇧ or ⌃ instead, or off.
@@ -196,7 +196,7 @@ scripts/task test keys --filter=X  # only the tests whose name matches
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release keys <version>`.
 
 `swift build && .build/debug/LangSmart --snapshot out.png` renders the menu's cards in light and dark
-without opening the menu. `swift scripts/make-icon.swift` redraws the app icon.
+without opening the menu; add `--status` for the menu bar item instead: fixing, locked, and dimmed. `swift scripts/make-icon.swift` redraws the app icon.
 
 Layout:
 

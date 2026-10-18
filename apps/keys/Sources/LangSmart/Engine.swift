@@ -176,7 +176,21 @@ final class Engine {
         return app.localizedName ?? id
     }
 
-    var isWorking: Bool { trusted && prefs.autoCorrect && pausedIn == nil && currentLayout != nil }
+    /// The layout the user pinned the frontmost app to, while it is enabled.
+    var pinnedLayout: (any Keyboard)? {
+        guard let id = frontApp?.bundleIdentifier, let pin = prefs.appLayouts[id] else { return nil }
+        return layouts.first { $0.id == pin }
+    }
+
+    var status: MenuBarStatus {
+        let named = { (keyboard: any Keyboard) in
+            MenuBarStatus.Layout(id: keyboard.id, flag: keyboard.flag, name: keyboard.name)
+        }
+        return MenuBarStatus(
+            trusted: trusted, fixing: prefs.autoCorrect, layout: currentLayout.map(named),
+            app: frontApp.map { $0.localizedName ?? $0.bundleIdentifier ?? "" }, paused: pausedIn != nil,
+            pinned: pinnedLayout.map(named))
+    }
 
     func layout(_ id: String) -> (any Keyboard)? {
         layouts.first { $0.id == id } ?? InputSources.keyboard(id)

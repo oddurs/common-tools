@@ -13,7 +13,7 @@ This is one app of the Common Tools monorepo. The workflow, the `scripts/task` s
 - Text typed in a converting input method (Japanese, Chinese) is the user's pick and is never read back or fixed.
 - Nothing leaves the Mac; the app makes no network requests. Typing is never logged: only daily counts and what the user taught (words meant in another layout, words to leave alone, mixed-up keys, per-app layouts) are saved, under `~/Library/Application Support/LangSmart/`.
 - A bug fix comes with the test that would have caught it. Tests read the layouts and dictionaries installed on the machine; keep them to ones macOS ships.
-- For menu changes, `scripts/task build keys && apps/keys/.build/debug/LangSmart --snapshot out.png` renders the dropdown offscreen in light and dark.
+- For menu changes, `cd apps/keys && swift build && .build/debug/LangSmart --snapshot out.png` renders the dropdown offscreen in light and dark; `--status` renders the menu bar item's looks instead. (`scripts/task build` makes only a release build.)
 - Old names stay where users' state is keyed to them: the `LangSmart` executable, bundle identifier `com.oddurs.langsmart`, the status item autosave name, the "LangSmart Development" signing identity, and `~/Library/Application Support/LangSmart/`. Renaming any of them loses users' Accessibility grant, settings or learned data.
 
 

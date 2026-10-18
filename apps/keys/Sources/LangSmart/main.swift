@@ -55,7 +55,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
 if let index = CommandLine.arguments.firstIndex(of: "--snapshot") {
     let path = CommandLine.arguments.dropFirst(index + 1).first ?? "snapshot.png"
-    MainActor.assumeIsolated { SnapshotCommand.run(path: path) }
+    let status = CommandLine.arguments.contains("--status")
+    MainActor.assumeIsolated { SnapshotCommand.run(path: path, status: status) }
     exit(0)
 }
 
