@@ -61,7 +61,7 @@ enum Review {
         case .overlay(let output, let selection):
             Task {
                 await finish {
-                    let overlay = Overlay(freeze: try await Capture.freeze())
+                    let overlay = Overlay(freeze: try await Capture.freeze(), imageSize: .prompt)
                     overlay.show()
                     if let selection { overlay.select(selection) }
                     try await Task.sleep(for: .milliseconds(400))

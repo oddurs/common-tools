@@ -11,6 +11,8 @@ struct Still {
     let image: CGImage
     /// The screen it was captured from; nil for a made-up one rendered offscreen.
     let screen: NSScreen?
+    /// The camera housing at the top of a notched display, in the display's points from its bottom-left.
+    var notch: CGRect?
 
     /// Pixels per point, which can be fractional on a scaled display.
     var scale: CGFloat { CGFloat(image.width) / frame.width }
@@ -55,7 +57,9 @@ enum Capture {
             let image = try await SCScreenshotManager.captureImage(
                 contentFilter: filter, configuration: configuration(for: filter))
             stills.append(
-                Still(frame: screen.frame, displayBounds: CGDisplayBounds(id), image: image, screen: screen))
+                Still(
+                    frame: screen.frame, displayBounds: CGDisplayBounds(id), image: image, screen: screen,
+                    notch: screen.notch))
         }
         guard !stills.isEmpty else { throw CaptureError.noDisplays }
         return Freeze(stills: stills, windows: windows)
@@ -103,6 +107,15 @@ enum Capture {
 }
 
 extension NSScreen {
+    /// Between the two areas beside the camera housing, as tall as the safe area's top inset.
+    var notch: CGRect? {
+        guard safeAreaInsets.top > 0, let left = auxiliaryTopLeftArea, let right = auxiliaryTopRightArea
+        else { return nil }
+        let height = safeAreaInsets.top
+        return CGRect(
+            x: left.width, y: frame.height - height, width: frame.width - left.width - right.width, height: height)
+    }
+
     var displayID: CGDirectDisplayID? {
         deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? CGDirectDisplayID
     }

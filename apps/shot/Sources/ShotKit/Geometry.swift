@@ -18,6 +18,16 @@ public enum Geometry {
         selection.width < minimumDrag || selection.height < minimumDrag
     }
 
+    /// `rect` with each edge moved to the nearest device pixel at `scale`, so what the overlay outlines is
+    /// exactly what is captured: on a 2× display an edge can sit on a half point, on a 1× one it can't.
+    public static func snapped(_ rect: CGRect, scale: CGFloat) -> CGRect {
+        guard scale > 0 else { return rect }
+        func snap(_ value: CGFloat) -> CGFloat { (value * scale).rounded() / scale }
+        let minX = snap(rect.minX)
+        let minY = snap(rect.minY)
+        return CGRect(x: minX, y: minY, width: snap(rect.maxX) - minX, height: snap(rect.maxY) - minY)
+    }
+
     /// The pixels of an image of the whole view that `rect`, in the view's points, covers. Edges round
     /// outward, so a selection never loses a partly covered pixel, and the result stays inside the image.
     public static func pixels(of rect: CGRect, viewSize: CGSize, imageWidth: Int, imageHeight: Int) -> CGRect {

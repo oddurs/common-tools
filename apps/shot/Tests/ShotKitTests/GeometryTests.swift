@@ -92,4 +92,26 @@ import Testing
         #expect(WindowFrame.topmost(at: CGPoint(x: 200, y: 200), in: windows)?.id == 2)
         #expect(WindowFrame.topmost(at: CGPoint(x: 600, y: 600), in: windows) == nil)
     }
+
+    @Test func snappingKeepsHalfPointsOnARetinaDisplay() {
+        let rect = Geometry.snapped(CGRect(x: 10.5, y: 20.26, width: 100.3, height: 50), scale: 2)
+        #expect(rect == CGRect(x: 10.5, y: 20.5, width: 100.5, height: 50))
+    }
+
+    @Test func snappingRoundsToWholePointsOnAStandardDisplay() {
+        let rect = Geometry.snapped(CGRect(x: 10.5, y: 20.4, width: 100.3, height: 50), scale: 1)
+        #expect(rect == CGRect(x: 11, y: 20, width: 100, height: 50))
+    }
+
+    @Test func aSnappedSelectionCapturesExactlyTheOutlinedPixels() {
+        // Whatever the drag, the pixels copied are the snapped rectangle times the scale, nothing more.
+        let view = CGSize(width: 1512, height: 982)
+        for scale in [1.0, 2.0] {
+            let snapped = Geometry.snapped(CGRect(x: 100.3, y: 200.7, width: 333.33, height: 123.45), scale: scale)
+            let pixels = Geometry.pixels(
+                of: snapped, viewSize: view, imageWidth: Int(view.width * scale), imageHeight: Int(view.height * scale))
+            let expected = CGSize(width: (snapped.width * scale).rounded(), height: (snapped.height * scale).rounded())
+            #expect(pixels.size == expected)
+        }
+    }
 }

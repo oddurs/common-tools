@@ -18,6 +18,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The overlay is sharper and quieter. The selection's edge is one device pixel in your accent colour on any display, and what it outlines is exactly what is copied, down to the pixel. The size sits in a small capsule of material by the selection's corner with what the shot costs in tokens; near an edge or the notch it moves inside the selection or above it instead of off the screen. Hovering a window shows its size too.
+- The loupe magnifies whole device pixels on a faint grid, rings the one under the pointer in black and white so it shows on any colour, and steps around the size rather than covering it.
+- The hint along the bottom names the keys in the same material, shows only on the display with the pointer, and gets out of the way when the pointer comes near it.
+- With Increase Contrast the dimming is stronger and the edge two device pixels; with Reduce Transparency the capsules are solid. VoiceOver reads the overlay's keys and the size of what is selected.
 - The menu bar icon first appears beside the system's icons, where it can be seen, instead of at the far left, where Common Bar, the notch or an app's menus would hide it.
 - Settings fits the screen it opens on and scrolls past that, instead of a fixed 720 pt cap, so it uses a tall display and still fits a 13-inch one. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
