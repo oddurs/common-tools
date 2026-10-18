@@ -76,6 +76,8 @@ scripts/task test shot --filter=X  # only the tests whose name matches
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release shot <version>`.
 
+[docs/design.md](docs/design.md) is the design spec: each moment of the flow, benchmarked against macOS and the best third-party tools, and what Shot decides.
+
 Two flags check changes without pressing the shortcut. Both need Screen Recording access for the terminal running them, and neither touches your settings:
 
 - `swift build && .build/debug/CommonShot --capture out.png` runs the whole pipeline on the main display: freeze, size, encode, copy to the clipboard, and write what the clipboard holds to `out.png`.
