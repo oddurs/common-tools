@@ -26,6 +26,9 @@
 			Not released yet. Like every Common Tools app it will be free forever and open source, and nothing
 			you do in it will ever be reported. <a href={app.repo}>Follow it on GitHub ›</a>
 		</p>
+		{#if app.access}
+			<p class="fine">{app.access}</p>
+		{/if}
 	</header>
 	<MoreTools slug={app.slug} />
 </main>

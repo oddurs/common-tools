@@ -31,6 +31,9 @@ public struct CommonTool: Identifiable, Sendable {
         CommonTool(
             id: "battery", name: "Common Battery", summary: "The battery in the menu bar, with alerts",
             bundleIdentifier: "com.oddurs.commonbattery"),
+        CommonTool(
+            id: "color", name: "Common Color", summary: "Pick a color anywhere, paste it as code",
+            bundleIdentifier: "com.oddurs.commoncolor"),
     ]
 
     public static let website = URL(string: "https://oddurs.github.io/common-tools/")!

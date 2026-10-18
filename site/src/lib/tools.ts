@@ -84,12 +84,14 @@ export const tools: Tool[] = [
 
 /** Apps on their way: each has a page, so every app's Settings can link to it, but no release yet. */
 export type Upcoming = {
-	slug: 'glyph' | 'command' | 'shot' | 'battery';
+	slug: 'glyph' | 'command' | 'shot' | 'battery' | 'color';
 	name: string;
 	tagline: string;
 	summary: string;
 	repo: string;
 	icon: `${Upcoming['slug']}/icon.png`;
+	/** What it will ask macOS for, or that it asks for nothing, and why. */
+	access?: string;
 };
 
 export const upcoming: Upcoming[] = [
@@ -127,6 +129,16 @@ export const upcoming: Upcoming[] = [
 			'The level, the time left, what the battery is doing, and alerts when it runs low or reaches your charge level.',
 		repo: `${github}/tree/main/apps/battery`,
 		icon: 'battery/icon.png'
+	},
+	{
+		slug: 'color',
+		name: 'Common Color',
+		tagline: 'Pick a color from anywhere, paste it as code.',
+		summary:
+			'Press ⌃⇧⌘C, click any pixel on any screen, and the color is on the clipboard as hex, CSS, SwiftUI, or AppKit, converted correctly from the display’s color space.',
+		repo: `${github}/tree/main/apps/color`,
+		icon: 'color/icon.png',
+		access: 'It needs no permission: macOS’s own color sampler reads the one pixel you click, so the app never sees your screen.'
 	}
 ];
 
