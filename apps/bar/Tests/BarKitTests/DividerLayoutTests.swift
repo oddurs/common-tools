@@ -2,19 +2,6 @@ import BarKit
 import Testing
 
 @Suite struct DividerLayoutTests {
-    /// The seeded order: toggle at the right, the divider left of it, the always-hidden divider further left.
-    let seeded = ItemPositions(toggle: 0, divider: 1, alwaysDivider: 2)
-
-    func layout(
-        collapsed: Bool, all: Bool = false, peeking: Bool = false, alwaysHidden: Bool = true,
-        _ positions: ItemPositions? = nil
-    ) -> DividerLayout {
-        var reveal = Reveal(isCollapsed: true)
-        _ = reveal.set(collapsed: collapsed, showingAlwaysHidden: all)
-        return DividerLayout(
-            reveal: reveal, isPeeking: peeking, positions: positions ?? seeded, alwaysHidden: alwaysHidden)
-    }
-
     @Test func aDividerReachesJustPastTheScreensLeftEdge() {
         // Measured on Tahoe: the divider ends at 1136 on a screen starting at 0, and macOS
         // pads each item by 16 pt.
@@ -34,8 +21,8 @@ import Testing
     }
 
     @Test func aStretchedDividerWhoseEndSlidRightNoLongerClearsTheScreen() {
-        // Its reach was measured with its end at 600; a reveal slid it to 900, so the icons left
-        // of it would sit from x 236 on, behind the app's menus.
+        // Its reach was measured with its end at 600; it has since slid to 900, so the icons
+        // left of it would sit from x 236 on, behind the app's menus.
         let reach = DividerLayout.reach(dividerEnd: 600, screenMinX: 0, padding: 16)
         #expect(!DividerLayout.clearsScreen(windowMinX: 900 - (reach + 16), screenMinX: 0))
         let again = DividerLayout.reach(dividerEnd: 900, screenMinX: 0, padding: 16)
@@ -46,88 +33,30 @@ import Testing
         #expect(DividerLayout.reach(dividerEnd: 20_000, screenMinX: 0, padding: 16) == DividerLayout.stretchedLength)
     }
 
-    @Test func collapsedBothDividersStretch() {
-        let l = layout(collapsed: true)
-        #expect(l.divider == .stretched)
-        #expect(l.alwaysDivider == .stretched)
-    }
-
-    @Test func aNormalRevealLeavesNoGapAndKeepsTheAlwaysHiddenSectionHidden() {
-        let l = layout(collapsed: false)
-        #expect(l.divider == .collapsed)
-        #expect(l.alwaysDivider == .stretched)
-    }
-
-    @Test func revealingEverythingShowsTheDottedMarker() {
-        let l = layout(collapsed: false, all: true)
-        #expect(l.divider == .collapsed)
-        #expect(l.alwaysDivider == .marker)
-    }
-
-    @Test func peekingMarksBothBoundariesForArranging() {
-        let l = layout(collapsed: true, peeking: true)
-        #expect(l.divider == .marker)
-        #expect(l.alwaysDivider == .marker)
-    }
-
-    @Test func withoutAnAlwaysHiddenSectionItsDividerIsAlwaysTakenDownToNothing() {
-        for l in [
-            layout(collapsed: true, alwaysHidden: false),
-            layout(collapsed: false, alwaysHidden: false),
-            layout(collapsed: false, all: true, alwaysHidden: false),
-            layout(collapsed: true, peeking: true, alwaysHidden: false),
-        ] {
-            #expect(l.alwaysDivider == .collapsed)
-        }
-        #expect(layout(collapsed: true, peeking: true, alwaysHidden: false).divider == .marker)
-    }
-
-    @Test func aDividerRightOfTheChevronIsNotStretched() {
-        // Stretching it would push the visible icons, and the chevron, off-screen.
-        let l = layout(collapsed: true, ItemPositions(toggle: 1, divider: 0, alwaysDivider: 2))
-        #expect(l.divider == .collapsed)
-        #expect(l.alwaysDivider == .stretched)
-    }
-
-    @Test func anAlwaysHiddenDividerRightOfTheDividerIsNotStretched() {
-        let positions = ItemPositions(toggle: 0, divider: 2, alwaysDivider: 1)
-        #expect(layout(collapsed: true, positions).alwaysDivider == .collapsed)
-        #expect(layout(collapsed: false, positions).alwaysDivider == .collapsed)
-        #expect(layout(collapsed: true, positions).divider == .stretched)
-    }
-
-    @Test func equalPositionsDoNotStretch() {
-        let l = layout(collapsed: true, ItemPositions(toggle: 3, divider: 3, alwaysDivider: 3))
-        #expect(l.divider == .collapsed)
-        #expect(l.alwaysDivider == .collapsed)
+    @Test func theDividerHidesOnlyLeftOfTheFolder() {
+        #expect(ItemPositions(toggle: 0, divider: 1).dividerHides)
+        // Stretched right of the folder, it would push the folder and the pinned icons off-screen.
+        #expect(!ItemPositions(toggle: 1, divider: 0).dividerHides)
+        #expect(!ItemPositions(toggle: 3, divider: 3).dividerHides)
     }
 }
 
 @Suite struct ItemPositionsTests {
     @Test func aFreshInstallStartsBesideTheSystemItemsInOrder() {
-        #expect(
-            ItemPositions.seeded(toggle: nil, divider: nil, alwaysDivider: nil)
-                == ItemPositions(toggle: 0, divider: 1, alwaysDivider: 2))
+        #expect(ItemPositions.seeded(toggle: nil, divider: nil) == ItemPositions(toggle: 0, divider: 1))
     }
 
     @Test func savedPositionsAreKept() {
-        let saved = ItemPositions(toggle: 40, divider: 90, alwaysDivider: 300)
-        #expect(ItemPositions.seeded(toggle: 40, divider: 90, alwaysDivider: 300) == saved)
+        #expect(ItemPositions.seeded(toggle: 40, divider: 90) == ItemPositions(toggle: 40, divider: 90))
     }
 
-    @Test func aNewItemStartsLeftOfWhereTheUserMovedThePreviousOne() {
-        #expect(
-            ItemPositions.seeded(toggle: 40, divider: 90, alwaysDivider: nil)
-                == ItemPositions(toggle: 40, divider: 90, alwaysDivider: 91))
-        #expect(
-            ItemPositions.seeded(toggle: 40, divider: nil, alwaysDivider: nil)
-                == ItemPositions(toggle: 40, divider: 41, alwaysDivider: 42))
+    @Test func aNewDividerStartsLeftOfWhereTheUserMovedTheFolder() {
+        #expect(ItemPositions.seeded(toggle: 40, divider: nil) == ItemPositions(toggle: 40, divider: 41))
     }
 
     @Test func autosaveNamesStayPut() {
-        // Renaming any of these would lose every user's arrangement.
+        // Renaming either would lose every user's arrangement.
         #expect(ItemName.toggle == "toggle")
         #expect(ItemName.divider == "divider")
-        #expect(ItemName.alwaysDivider == "alwaysDivider")
     }
 }

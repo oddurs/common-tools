@@ -3,178 +3,114 @@ import BarKit
 import CommonKit
 import CommonUI
 
-/// Three status items, right to left: a chevron that toggles, a divider left of it, and
-/// an always-hidden divider further left. Collapsing stretches a divider so everything
-/// left of it is pushed off-screen. A normal reveal takes the first divider down to nothing;
-/// ⌥-click shows the always-hidden section too, and holding ⌘ shows both dividers as
-/// marks so icons can be ⌘-dragged across them.
+/// Two status items, right to left: the More folder, and a divider left of it that stays stretched
+/// so every icon left of it is off-screen, all the time. Nothing is ever revealed in the menu bar,
+/// so nothing lands under the notch and nothing reshuffles. The folder lists those icons; choosing
+/// one brings it on screen beside the notch just long enough to open it.
 @MainActor
 final class MenuBarController: NSObject {
     private enum Metric {
-        /// Just wide enough for the chevron; macOS adds its own padding either side.
-        static let toggleLength: CGFloat = 10
-        /// About the width of a small icon.
-        static let spacerLength: CGFloat = 8
-        static let pollInterval: TimeInterval = 1.0 / 30
-        static let fadeDuration: TimeInterval = 0.12
-        /// Long enough for macOS to finish gliding the icons into place.
+        /// Long enough for macOS to finish moving the icons.
         static let settleDelay: TimeInterval = 0.6
+        static let pollInterval: TimeInterval = 0.05
+        /// How long an icon may take to come on screen before opening it is given up.
+        static let arrivalTimeout: TimeInterval = 1.5
+        static let rowIcon = NSSize(width: 16, height: 16)
     }
 
-    private static let onboardedKey = "onboarded"
-    /// Written by an earlier version that moved the always-hidden divider aside; cleared on launch.
-    private static let retiredAlwaysDividerHomeKey = "alwaysDividerHome"
+    static let accessibility = Permission.accessibility(reason: "to see which app each icon belongs to and open it")
+    private static let askedForAccessKey = "askedForAccessibility"
 
-    private let toggle: NSStatusItem
+    private let folder: NSStatusItem
     private let divider: DividerItem
-    private let alwaysDivider: DividerItem
-    private let chevron = ChevronView()
-    private var chevronPointsLeft: Bool?
-    private var spacers: [NSStatusItem] = []
-    private var syncingSpacers = false
-    private var reveal: Reveal
-    private var peek = Peek()
-    private var hover = Hover()
-    private var scroll = ScrollGesture()
-    private var poll: Timer?
-    private var collapseTimer: Timer?
     private var settleTimer: Timer?
-    private var eventMonitor: Any?
-    private var preferencesObserver: Any?
-    private var alwaysHidden = Preferences.isOn(Preferences.alwaysHiddenSection)
-    private let demo = DragDemoOverlay()
+    private var opening: Opening?
+    private var openTimer: Timer?
+    private var observers: [Any] = []
     private let settings = SettingsWindowHost(title: "Common Bar Settings")
     private let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     override init() {
-        Preferences.register()
         Self.seedPositions()
-        reveal = Reveal(isCollapsed: UserDefaults.standard.bool(forKey: Self.onboardedKey))
-
-        UserDefaults.standard.removeObject(forKey: Self.retiredAlwaysDividerHomeKey)
         DividerItem.markVisible(ItemName.toggle)
-        toggle = NSStatusBar.system.statusItem(withLength: Metric.toggleLength)
-        divider = DividerItem(named: ItemName.divider, marker: Glyphs.line)
-        alwaysDivider = DividerItem(named: ItemName.alwaysDivider, marker: Glyphs.dottedLine)
+        folder = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        divider = DividerItem(named: ItemName.divider)
         super.init()
 
-        toggle.autosaveName = ItemName.toggle
-
-        if let button = toggle.button {
+        folder.autosaveName = ItemName.toggle
+        if let button = folder.button {
+            button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "More")
             button.target = self
-            button.action = #selector(toggleClicked)
+            button.action = #selector(folderClicked)
             // Menu bar extras respond on press, not release.
             button.sendAction(on: [.leftMouseDown, .rightMouseDown])
-            // A view of its own, so the glyph can turn without the button's highlight turning too.
-            chevron.image = Glyphs.chevron
-            chevron.imageScaling = .scaleNone
-            chevron.frame = button.bounds
-            chevron.wantsLayer = true
-            button.addSubview(chevron)
         }
 
-        // Mouse and scroll events need no permission. Modifiers and hover are polled,
-        // only while the pointer is in the menu bar.
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(
-            matching: [.mouseMoved, .leftMouseDragged, .leftMouseDown, .scrollWheel]
-        ) { [weak self] event in
-            MainActor.assumeIsolated { self?.handle(event) }
-        }
+        // The divider's right end moves as pinned icons come and go and as screens change, and the
+        // folder can be ⌘-dragged, which rewrites its saved position.
+        let center = NotificationCenter.default
+        let workspace = NSWorkspace.shared.notificationCenter
+        observers = [
+            center.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) {
+                [weak self] _ in
+                MainActor.assumeIsolated { self?.apply() }
+            },
+            center.addObserver(
+                forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
+            ) { [weak self] _ in
+                MainActor.assumeIsolated { self?.apply() }
+            },
+            workspace.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main) {
+                [weak self] _ in MainActor.assumeIsolated { self?.scheduleSettle() }
+            },
+            workspace.addObserver(
+                forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main
+            ) { [weak self] _ in MainActor.assumeIsolated { self?.scheduleSettle() } },
+        ]
 
-        // Settings apply at once; turning the always-hidden section off releases its icons.
-        preferencesObserver = NotificationCenter.default.addObserver(
-            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
-        ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.preferencesChanged() }
-        }
-
-        syncSpacers()
-        apply(animated: false)
-
-        // Give the status bar a moment to lay the items out: the how-to plays beside the chevron.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                if self.reveal.isCollapsed { self.apply(animated: false) } else { self.showDemo() }
-            }
-        }
+        apply()
     }
 
     private static func positionKey(_ name: String) -> String {
         "NSStatusItem Preferred Position \(name)"
     }
 
-    /// Distance from the right edge of the screen; larger is further left.
-    private static func position(of name: String) -> Double {
-        UserDefaults.standard.double(forKey: positionKey(name))
-    }
-
     private static func savedPosition(of name: String) -> Double? {
-        UserDefaults.standard.object(forKey: positionKey(name)) == nil ? nil : position(of: name)
+        UserDefaults.standard.object(forKey: positionKey(name)) == nil
+            ? nil : UserDefaults.standard.double(forKey: positionKey(name))
     }
 
     /// Writes a starting position for each item macOS hasn't saved one for yet.
     private static func seedPositions() {
         let seeded = ItemPositions.seeded(
-            toggle: savedPosition(of: ItemName.toggle),
-            divider: savedPosition(of: ItemName.divider),
-            alwaysDivider: savedPosition(of: ItemName.alwaysDivider))
-        let positions = [
-            (ItemName.toggle, seeded.toggle),
-            (ItemName.divider, seeded.divider),
-            (ItemName.alwaysDivider, seeded.alwaysDivider),
-        ]
-        for (name, position) in positions where savedPosition(of: name) == nil {
+            toggle: savedPosition(of: ItemName.toggle), divider: savedPosition(of: ItemName.divider))
+        for (name, position) in [(ItemName.toggle, seeded.toggle), (ItemName.divider, seeded.divider)]
+        where savedPosition(of: name) == nil {
             UserDefaults.standard.set(position, forKey: positionKey(name))
         }
     }
 
-    // MARK: State
-
-    private func setCollapsed(_ collapsed: Bool, showingAlwaysHidden: Bool = false) {
-        guard reveal.set(collapsed: collapsed, showingAlwaysHidden: showingAlwaysHidden) else { return }
-        // A deliberate toggle shouldn't be undone by hover until the pointer leaves the bar.
-        hover.toggled()
-        collapseTimer?.invalidate()
-        if !collapsed { scheduleAutoCollapse() }
-        apply()
+    private static var positions: ItemPositions {
+        ItemPositions(
+            toggle: savedPosition(of: ItemName.toggle) ?? 0, divider: savedPosition(of: ItemName.divider) ?? 1)
     }
 
-    private func apply(animated: Bool = true) {
-        let motion = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-        let alwaysHidden = Preferences.isOn(Preferences.alwaysHiddenSection)
-        let layout = DividerLayout(
-            reveal: reveal, isPeeking: peek.isPeeking, positions: Self.positions, alwaysHidden: alwaysHidden)
-        divider.set(layout.divider, animated: motion)
-        alwaysDivider.set(layout.alwaysDivider, animated: motion)
+    // MARK: Layout
+
+    /// Keeps everything left of the divider off-screen, unless an icon is out being opened.
+    private func apply() {
+        guard opening == nil else { return }
+        if Self.positions.dividerHides { divider.hide() } else { divider.takeDown() }
         scheduleSettle()
-
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = motion ? Metric.fadeDuration : 0
-            // Spacers are blank except while arranging, so they can be found and dragged.
-            for spacer in spacers {
-                spacer.button?.animator().alphaValue = peek.isPeeking ? 1 : 0
-            }
-        }
-
-        // The chevron turns as the icons glide, pointing the way they are going: left, where
-        // the hidden icons wait, while closed; back towards them to close while open. The
-        // curve overshoots a touch and settles, over about as long as the glide.
-        guard reveal.isCollapsed != chevronPointsLeft else { return }
-        let firstLayout = chevronPointsLeft == nil
-        chevronPointsLeft = reveal.isCollapsed
-        chevron.turn(to: reveal.isCollapsed ? 0 : .pi, animated: motion && !firstLayout)
-        toggle.button?.setAccessibilityLabel(reveal.isCollapsed ? "Show hidden menu bar items" : "Hide menu bar items")
     }
 
-    /// Once the icons have glided into place, makes sure no stretched divider has left icons on
-    /// screen where they can't be seen: a reveal slides the always-hidden divider's right end along.
+    /// Once macOS has moved the icons, makes sure none was left on screen.
     private func scheduleSettle() {
         settleTimer?.invalidate()
         settleTimer = Timer.scheduledTimer(withTimeInterval: Metric.settleDelay, repeats: false) { [weak self] _ in
             MainActor.assumeIsolated {
-                self?.divider.keepClearingScreen()
-                self?.alwaysDivider.keepClearingScreen()
+                guard let self, self.opening == nil else { return }
+                self.divider.keepClearingScreen()
             }
         }
     }
@@ -182,215 +118,216 @@ final class MenuBarController: NSObject {
     /// Common Bar's items where the window server has them, so they aren't mistaken for another
     /// app's: on macOS 26 their windows carry no name Common Bar can read.
     private var ownItems: OwnItems {
-        let frames = [toggle.button?.window?.frame, alwaysDivider.frame] + spacers.map { $0.button?.window?.frame }
-        return OwnItems(
+        OwnItems(
             divider: divider.frame.map(MenuBar.windowServerFrame),
-            others: frames.compactMap { $0.map(MenuBar.windowServerFrame) })
+            others: [folder.button?.window?.frame].compactMap { $0.map(MenuBar.windowServerFrame) })
     }
 
-    private static var positions: ItemPositions {
-        ItemPositions(
-            toggle: position(of: ItemName.toggle),
-            divider: position(of: ItemName.divider),
-            alwaysDivider: position(of: ItemName.alwaysDivider))
-    }
+    private var screen: NSScreen? { folder.button?.window?.screen ?? NSScreen.main }
 
-    private func preferencesChanged() {
-        syncSpacers()
-        let enabled = Preferences.isOn(Preferences.alwaysHiddenSection)
-        // Item positions are saved to the same defaults on every move; only this setting matters here.
-        guard enabled != alwaysHidden else { return }
-        alwaysHidden = enabled
-        if !enabled && reveal.showsAlwaysHidden {
-            _ = reveal.set(collapsed: reveal.isCollapsed, showingAlwaysHidden: false)
-        }
-        apply()
-    }
+    // MARK: Folder
 
-    /// Adds or removes spacers to match Settings. A removed spacer keeps its saved
-    /// position, so adding it back puts it where it was.
-    private func syncSpacers() {
-        // Seeding a position below writes to the defaults, which calls back here.
-        guard !syncingSpacers else { return }
-        syncingSpacers = true
-        defer { syncingSpacers = false }
-        let count = Preferences.spacerCount
-        while spacers.count > count {
-            NSStatusBar.system.removeStatusItem(spacers.removeLast())
-        }
-        while spacers.count < count {
-            let name = ItemName.spacer(spacers.count)
-            if Self.savedPosition(of: name) == nil {
-                UserDefaults.standard.set(
-                    Spacers.seedPosition(toggle: Self.position(of: ItemName.toggle)), forKey: Self.positionKey(name))
-            }
-            DividerItem.markVisible(name)
-            let item = NSStatusBar.system.statusItem(withLength: Metric.spacerLength)
-            item.autosaveName = name
-            item.button?.image = Glyphs.spacer
-            item.button?.appearsDisabled = true
-            item.button?.alphaValue = peek.isPeeking ? 1 : 0
-            item.button?.setAccessibilityElement(false)
-            spacers.append(item)
-        }
-    }
-
-    // MARK: Events
-
-    private func handle(_ event: NSEvent) {
-        switch event.type {
-        case .leftMouseDown:
-            demo.close()
-            if Preferences.isOn(Preferences.showOnClick),
-                MenuBar.isEmptySpace(NSEvent.mouseLocation, own: ownItems)
-            {
-                setCollapsed(!reveal.isCollapsed)
-            }
-        case .scrollWheel:
-            scrolled(event)
-        default:
-            startPolling()
-        }
-    }
-
-    private func scrolled(_ event: NSEvent) {
-        guard Preferences.isOn(Preferences.showOnScroll), MenuBar.contains(NSEvent.mouseLocation) else { return }
-        let intent = scroll.add(
-            deltaY: Double(event.scrollingDeltaY), began: event.phase == .began, timestamp: event.timestamp,
-            precise: event.hasPreciseScrollingDeltas, inverted: event.isDirectionInvertedFromDevice)
-        if let intent { setCollapsed(intent == .hide) }
-    }
-
-    private func startPolling() {
-        guard poll == nil, peek.isPeeking || hover.revealed || MenuBar.contains(NSEvent.mouseLocation) else { return }
-        let timer = Timer(timeInterval: Metric.pollInterval, repeats: true) { [weak self] _ in
-            MainActor.assumeIsolated { self?.tick() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        poll = timer
-    }
-
-    private func tick() {
-        let pointer = NSEvent.mouseLocation
-        let modifiers = NSEvent.modifierFlags.intersection([.command, .option, .control, .shift])
-        let commandOnly = modifiers == .command
-        let mouseDown = NSEvent.pressedMouseButtons != 0
-        let inMenuBar = MenuBar.contains(pointer)
-        let now = Date()
-
-        if peek.update(commandOnly: commandOnly, inMenuBar: inMenuBar, mouseDown: mouseDown, now: now) {
-            // Holding ⌘ is the how-to's first step; the user has it from here.
-            if peek.isPeeking { demo.close() }
-            apply()
-        }
-        if !peek.isPeeking {
-            let action = hover.update(
-                isCollapsed: reveal.isCollapsed,
-                overEmptySpace: inMenuBar && MenuBar.isEmptySpace(pointer, own: ownItems),
-                inMenuBar: inMenuBar, idle: modifiers.isEmpty && !mouseDown,
-                enabled: Preferences.isOn(Preferences.showOnHover), menuOpen: MenuBar.isMenuOpen, now: now)
-            switch action {
-            case .none:
-                break
-            case .reveal:
-                reveal.expand()
-                apply()
-            case .collapse:
-                setCollapsed(true)
-            }
-        }
-
-        // The pointer has left the bar, so hover may reveal again.
-        if !peek.isPeeking && !hover.revealed && !inMenuBar {
-            poll?.invalidate()
-            poll = nil
-            hover.rearm()
-        }
-    }
-
-    // MARK: Toggle
-
-    @objc private func toggleClicked() {
-        demo.close()
+    @objc private func folderClicked() {
         let event = NSApp.currentEvent
-        let modifiers = event?.modifierFlags ?? []
-        if event?.type == .rightMouseDown || modifiers.contains(.control) {
-            showMenu()
-            return
-        }
-        let next = reveal.afterClick(
-            option: modifiers.contains(.option), alwaysHidden: Preferences.isOn(Preferences.alwaysHiddenSection))
-        setCollapsed(next.collapsed, showingAlwaysHidden: next.showingAlwaysHidden)
-    }
-
-    private func scheduleAutoCollapse() {
-        guard let delay = Preferences.autoHideDelay.interval else { return }
-        collapseTimer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated {
-                guard let self, !self.reveal.isCollapsed else { return }
-                // Wait while the user is still working in the menu bar or one of its menus.
-                if self.peek.isPeeking || MenuBar.contains(NSEvent.mouseLocation) || MenuBar.isMenuOpen
-                    || NSEvent.pressedMouseButtons != 0
-                {
-                    self.scheduleAutoCollapse()
-                    return
-                }
-                self.setCollapsed(true)
-            }
+        if event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true {
+            show(appMenu())
+        } else {
+            show(folderMenu())
         }
     }
 
-    // MARK: Menu
+    private func show(_ menu: NSMenu) {
+        folder.menu = menu
+        folder.button?.performClick(nil)
+        folder.menu = nil
+    }
 
-    private func showMenu() {
+    private func appMenu() -> NSMenu {
         let menu = NSMenu()
-
-        let tips = NSMenuItem(title: "How to Arrange…", action: #selector(showDemo), keyEquivalent: "")
-        tips.target = self
-        menu.addItem(tips)
-
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
-
         menu.addItem(
             NSMenuItem(title: "Quit Common Bar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-
-        toggle.menu = menu
-        toggle.button?.performClick(nil)
-        toggle.menu = nil
+        return menu
     }
 
-    // MARK: How-to
+    private func folderMenu() -> NSMenu {
+        let menu = NSMenu()
+        guard let screen else { return menu }
+        let model = MenuBar.model(of: screen, own: ownItems)
+        let hiddenCount = model.items.filter { $0.section == .hidden }.count
 
-    /// Played with the hidden items revealed, beside the chevron the user will drag past.
-    @objc private func showDemo() {
-        playDemo(attemptsLeft: 8)
-    }
+        guard Self.accessibility.isGranted else {
+            addPermissionItems(to: menu, hiddenCount: hiddenCount)
+            return menu
+        }
 
-    /// Just after launch the window server may not have laid the items out yet, so the
-    /// chevron is looked for again for a moment before giving up.
-    private func playDemo(attemptsLeft: Int) {
-        guard !demo.isShowing, let button = toggle.button, let screen = NSScreen.main ?? NSScreen.screens.first
-        else { return }
-        // AppKit's frame for a status item can lag where Control Center has put it, so it is
-        // trusted only once the window server shows an item at the same place.
-        guard let window = button.window, MenuBar.hasStatusItem(at: window.frame, on: screen) else {
-            guard attemptsLeft > 0 else { return }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-                MainActor.assumeIsolated { self?.playDemo(attemptsLeft: attemptsLeft - 1) }
+        let entries = model.folderEntries(Self.accessibleItems(), ownPID: Self.ownPID)
+        if entries.isEmpty {
+            menu.addItem(note(hiddenCount == 0 ? "Every icon is in the menu bar." : "No app answered for its icons."))
+        }
+        for entry in entries {
+            let row = NSMenuItem(title: entry.name, action: #selector(entryChosen(_:)), keyEquivalent: "")
+            row.target = self
+            row.representedObject = entry.item.id
+            if let icon = NSRunningApplication(processIdentifier: entry.owner.pid)?.icon {
+                icon.size = Metric.rowIcon
+                row.image = icon
             }
+            menu.addItem(row)
+        }
+        return menu
+    }
+
+    /// Until Accessibility is allowed, the folder says why it's needed and how, instead of an
+    /// empty list. It is asked here, the first time a folder opens, and never at launch.
+    private func addPermissionItems(to menu: NSMenu, hiddenCount: Int) {
+        let permission = Self.accessibility
+        menu.addItem(note("Common Bar needs \(permission.name) access \(permission.reason)."))
+        let asked = UserDefaults.standard.bool(forKey: Self.askedForAccessKey)
+        let allow = NSMenuItem(
+            title: asked ? "Open System Settings…" : "Allow \(permission.name)…", action: #selector(allowAccess),
+            keyEquivalent: "")
+        allow.target = self
+        menu.addItem(allow)
+        if asked {
+            menu.addItem(.separator())
+            menu.addItem(note("\(permission.staleSwitchNote(app: "Common Bar")) Reset and Ask Again clears it."))
+            let reset = NSMenuItem(title: "Reset and Ask Again", action: #selector(resetAccess), keyEquivalent: "")
+            reset.target = self
+            menu.addItem(reset)
+        }
+        if hiddenCount > 0 {
+            menu.addItem(.separator())
+            menu.addItem(
+                note(hiddenCount == 1 ? "1 icon is in this folder." : "\(hiddenCount) icons are in this folder."))
+        }
+    }
+
+    /// A line of explanation in a menu: not choosable, and wrapped rather than one long row.
+    private func note(_ text: String) -> NSMenuItem {
+        let item = NSMenuItem()
+        let label = NSTextField(wrappingLabelWithString: text)
+        label.textColor = Tokens.Text.secondary.nsColor
+        label.font = .menuFont(ofSize: NSFont.smallSystemFontSize)
+        label.preferredMaxLayoutWidth = Tokens.Layout.menuPanelWidth - 2 * Tokens.Space.md
+        let size = label.fittingSize
+        let container = NSView(
+            frame: NSRect(x: 0, y: 0, width: size.width + 2 * Tokens.Space.md, height: size.height + Tokens.Space.xs))
+        label.frame = NSRect(x: Tokens.Space.md, y: Tokens.Space.xxs, width: size.width, height: size.height)
+        container.addSubview(label)
+        item.view = container
+        item.isEnabled = false
+        return item
+    }
+
+    @objc private func allowAccess() {
+        let permission = Self.accessibility
+        if UserDefaults.standard.bool(forKey: Self.askedForAccessKey) {
+            NSWorkspace.shared.open(permission.settingsURL)
+        } else {
+            UserDefaults.standard.set(true, forKey: Self.askedForAccessKey)
+            permission.request()
+        }
+    }
+
+    /// Clears a record left by an earlier copy, whose switch shows on but doesn't apply to this one.
+    @objc private func resetAccess() {
+        do {
+            try Self.accessibility.resetAndRequest()
+        } catch {
+            NSApp.activate()
+            NSAlert(error: error).runModal()
+        }
+    }
+
+    // MARK: Opening
+
+    /// An icon brought on screen to be opened, until what it opened closes.
+    private struct Opening {
+        let target: UInt32
+        let started: Date
+        var pressed: (pid: Int32, before: Set<UInt32>, watch: OpenWatch)?
+    }
+
+    @objc private func entryChosen(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? UInt32 else { return }
+        // After the folder's menu has closed, so it isn't taken for the icon's.
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated { self?.open(id) }
+        }
+    }
+
+    private func open(_ id: UInt32) {
+        guard opening == nil, let screen, let end = divider.frame.map(MenuBar.windowServerFrame)?.maxX else { return }
+        let model = MenuBar.model(of: screen, own: ownItems)
+        guard let target = model.items.first(where: { $0.id == id }),
+            let blockEnd = model.blockEnd(toOpen: target, dividerEnd: end, padding: DividerItem.Metric.padding)
+        else {
+            NSSound.beep()
             return
         }
-        let chevron = window.frame
-        collapseTimer?.invalidate()
-        reveal.expand()
-        apply()
-        demo.show(beside: chevron, appearance: button.effectiveAppearance) { [weak self] in
-            UserDefaults.standard.set(true, forKey: Self.onboardedKey)
-            self?.scheduleAutoCollapse()
+        opening = Opening(target: id, started: Date())
+        divider.show(
+            length: DividerLayout.length(showingUpTo: blockEnd, dividerEnd: end, padding: DividerItem.Metric.padding))
+        let timer = Timer(timeInterval: Metric.pollInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.stepOpening() }
         }
+        RunLoop.main.add(timer, forMode: .common)
+        openTimer = timer
+    }
+
+    private func stepOpening() {
+        guard opening == nil || !followOpening() else { return }
+        openTimer?.invalidate()
+        openTimer = nil
+        opening = nil
+        apply()
+    }
+
+    /// One step of opening an icon: wait for it to arrive on screen, press it, then wait for its
+    /// menu or popover to close. Returns false when done.
+    private func followOpening() -> Bool {
+        guard var opening, let screen else { return false }
+        let now = Date()
+        if var pressed = opening.pressed {
+            let open = MenuBar.somethingOpened(since: pressed.before, by: pressed.pid, on: screen)
+            let phase = pressed.watch.update(somethingOpen: open, now: now)
+            opening.pressed = pressed
+            self.opening = opening
+            return phase != .done
+        }
+
+        let model = MenuBar.model(of: screen, own: ownItems)
+        // Pressed only once all of it is on screen: a menu opened off-screen can't be seen and
+        // still takes the keyboard.
+        guard let target = model.items.first(where: { $0.id == opening.target }),
+            target.window.frame.minX >= model.geometry.minX, target.window.frame.maxX <= model.geometry.maxX
+        else {
+            return now.timeIntervalSince(opening.started) < Metric.arrivalTimeout
+        }
+        // Asked again: Accessibility's frames moved with the icon.
+        guard
+            let owner = model.folderEntries(Self.accessibleItems(), ownPID: Self.ownPID)
+                .first(where: { $0.id == target.id })?.owner
+        else { return false }
+        let before = MenuBar.onScreenWindowIDs()
+        guard MenuBarExtras.press(pid: owner.pid, at: target.window.frame) else { return false }
+        opening.pressed = (owner.pid, before, OpenWatch(started: now))
+        self.opening = opening
+        return true
+    }
+
+    private static let ownPID = ProcessInfo.processInfo.processIdentifier
+
+    /// Every running app's menu bar items, as Accessibility describes them.
+    private static func accessibleItems() -> [AccessibleItem] {
+        let apps = NSWorkspace.shared.runningApplications.map {
+            MenuBarExtras.App(pid: $0.processIdentifier, bundleID: $0.bundleIdentifier, name: $0.localizedName ?? "")
+        }
+        return MenuBarExtras.items(of: apps)
     }
 
     @objc func showSettings() {
@@ -400,9 +337,8 @@ final class MenuBarController: NSObject {
 
 extension MenuBarController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // The how-to plays in the menu bar beside the chevron, so both fit on a first launch.
         Welcome.showIfNeeded(
-            WelcomeInfo(line: "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them."))
+            WelcomeInfo(line: "Keeps your menu bar tidy. The icons you rarely use wait in the More folder."))
         updates.start()
     }
 

@@ -51,6 +51,14 @@ public struct MenuBarGeometry: Equatable, Sendable {
         return .visible
     }
 
+    /// Whether a window hangs from this menu bar, as a status item's menu or popover does: its top
+    /// is at the bar's bottom edge, give or take a popover's arrow.
+    public func hangsBelow(_ frame: CGRect) -> Bool {
+        let bottom = top + height
+        return frame.minY >= bottom - 8 && frame.minY <= bottom + 12 && frame.height > 0
+            && frame.maxX > minX && frame.minX < maxX
+    }
+
     /// Whether a window sits in this menu bar's row: the status item layer also holds the
     /// panels that open from items, which hang below it.
     func holds(_ frame: CGRect) -> Bool {
@@ -74,7 +82,7 @@ public enum Visibility: Equatable, Sendable {
 public enum Section: Equatable, Sendable {
     /// Right of the divider: always showing.
     case shown
-    /// Left of it: off-screen while the bar is collapsed.
+    /// Left of it: kept off-screen, reached through a folder.
     case hidden
 }
 
@@ -91,7 +99,7 @@ public struct MenuBarItem: Equatable, Sendable, Identifiable {
 public struct OwnItems: Equatable, Sendable {
     /// The divider every hidden icon is left of.
     public var divider: CGRect?
-    /// The chevron, the always-hidden divider, and the spacers.
+    /// Its other items: the folders.
     public var others: [CGRect]
 
     public init(divider: CGRect?, others: [CGRect] = []) {
@@ -124,18 +132,5 @@ public struct MenuBarModel: Equatable, Sendable {
                     window: window, visibility: geometry.visibility(of: window.frame),
                     section: hidden ? .hidden : .shown)
             }
-    }
-
-    /// Icons on screen that can't be seen right now.
-    public var stranded: [MenuBarItem] { items.filter { $0.visibility.isStranded } }
-
-    /// Whether `x` in this menu bar holds neither another app's icon nor the app's menus, so
-    /// resting the pointer or clicking there can reveal. Common Bar's own items don't count: a
-    /// stretched divider covers exactly the space that is empty.
-    public func isEmptySpace(at x: CGFloat) -> Bool {
-        // Without a notch, the app's menus can't be seen, so only the right half is trusted.
-        let start = geometry.notch?.upperBound ?? (geometry.minX + geometry.maxX) / 2
-        guard x >= start, x < geometry.maxX else { return false }
-        return !items.contains { $0.window.frame.minX <= x && x < $0.window.frame.maxX }
     }
 }

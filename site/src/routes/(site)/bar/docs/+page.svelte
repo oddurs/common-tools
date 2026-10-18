@@ -6,10 +6,9 @@
 	const bar = tool('bar');
 	const sections: [string, string][] = [
 		['install', 'Install'],
-		['hide', 'Hide icons'],
-		['show', 'Show them again'],
-		['always', 'Always-hidden icons'],
-		['spacers', 'Spacers'],
+		['folder', 'The More folder'],
+		['open', 'Open an icon'],
+		['accessibility', 'Accessibility'],
 		['menu', 'The menu'],
 		['settings', 'Settings'],
 		['questions', 'Questions'],
@@ -21,114 +20,89 @@
 	<h2 id="install">Install</h2>
 	<Install tool={bar} />
 	<p class="callout">
-		On first launch a chevron appears beside the system icons, and a short how-to plays right there in the
-		menu bar. Right-click the chevron, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
+		On first launch the More folder appears beside the system icons, and every icon left of it moves off
+		the menu bar. Right-click More, choose <b>Settings…</b>, and turn on <b>Open at login</b>.
 	</p>
 
-	<h2 id="hide">Hide icons</h2>
+	<h2 id="folder">The More folder</h2>
 	<p>
-		The chevron is the boundary. Icons to its right always show; icons to its left are tucked away
-		whenever the bar is collapsed.
+		More is the boundary. Icons to its right, and the system's own, stay in the menu bar. Every icon to
+		its left is kept off-screen all the time, past the screen's left edge, rather than under the notch or
+		behind the app's menus, where macOS would shuffle the bar around it.
 	</p>
+	<p>
+		Each icon is where Common Bar found it: icons you had showing stay, icons you had hidden are in More.
+		macOS's own <kbd>⌘</kbd>-drag still moves the icons in the menu bar among themselves.
+	</p>
+
+	<h2 id="open">Open an icon</h2>
 	<ol>
+		<li>Click More. It lists the icons in it, in menu bar order, each with its app's icon and name.</li>
 		<li>
-			Hold <kbd>⌘</kbd> with the pointer over the menu bar. After a moment every hidden icon shows, and a
-			thin line appears just left of the chevron, where the hidden icons begin.
+			Choose one. Common Bar brings that icon on screen and opens it, as clicking it would: its menu or
+			panel drops from the menu bar.
 		</li>
-		<li>
-			Keep holding <kbd>⌘</kbd> and drag an icon past that line. This is macOS's own ⌘-drag. An icon dropped
-			between the line and the chevron stays visible.
-		</li>
-		<li>Let go of <kbd>⌘</kbd>. Everything left of the line disappears, and the line with it.</li>
+		<li>Close the menu, and the icon goes back off-screen.</li>
 	</ol>
-	<p>To bring an icon back for good, hold <kbd>⌘</kbd> and drag it to the right of the line.</p>
 	<p>
-		To see it done, right-click the chevron and choose <b>How to Arrange…</b>. An icon is picked up,
-		dragged past the chevron, and hidden, three times over, right in the menu bar. Any click, or holding
-		<kbd>⌘</kbd> yourself, stops it. With Reduce Motion on, it shows a still instead.
+		The icon nearest More opens right beside it. One further along opens where it lands, under the notch
+		or behind the app's menus, and the icons between it and More stay out of sight meanwhile.
 	</p>
 
-	<h2 id="show">Show them again</h2>
-	<ul>
-		<li><b>Click the chevron.</b> Click it again to hide.</li>
-		<li><b>Hover</b> over empty menu bar space for a moment.</li>
-		<li><b>Scroll down</b> on the menu bar, or <b>click its empty space</b>. Scroll up to hide.</li>
-	</ul>
+	<h2 id="accessibility">Accessibility</h2>
 	<p>
-		Revealed icons hide again by themselves: after ten seconds for a click (change it in
-		<a href="#settings">Settings</a>), or half a second after the pointer leaves the bar for a hover. They
-		stay while you're still working in the menu bar or a menu from it is open.
+		Tidying the menu bar needs no permission. Listing and opening the icons in More needs Accessibility:
+		on macOS 26 every menu bar icon belongs to Control Center as far as the window list is concerned, so
+		only Accessibility says which app made each one, and only Accessibility can open it.
 	</p>
-
-	<h2 id="always">Always-hidden icons</h2>
 	<p>
-		For icons you almost never need, turn on <b>Always-hidden section</b> in
-		<a href="#settings">Settings</a>. It's off by default. A dotted line then appears further left; icons
-		past it stay hidden even when the others show, which matters on a notched display where there's little
-		room.
-	</p>
-	<ul>
-		<li>
-			<kbd>⌥</kbd>-click the chevron to show both sections. <kbd>⌥</kbd>-click again to hide everything.
-		</li>
-		<li>Holding <kbd>⌘</kbd> shows the dotted line too, so you can drag icons into either section.</li>
-		<li>Hidden icons show with no gap beside the chevron, whichever sections are open.</li>
-	</ul>
-
-	<h2 id="spacers">Spacers</h2>
-	<p>
-		Spacers are blank gaps you can put between icons to group them. Add up to five in
-		<a href="#settings">Settings</a>. Each is a narrow empty slot that shows a dashed outline only while
-		you hold <kbd>⌘</kbd> over the menu bar, so you can find it and drag it into place. New spacers appear just
-		right of the chevron; drag one past the chevron and it hides like any icon. Removing a spacer remembers
-		where it was for when you add it back.
+		Common Bar asks the first time you click More, never at launch. Until it's allowed, More says why and
+		how many icons it holds, with <b>Allow Accessibility…</b>. If the switch in System Settings is already
+		on but More still asks, the switch belongs to an earlier copy of Common Bar;
+		<b>Reset and Ask Again</b>
+		in More clears it.
 	</p>
 
 	<h2 id="menu">The menu</h2>
 	<p>
-		Right-click the chevron, or <kbd>⌃</kbd>-click it, for <b>How to Arrange…</b> (the how-to again),
-		<b>Settings…</b> (<kbd>⌘,</kbd>), and <b>Quit Common Bar</b>.
+		Right-click More, or <kbd>⌃</kbd>-click it, for <b>Settings…</b> (<kbd>⌘,</kbd>) and
+		<b>Quit Common Bar</b>.
 	</p>
 
 	<h2 id="settings">Settings</h2>
 	<p>
 		Open <b>Settings…</b> from the menu, or open Common Bar again from Finder or Spotlight while it's running.
 	</p>
-	<h3>Show Hidden Icons When</h3>
-	<p>
-		Turn off any way of revealing you don't want: <b>Hovering over empty menu bar space</b>,
-		<b>Scrolling down on the menu bar</b>, or <b>Clicking empty menu bar space</b>. The chevron always
-		works.
-	</p>
-	<h3>Spacers</h3>
-	<p>How many spacers to show, from none (the default) to five.</p>
+	<h3>Folders</h3>
+	<p>Whether Accessibility is allowed, with a button to System Settings when it isn't.</p>
 	<h3>General</h3>
 	<ul>
 		<li><b>Open at login</b> starts Common Bar when you log in.</li>
 		<li>
-			<b>Hide again after</b>: how long icons shown with a click stay out. 5 seconds, 10 seconds (the
-			default), 30 seconds, 1 minute, or Never.
+			<b>Check for updates daily</b> asks GitHub for the latest release once a day. It's off by default and
+			sends nothing about you or your Mac.
 		</li>
-		<li><b>Always-hidden section</b> adds the dotted line described <a href="#always">above</a>.</li>
 	</ul>
 	<h3>Common Tools</h3>
 	<p>The other Common Tools apps, to open or get, and the version of Common Bar you're running.</p>
-	<p>
-		These are ordinary preferences, so <code>defaults write com.oddurs.reasonal</code> works too. The keys
-		are
-		<code>showOnHover</code>, <code>showOnScroll</code>, and <code>showOnClick</code> (booleans), and
-		<code>autoHide</code> (seconds; <code>0</code> means Never), and <code>spacers</code> (0 to 5).
-	</p>
 
 	<h2 id="questions">Questions</h2>
-	<h3>I can't see the chevron.</h3>
+	<h3>I can't see More.</h3>
 	<p>
-		On a crowded notched display it can end up behind the camera housing. Hold <kbd>⌘</kbd> and drag other icons
-		out of the way, or quit apps you don't need in the menu bar. Common Bar places itself beside the system
-		icons on first launch to avoid this.
+		On a crowded notched display it can end up behind the camera housing if many icons sit right of it.
+		Quit apps you don't need in the menu bar. Common Bar places itself beside the system icons on first
+		launch to avoid this.
 	</p>
-	<h3>Does it need any permissions?</h3>
-	<p>No. It watches pointer position and modifier keys, which macOS allows without Accessibility access.</p>
+	<h3>Where did my hidden icons go?</h3>
+	<p>
+		Into More, always-hidden ones included. Earlier versions showed them in the menu bar on a click or a
+		hover; on a crowded notched display most landed under the notch, out of sight.
+	</p>
+	<h3>An icon in More won't open.</h3>
+	<p>
+		Common Bar opens an icon only once all of it is on screen: a menu opened off-screen can't be seen and
+		would still take the keyboard. If an icon can't reach the screen in time, More leaves it be.
+	</p>
 
 	<h2 id="source">Build from source</h2>
 	<p>The Command Line Tools are enough; Xcode is not required.</p>

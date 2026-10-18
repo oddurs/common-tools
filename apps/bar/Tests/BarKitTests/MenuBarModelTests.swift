@@ -2,7 +2,7 @@ import BarKit
 import CoreGraphics
 import Testing
 
-/// Recorded on a 14-inch MacBook Pro on macOS 26.5 with Common Bar revealed: a 1728-point-wide
+/// Recorded on a 14-inch MacBook Pro on macOS 26.5 with an earlier Common Bar showing its hidden icons: a 1728-point-wide
 /// screen, the notch from x 771 to 956, a 33-point menu bar, and every status item's window
 /// belonging to Control Center (pid 628). Names are what Screen Recording shows; Common Bar
 /// never sees them.
@@ -98,8 +98,9 @@ import Testing
     }
 
     @Test func fourteenIconsAreStranded() {
-        #expect(model.stranded.count == 14)
-        #expect(model.stranded.allSatisfy { $0.section == .hidden })
+        let stranded = model.items.filter(\.visibility.isStranded)
+        #expect(stranded.count == 14)
+        #expect(stranded.allSatisfy { $0.section == .hidden })
     }
 
     @Test func everyIconRightOfTheChevronCanBeSeen() {
@@ -129,25 +130,7 @@ import Testing
         let hidden = collapsedModel.items.filter { $0.section == .hidden }
         #expect(ids(hidden) == [55267, 55742])
         #expect(hidden.allSatisfy { $0.visibility == .offScreen })
-        #expect(collapsedModel.stranded.isEmpty)
-    }
-
-    @Test func theStretchedDividerIsEmptySpace() {
-        // Before, it was looked up by a window name macOS 26 doesn't give, so hovering here never revealed.
-        #expect(collapsedModel.isEmptySpace(at: 1000))
-        #expect(collapsedModel.isEmptySpace(at: 960))
-    }
-
-    @Test func anotherAppsIconIsNotEmptySpace() {
-        // Before, only windows the window server called on screen were checked, and on macOS 26
-        // it calls no status item on screen, so resting on any icon revealed.
-        #expect(!collapsedModel.isEmptySpace(at: 1120))
-        #expect(!collapsedModel.isEmptySpace(at: 1700))
-    }
-
-    @Test func theNotchAndTheMenusAreNotEmptySpace() {
-        #expect(!collapsedModel.isEmptySpace(at: 800))
-        #expect(!collapsedModel.isEmptySpace(at: 300))
+        #expect(collapsedModel.items.allSatisfy { !$0.visibility.isStranded })
     }
 
     // MARK: Other screens
@@ -157,13 +140,6 @@ import Testing
         #expect(plain.visibility(of: CGRect(x: 10, y: 0, width: 30, height: 24)) == .visible)
         #expect(plain.visibility(of: CGRect(x: -20, y: 0, width: 30, height: 24)) == .behindAppMenus)
         #expect(plain.visibility(of: CGRect(x: -40, y: 0, width: 30, height: 24)) == .offScreen)
-    }
-
-    @Test func withoutANotchOnlyTheRightHalfCountsAsEmptySpace() {
-        let plain = MenuBarGeometry(minX: 0, maxX: 1920, height: 24)
-        let model = MenuBarModel(windows: [], geometry: plain, own: OwnItems(divider: nil))
-        #expect(!model.isEmptySpace(at: 900))
-        #expect(model.isEmptySpace(at: 1000))
     }
 
     @Test func aScreenToTheRightCountsFromItsOwnEdge() {
@@ -178,6 +154,19 @@ import Testing
         let other = StatusItemWindow(
             id: 2, frame: CGRect(x: 1000, y: -200, width: 30, height: 24), ownerPID: 1, ownerName: "")
         #expect(MenuBarModel(windows: [other], geometry: Self.notched, own: OwnItems(divider: nil)).items.isEmpty)
+    }
+
+    @Test func menusAndPopoversHangFromTheBar() {
+        // Recorded: a menu at y 34, a popover with its arrow at y 28, Control Center's panel at 29.
+        #expect(Self.notched.hangsBelow(CGRect(x: 600, y: 34, width: 57, height: 34)))
+        #expect(Self.notched.hangsBelow(CGRect(x: 0, y: 28, width: 226, height: 106)))
+        #expect(Self.notched.hangsBelow(CGRect(x: 948, y: 29, width: 336, height: 167)))
+    }
+
+    @Test func aWindowLowerDownOrOffThisScreenDoesNot() {
+        #expect(!Self.notched.hangsBelow(CGRect(x: 100, y: 200, width: 600, height: 400)))
+        #expect(!Self.notched.hangsBelow(CGRect(x: 0, y: 0, width: 1728, height: 33)))
+        #expect(!Self.notched.hangsBelow(CGRect(x: -7604, y: 34, width: 57, height: 34)))
     }
 
     @Test func withoutTheDividerLaidOutNothingIsCountedHidden() {

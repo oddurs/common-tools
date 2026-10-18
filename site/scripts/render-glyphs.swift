@@ -16,6 +16,8 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "paperclip": (14, .regular), "cup.and.saucer.fill": (13, .regular), "headphones": (14, .regular),
     "calendar": (14, .regular), "keyboard": (13, .regular),
     "gauge.with.dots.needle.33percent": (14, .regular), "globe": (14, .regular), "timer": (14, .regular),
+    // Common Bar's More folder.
+    "ellipsis.circle": (15, .regular),
     // Common Stats' card icons.
     "cpu": (13, .medium), "memorychip": (13, .medium), "network": (13, .medium),
     "arrow.up.arrow.down": (12, .semibold), "square.stack.3d.up": (13, .medium),

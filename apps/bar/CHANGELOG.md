@@ -4,27 +4,27 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-### Fixed
+### Changed
 
-- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
-- Resting the pointer on a menu bar icon, or clicking one, no longer shows the hidden icons. On macOS 26 every icon counted as empty menu bar space; now only space no other app's icon takes up does, including the space beside the chevron where the hidden icons wait.
-- Always-hidden icons stay off-screen while the others show. The dotted line's stretch was measured once, and a reveal could slide it far enough right that icons past it sat on screen, out of sight behind the notch or the app's menus. It now stretches further whenever that happens.
-- No more blank gaps when hidden icons are showing. The hidden icons used to sit 16 pt away from the chevron, and with the always-hidden section off there was another 16 pt gap among them. A divider with nothing to do now takes up no room, without being removed from the menu bar, so opening and closing stay smooth however often you do it.
+- Common Bar is now a folder. The chevron became **More**, and every icon left of it stays off-screen all the time instead of sliding into the menu bar on request, so nothing lands under the notch or behind the app's menus and nothing reshuffles. Click More to see those icons, each with its app's icon and name, and choose one to open it: Common Bar brings it on screen just long enough for its menu, then puts it back. Icons you had hidden, always-hidden ones included, are all in More now; icons right of the chevron stay in the menu bar.
+- Common Bar needs Accessibility to list and open the icons in More, and asks the first time you open it, never at launch. Until then More says why and how many icons it holds. Tidying the menu bar still needs no permission.
+- Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
+- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 
 ### Added
 
-- A Welcome window on first launch: what Common Bar does, Open at login, and the Common Tools family. The how-to in the menu bar plays as before.
+- A Welcome window on first launch: what Common Bar does, Open at login, and the Common Tools family.
 - An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
-- Spacers: blank gaps you drag between menu bar icons to group them. Choose up to five under **Spacers** in Settings. They're invisible except while you hold ⌘, when a dashed outline shows where each one is.
 
-### Changed
+### Removed
 
-- Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
-- Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
-- Clicking empty menu bar space no longer reveals hidden icons unless you turn it on in Settings. A stray click on blank bar space used to open or close the bar.
-- Smoother opening and closing. Hidden icons glide in from just past the screen's edge instead of from thousands of points away, the chevron turns with a gentle spring to point the way they go, and the ⌘ hairline fades in.
-- While you hold ⌘, a hairline marks where hidden icons begin, just left of the chevron. Icons dropped between it and the chevron stay visible; the divider is no longer moved back beside the chevron behind your back.
-- The first-launch tips are now an animated how-to played in the menu bar beside the chevron: holding ⌘ and dragging an icon past the chevron to hide it. It plays three times, stops on any click or when you hold ⌘, and **How to Arrange…** plays it again.
+- Showing hidden icons in the menu bar: clicking the chevron, hovering over or clicking empty menu bar space, scrolling on the bar, holding ⌘ to see them, ⌥-click, and hiding them again after a few seconds. More replaces all of them.
+- The always-hidden section and its dotted line. Settings no longer has Show Hidden Icons When, Hide again after, or Always-hidden section.
+- The first-launch tips and **How to Arrange…**, which taught ⌘-dragging icons past the chevron.
+
+### Fixed
+
+- Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 
 ## [0.3.0] - 2026-10-16
 

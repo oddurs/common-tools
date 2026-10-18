@@ -18,7 +18,7 @@ Seven apps, one shared package and a website, checked by one seam: `scripts/task
 
 ```sh
 scripts/task test bar                        # one app's suite
-scripts/task test bar --filter=RevealTests   # one suite, or one test by name
+scripts/task test bar --filter=FolderTests   # one suite, or one test by name
 scripts/task test kit                        # CommonKit, including the contract for every app
 scripts/task cover command                   # line coverage, per file
 scripts/task smoke stats                     # build if needed, launch, wait five seconds

@@ -2,46 +2,64 @@
 	import Film from '../film/Film.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import Window from '../mac/Window.svelte';
-	import { frameAt, metrics } from './demo';
+	import { chosen, frameAt, metrics, stage } from './demo';
 
 	let { time, dark = false }: { time: number; dark?: boolean } = $props();
 
 	const frame = $derived(frameAt(time));
+	const chosenName = $derived(frame.dropdown.rows[chosen].name);
 </script>
 
 <Film {frame} {dark} slug="bar" app="Notes" menus={['File', 'Edit', 'Format', 'View', 'Window', 'Help']}>
 	{#snippet extras()}
-		{#each frame.icons as icon (icon.symbol)}
+		{#each frame.icons as icon, i (i)}
 			<span
 				class="icon"
-				class:lifted={icon.lifted}
 				style:left="{icon.x}px"
 				style:width="{metrics.slot}px"
 				style:opacity={icon.opacity}><Symbol name={icon.symbol} /></span
 			>
 		{/each}
-		{#if frame.line.opacity > 0}
-			<!-- Glyphs.line: a 1 × 12 pt hairline in its 4 pt marker item. -->
-			<span
-				class="icon"
-				style:left="{frame.line.x}px"
-				style:width="{metrics.marker}px"
-				style:opacity={frame.line.opacity}><i class="line"></i></span
+		<span
+			class="icon"
+			class:open={frame.folder.open}
+			style:left="{frame.folder.x}px"
+			style:width="{metrics.folder}px"><Symbol name="ellipsis.circle" /></span
+		>
+	{/snippet}
+
+	{#snippet top()}
+		{#if frame.dropdown.opacity > 0}
+			<!-- The More folder's menu: each hidden icon by its app, in menu bar order. -->
+			<div
+				class="menu"
+				style:left="{stage.dropdown.x}px"
+				style:top="{stage.dropdown.y}px"
+				style:width="{metrics.dropdownWidth}px"
+				style:opacity={frame.dropdown.opacity}
 			>
+				{#each frame.dropdown.rows as row, i (row.symbol)}
+					<div class="row" class:highlight={frame.dropdown.highlight === i}>
+						<span class="app"><Symbol name={row.symbol} scale={0.8} /></span>{row.name}
+					</div>
+				{/each}
+			</div>
 		{/if}
-		<span class="icon" style:left="{frame.chevron.x}px" style:width="{metrics.chevron}px">
-			<!-- Glyphs.swift: a 6 × 9 pt canvas, right-angled arms 3.5 pt from a tip inset 1 pt, 1.25 pt stroke. -->
-			<svg width="6" height="9" viewBox="0 0 6 9" aria-hidden="true">
-				<path
-					d={frame.chevron.open ? 'M1.5 1 L5 4.5 L1.5 8' : 'M4.5 1 L1 4.5 L4.5 8'}
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.25"
-					stroke-linejoin="miter"
-					stroke-linecap="butt"
-				/>
-			</svg>
-		</span>
+		{#if frame.itemMenu.opacity > 0}
+			<div
+				class="menu"
+				style:left="{frame.itemMenu.x}px"
+				style:top="{stage.dropdown.y}px"
+				style:width="{metrics.itemMenuWidth}px"
+				style:opacity={frame.itemMenu.opacity}
+			>
+				<div class="row title">{chosenName}</div>
+				<div class="row">Show History…</div>
+				<div class="row">Clear History</div>
+				<div class="separator"></div>
+				<div class="row">Settings…</div>
+			</div>
+		{/if}
 	{/snippet}
 
 	<Window title="Notes" x={330} y={300} width={720} height={420}>
@@ -60,15 +78,75 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		border-radius: 8px;
 	}
-	.icon.lifted {
-		top: 3px;
-		filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+	/* macOS 26 marks an open menu bar extra with a soft capsule. */
+	.icon.open {
+		background: color-mix(in srgb, currentColor 14%, transparent);
 	}
-	.line {
-		width: 1px;
-		height: 12px;
-		background: currentColor;
+
+	/* A menu in macOS 26: Liquid Glass, larger corners. */
+	.menu {
+		position: absolute;
+		z-index: 30;
+		padding: 5px;
+		border-radius: 12px;
+		background: rgba(246, 246, 248, 0.82);
+		backdrop-filter: blur(40px) saturate(1.8);
+		box-shadow:
+			inset 0 0.5px 0 rgba(255, 255, 255, 0.9),
+			0 18px 50px rgba(0, 0, 0, 0.22),
+			0 0 0 0.5px rgba(0, 0, 0, 0.14);
+		font:
+			13px/1.3 -apple-system,
+			BlinkMacSystemFont,
+			'SF Pro Text',
+			sans-serif;
+		color: #1d1d1f;
+		text-shadow: none;
+		--tile: rgba(0, 0, 0, 0.06);
+		--secondary: #6e6e73;
+		--highlight: #0a84ff;
+	}
+	:global(.dark) .menu {
+		background: rgba(36, 36, 40, 0.78);
+		box-shadow:
+			inset 0 0.5px 0 rgba(255, 255, 255, 0.22),
+			0 18px 50px rgba(0, 0, 0, 0.5),
+			0 0 0 0.5px rgba(255, 255, 255, 0.14);
+		color: #f5f5f7;
+		--tile: rgba(255, 255, 255, 0.1);
+		--secondary: #98989d;
+	}
+	.row {
+		height: 24px;
+		padding: 0 8px;
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		border-radius: 6px;
+	}
+	.row.highlight {
+		background: var(--highlight);
+		color: white;
+	}
+	.row.title {
+		color: var(--secondary);
+		font-weight: 600;
+	}
+	/* Stands in for the app's icon. */
+	.app {
+		width: 18px;
+		height: 18px;
+		display: grid;
+		place-items: center;
+		border-radius: 5px;
+		background: var(--tile);
+	}
+	.separator {
+		height: 1px;
+		margin: 4px 8px;
+		background: color-mix(in srgb, currentColor 15%, transparent);
 	}
 	.note {
 		padding: 30px 36px;

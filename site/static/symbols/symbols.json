@@ -45,6 +45,10 @@
     "height" : 16,
     "width" : 12
   },
+  "ellipsis.circle" : {
+    "height" : 17,
+    "width" : 18
+  },
   "eye" : {
     "height" : 13,
     "width" : 21
