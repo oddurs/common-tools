@@ -59,6 +59,19 @@ scripts/task test bar --filter=X    # just the tests whose name matches
 
 A branch must pass this before it becomes a pull request. A bug fix comes with the test that would have caught it. Each app's `CLAUDE.md` says what else its changes need: accuracy arguments, `worldkey eval` numbers, snapshots.
 
+## Installing on your Mac
+
+```sh
+scripts/install bar                        # build, quit the running copy, replace /Applications/Common Bar.app, reopen
+scripts/install --changed-since HEAD~3     # only the apps that changed (CommonKit or shared/ means all of them)
+scripts/install --dry-run                  # say what it would do, touch nothing
+git config commontools.autoinstall true    # once: install what every merge changes, by itself
+```
+
+`scripts/install` builds with `scripts/task build`, so the copy is signed with the development identity and keeps its permission grants; it refuses an ad-hoc signed build. A running copy is quit and opened again, and an app that wasn't installed is opened. A failed build is skipped, the rest still install, and the exit status says so.
+
+With `commontools.autoinstall` on, `scripts/agent done` (which `ship` runs) and a `git pull` of `main` in the primary checkout hand the install to a background worker and return at once. The worker builds `origin/main` in its own worktree, `../.worktrees/common-tools/autoinstall`, installs the apps changed since the last install, and logs to `~/Library/Logs/Common Tools/install.log`. One runs at a time; a merge that lands meanwhile goes next. It's off unless you turn it on, so CI and other contributors never see it.
+
 ## Releases
 
 ```sh

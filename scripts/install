@@ -1,0 +1,285 @@
+#!/bin/sh
+set -eu
+
+# Installs apps from this checkout into /Applications, replacing the copies there.
+#
+#   scripts/install [app ...] [--changed-since <rev>] [--dry-run]
+#   scripts/install --after-merge <old-rev>
+#
+# No app means every app in apps.json; --changed-since keeps only the apps whose apps/<slug>/
+# changed between <rev> and HEAD, or all of them when packages/CommonKit or shared/ did. Each app
+# is built with scripts/task build, which signs it with the shared development identity so its
+# permission grants carry over; an ad-hoc signed build is refused. A running copy is quit first
+# and opened again after; an app that wasn't installed before is opened too. A failed build is
+# skipped, the rest still install, and the script exits non-zero at the end.
+#
+# --after-merge is what scripts/agent done and the post-merge hook call. It does nothing unless
+# this Mac opted in with `git config commontools.autoinstall true`. Then it returns at once and a
+# background worker installs what changed on origin's default branch since the last install, in
+# a worktree of its own, logging to ~/Library/Logs/Common Tools/install.log. One worker runs at a
+# time; a merge that lands while it runs is picked up when it finishes.
+
+cd "$(dirname "$0")/.."
+root="$(pwd)"
+applications="/Applications"
+identity="Common Tools Development"
+log_file="$HOME/Library/Logs/Common Tools/install.log"
+
+die() {
+    echo "install: $*" >&2
+    exit 1
+}
+
+# Apps are what apps/ holds and apps.json names, as in scripts/task.
+app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
+all_apps() {
+    for dir in "$root"/apps/*/; do
+        slug="$(basename "$dir")"
+        if app_field "$slug" BUNDLE >/dev/null 2>&1; then echo "$slug"; fi
+    done
+}
+
+changed_apps() {
+    git diff --name-only "$1" HEAD | awk -v apps="$(all_apps | tr '\n' ' ')" '
+        /^packages\/CommonKit\// { every = 1; next }
+        /^shared\//              { every = 1; next }
+        /^apps\/[^\/]+\//        { split($0, p, "/"); app[p[2]] = 1 }
+        END {
+            n = split(apps, list, " ")
+            for (i = 1; i <= n; i++) if (every || app[list[i]]) print list[i]
+        }'
+}
+
+# Launch Services knows a running app by its bundle identifier, wherever it was launched from.
+running_pid() { lsappinfo info -only pid -app "$1" | sed -n 's/.*"pid"=\([0-9][0-9]*\).*/\1/p'; }
+
+# Waits up to $2 tenths of a second for process $1 to exit.
+wait_exit() {
+    tries=0
+    while kill -0 "$1" 2>/dev/null; do
+        tries=$((tries + 2))
+        [ "$tries" -le "$2" ] || return 1
+        sleep 0.2
+    done
+}
+
+# Asks the app to quit, so it saves what it keeps; kills it only when it won't.
+quit_app() {
+    pid="$(running_pid "$1")"
+    [ -n "$pid" ] || return 0
+    if ! osascript -e "quit app id \"$1\"" >/dev/null 2>&1; then
+        echo "    $1 didn't take the quit event" >&2
+    fi
+    wait_exit "$pid" 100 && return 0
+    echo "    $1 is still running after 10 seconds; killing it" >&2
+    kill "$pid" 2>/dev/null || return 0
+    wait_exit "$pid" 30 && return 0
+    kill -9 "$pid" 2>/dev/null || return 0
+    wait_exit "$pid" 10
+}
+
+report() { printf '%-9s %-16s %s\n' "$1" "$2" "$3"; }
+
+install_app() {
+    slug="$1"
+    name="$(app_field "$slug" NAME)"
+    bundle_id="$(app_field "$slug" BUNDLE)"
+    bundle="$root/build/$slug/$name.app"
+    dest="$applications/$name.app"
+
+    # The installed copy may carry an older bundle identifier (a rename); quit that one too.
+    ids="$bundle_id"
+    installed=0
+    if [ -d "$dest" ]; then
+        installed=1
+        old_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$dest/Contents/Info.plist" 2>/dev/null)" || old_id=""
+        if [ -n "$old_id" ] && [ "$old_id" != "$bundle_id" ]; then ids="$ids $old_id"; fi
+    fi
+    running=0
+    for id in $ids; do
+        if [ -n "$(running_pid "$id")" ]; then running=1; fi
+    done
+    reopen=0
+    if [ "$running" -eq 1 ] || [ "$installed" -eq 0 ]; then reopen=1; fi
+
+    if [ "$dry_run" -eq 1 ]; then
+        what="would build and replace $dest"
+        [ "$installed" -eq 1 ] || what="would build and install $dest"
+        if [ "$running" -eq 1 ]; then
+            what="$what, quit $ids, reopen"
+        elif [ "$reopen" -eq 1 ]; then
+            what="$what, open"
+        fi
+        report "$slug" "$name" "$what"
+        return 0
+    fi
+
+    build_log="$(mktemp -t common-tools-install)"
+    if ! "$root/scripts/task" build "$slug" >"$build_log" 2>&1; then
+        cat "$build_log" >&2
+        command rm -f "$build_log"
+        report "$slug" "$name" "build failed; skipped"
+        return 1
+    fi
+    command rm -f "$build_log"
+    # An ad-hoc signature would get grants of its own and orphan the ones the identity holds.
+    if ! codesign --verify --strict "$bundle" 2>/dev/null ||
+        ! codesign -dvv "$bundle" 2>&1 | grep -qx "Authority=$identity"; then
+        report "$slug" "$name" "not signed with '$identity'; skipped"
+        return 1
+    fi
+
+    for id in $ids; do
+        if ! quit_app "$id"; then
+            report "$slug" "$name" "$id would not quit; skipped"
+            return 1
+        fi
+    done
+    if ! command rm -rf "$dest" || ! ditto "$bundle" "$dest"; then
+        report "$slug" "$name" "could not write $dest; skipped"
+        return 1
+    fi
+    result="installed"
+    [ "$installed" -eq 0 ] || result="updated"
+    if [ "$reopen" -eq 1 ]; then
+        if open "$dest"; then
+            result="$result, opened"
+        else
+            result="$result, but it didn't open"
+        fi
+    fi
+    report "$slug" "$name" "$result"
+}
+
+state_dir() { echo "$(git rev-parse --path-format=absolute --git-common-dir)/autoinstall"; }
+
+# Takes the worker lock, clearing one whose worker is gone (a crash, a restart).
+take_lock() {
+    mkdir "$state/lock" 2>/dev/null && return 0
+    pid="$(cat "$state/lock/pid" 2>/dev/null)" || pid=""
+    [ -n "$pid" ] && ! kill -0 "$pid" 2>/dev/null || return 1
+    command rm -rf "$state/lock"
+    mkdir "$state/lock" 2>/dev/null
+}
+
+after_merge() {
+    [ "$(git config --type=bool --default=false commontools.autoinstall)" = true ] || exit 0
+    old="$(git rev-parse --verify --quiet "${1:-}^{commit}")" || die "usage: scripts/install --after-merge <old-rev>"
+    state="$(state_dir)"
+    mkdir -p "$state" "$(dirname "$log_file")"
+    # What /Applications reflects. The worker keeps it; the first merge on this Mac starts it.
+    [ -f "$state/installed" ] || echo "$old" >"$state/installed"
+    : >"$state/pending"
+    if take_lock; then
+        # Its own process group and no terminal, so the build outlives whoever merged.
+        set -m
+        nohup "$root/scripts/install" --worker </dev/null >>"$log_file" 2>&1 &
+        echo "$!" >"$state/lock/pid"
+        echo "==> installing the apps this merge changed, in the background; log: $log_file"
+    else
+        echo "==> an install is already running; this merge goes next (log: $log_file)"
+    fi
+}
+
+install_once() {
+    target_ref="$(git symbolic-ref --quiet refs/remotes/origin/HEAD)" || {
+        echo "==> origin/HEAD is not set; run 'git remote set-head origin --auto'"
+        return 1
+    }
+    target="$(git rev-parse "$target_ref")"
+    from="$(cat "$state/installed")"
+    [ "$from" != "$target" ] || return 0
+    echo "==> $(date '+%Y-%m-%d %H:%M:%S') installing ${target_ref#refs/remotes/} $(git rev-parse --short "$from")..$(git rev-parse --short "$target")"
+    # A worktree of its own: the primary checkout can move or hold edits while this builds.
+    main="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+    origin_url="$(git remote get-url origin 2>/dev/null)" || origin_url=""
+    tree="$(dirname "$main")/.worktrees/$(basename "${origin_url:-$main}" .git)/autoinstall"
+    if [ -d "$tree" ]; then
+        git -C "$tree" checkout --quiet --force --detach "$target" || return 1
+    else
+        git worktree add --quiet --detach "$tree" "$target" || return 1
+    fi
+    status=0
+    "$tree/scripts/install" --changed-since "$from" || status=$?
+    # Advanced either way: a failed app is in the log, and retrying every merge would rebuild
+    # everything since. `scripts/install <app>` installs it by hand.
+    echo "$target" >"$state/installed"
+    echo "==> $(date '+%Y-%m-%d %H:%M:%S') finished (status $status)"
+}
+
+worker() {
+    # Run by a hook, git exports variables that would point every git call here at the wrong tree.
+    for var in $(git rev-parse --local-env-vars); do unset "$var"; done
+    state="$(state_dir)"
+    while :; do
+        while [ -e "$state/pending" ]; do
+            command rm -f "$state/pending"
+            if ! install_once; then echo "==> install stopped; the next merge tries again"; fi
+        done
+        command rm -rf "$state/lock"
+        # A merge that arrived after the last look found the lock still held, so it's ours to run.
+        [ -e "$state/pending" ] || break
+        mkdir "$state/lock" 2>/dev/null || break
+        echo "$$" >"$state/lock/pid"
+    done
+}
+
+dry_run=0
+since=""
+areas=""
+while [ $# -gt 0 ]; do
+    case "$1" in
+    --after-merge)
+        after_merge "${2:-}"
+        exit 0
+        ;;
+    --worker)
+        worker
+        exit 0
+        ;;
+    --dry-run) dry_run=1 ;;
+    --changed-since)
+        [ $# -ge 2 ] || die "--changed-since needs a revision"
+        since="$2"
+        shift
+        ;;
+    --changed-since=*) since="${1#--changed-since=}" ;;
+    -*) die "unknown option $1; usage: scripts/install [app ...] [--changed-since <rev>] [--dry-run]" ;;
+    *) areas="$areas $1" ;;
+    esac
+    shift
+done
+
+apps=""
+for area in ${areas:-$(all_apps)}; do
+    case "$area" in
+    site | kit) echo "==> $area is not an app; nothing to install" ;;
+    *)
+        app_field "$area" BUNDLE >/dev/null 2>&1 && [ -d "$root/apps/$area" ] || die "no app '$area' in apps.json"
+        apps="$apps $area"
+        ;;
+    esac
+done
+if [ -n "$since" ]; then
+    git rev-parse --verify --quiet "$since^{commit}" >/dev/null || die "unknown revision '$since'"
+    changed=" $(changed_apps "$since" | tr '\n' ' ')"
+    kept=""
+    for slug in $apps; do
+        case "$changed" in *" $slug "*) kept="$kept $slug" ;; esac
+    done
+    apps="$kept"
+    why=""
+    git diff --quiet "$since" HEAD -- packages/CommonKit shared || why=" (CommonKit or shared/ changed, so every app)"
+    echo "==> changed since $(git rev-parse --short "$since")$why:${apps:- no app}"
+fi
+[ -n "$apps" ] || exit 0
+
+if [ "$dry_run" -eq 0 ] && ! security find-identity -v -p codesigning | grep -q "\"$identity\""; then
+    die "no valid '$identity' signing identity; run scripts/dev-cert once on this Mac"
+fi
+
+failed=0
+for slug in $apps; do
+    install_app "$slug" || failed=$((failed + 1))
+done
+[ "$failed" -eq 0 ] || die "$failed app(s) not installed"
