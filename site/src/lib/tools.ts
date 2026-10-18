@@ -69,16 +69,16 @@ export const tools: Tool[] = [
 	{
 		slug: 'bar',
 		name: 'Common Bar',
-		tagline: 'A tidy menu bar. The icons you rarely use wait behind the chevron.',
+		tagline: 'A tidy menu bar. The icons you rarely use wait in one folder.',
 		summary:
-			'Tucks away the menu bar icons you rarely use. Click the chevron to show them; ⌘-drag an icon past it to hide it.',
+			'Keeps the menu bar icons you rarely use in one folder, off the menu bar and clear of the notch. Click the folder and choose one to open it.',
 		repo: `${github}/tree/main/apps/bar`,
 		legacyRepo: `${legacy}/common-bar`,
 		asset: 'CommonBar.zip',
 		requires: 'macOS 14 or later · Apple silicon and Intel',
 		icon: 'bar/icon.png',
-		firstRun: 'Hold ⌘ and drag the icons you rarely use past the chevron.',
-		demo: 'A crowded menu bar. Clicking the Common Bar chevron hides the icons to its left; hovering brings them back. Holding ⌘ shows every icon, and one is dragged past the chevron to hide it.'
+		firstRun: 'Click the More folder and choose an icon to open it.',
+		demo: 'A crowded menu bar. Common Bar moves the icons left of its More folder off the menu bar. Clicking More lists them by app, and choosing one opens it beside the folder; once its menu closes, it goes back.'
 	}
 ];
 

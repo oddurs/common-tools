@@ -39,10 +39,10 @@
 		"BUNDLE": "com.oddurs.reasonal",
 		"MIN_MACOS": "14.0",
 		"TOOLS": "",
-		"description": "Hides the menu bar icons you rarely use behind a chevron. Hold ⌘ to arrange them.",
+		"description": "Keeps the menu bar tidy: the icons you rarely use wait in a folder, ready to open.",
 		"topics": ["menu-bar", "menubar-app", "menu-bar-manager"],
 		"published": true,
-		"PERMISSIONS": ""
+		"PERMISSIONS": "Accessibility"
 	},
 	"battery": {
 		"NAME": "Common Battery",

@@ -1,155 +1,152 @@
-// The Common Bar demo, in the app's default setup: a crowded menu bar, tidied
-// with one click on the chevron, revealed by hover, and rearranged by ⌘-dragging an icon past the
-// chevron. Sizes and glyphs are the app's own (Glyphs.swift, MenuBarController). The optional always-hidden section is off
-// by default, so it isn't shown. The scene is a pure function of time, so the recorder can step
+// The Common Bar demo: a crowded menu bar tidied into the More folder, the folder opened to list
+// the icons in it by app, and one of them opened from there. Sizes and the folder's symbol are the
+// app's own (MenuBarController). Opening an icon brings it on screen just long enough for its
+// menu: the one chosen here is the nearest the divider, which Common Bar shows right beside the
+// folder (MenuBarModel.blockEnd). The scene is a pure function of time, so the recorder can step
 // through it.
 
 import { direct, type BaseFrame } from '../film/director';
-import { clamp, ramp, type Point } from '../film/motion';
+import { clamp, ramp } from '../film/motion';
 import { extrasRight, menuBarHeight, screen, statusSlot, wide } from '../mac/geometry';
 import type { SymbolName } from '../mac/symbols';
 
-export type Section = 'hidden' | 'visible';
-
-/** Left to right as they start out: other apps' menu bar icons. Hidden ones sit left of the chevron. */
-const initial: [SymbolName, Section][] = [
-	['cup.and.saucer.fill', 'hidden'],
-	['gauge.with.dots.needle.33percent', 'hidden'],
-	['timer', 'hidden'],
-	['globe', 'hidden'],
-	['headphones', 'hidden'],
-	['calendar', 'hidden'],
-	['keyboard', 'hidden'],
-	['drop.fill', 'hidden'],
-	['lock.fill', 'hidden'],
-	['video.fill', 'hidden'],
-	['shippingbox.fill', 'hidden'],
-	['bolt.fill', 'hidden'],
-	['eye', 'hidden'],
-	['paperclip', 'hidden'],
-	['music.note', 'visible'],
-	['message.fill', 'visible'],
-	['icloud.fill', 'visible']
+/** Left to right: other apps' menu bar icons, with the names a folder gives them. */
+const hidden: [SymbolName, string][] = [
+	['cup.and.saucer.fill', 'Keep Awake'],
+	['gauge.with.dots.needle.33percent', 'Activity'],
+	['timer', 'Timer'],
+	['globe', 'VPN'],
+	['headphones', 'Audio'],
+	['calendar', 'Calendar'],
+	['keyboard', 'Input'],
+	['drop.fill', 'Color Picker'],
+	['lock.fill', 'Passwords'],
+	['video.fill', 'Recorder'],
+	['shippingbox.fill', 'Containers'],
+	['bolt.fill', 'Power'],
+	['eye', 'Watcher'],
+	['paperclip', 'Clipboard']
 ];
+/** Right of the folder: these stay in the menu bar. */
+const pinned: SymbolName[] = ['music.note', 'message.fill', 'icloud.fill'];
 
-export type Placed = { symbol: SymbolName; x: number; opacity: number; lifted?: boolean };
+/** The one opened from the folder: the nearest the divider, so it shows beside the folder. */
+export const chosen = hidden.length - 1;
+
+export type Placed = { symbol: SymbolName; x: number; opacity: number };
+export type Row = { symbol: SymbolName; name: string };
 export type Frame = BaseFrame & {
 	icons: Placed[];
-	chevron: { x: number; open: boolean };
-	/** The hairline marking where hidden icons begin, shown only while ⌘ is held. */
-	line: { x: number; opacity: number };
+	folder: { x: number; open: boolean };
+	/** The folder's menu: its rows, how far it has faded in, and the row under the pointer. */
+	dropdown: { opacity: number; rows: Row[]; highlight: number | null };
+	/** The chosen icon's own menu. */
+	itemMenu: { opacity: number; x: number };
 };
 
 export const metrics = {
 	right: extrasRight,
 	slot: statusSlot,
-	/** The chevron item: 10 pt long (Glyphs.swift), 26 pt on screen with the menu bar's padding. */
-	chevron: 26,
-	/** The divider while arranging: a 4 pt marker item (DividerLayout), 20 pt on screen. */
-	marker: 20
+	/** The folder: a square status item showing ellipsis.circle. */
+	folder: 32,
+	row: 24,
+	dropdownWidth: 210,
+	itemMenuWidth: 190
 };
 
-const dragged: SymbolName = 'music.note';
+const folderX = metrics.right - pinned.length * metrics.slot - metrics.folder;
+export const stage = {
+	folderX,
+	dropdown: { x: folderX, y: menuBarHeight + 5 },
+	/** Where the chosen icon sits while it is open: just left of the folder. */
+	chosenX: folderX - metrics.slot
+};
 
-/** How far the hidden icons are revealed, 0 (pushed away) to 1 (in place), at time t. */
-function reveal(t: number): number {
-	const open = (from: number, to: number) => Math.min(ramp(t, from, 220), 1 - ramp(t, to, 220));
-	return Math.max(
-		1 - ramp(t, marks.collapse, 260),
-		open(marks.hoverIn, marks.hoverOut),
-		open(marks.command + 200, marks.commandUp)
-	);
+/** How far the hidden icons are in place, 1, or pushed off the screen's left edge, 0. */
+function tidy(t: number): number {
+	return 1 - ramp(t, marks.tidy, 600);
 }
 
-function order(t: number): [SymbolName, Section][] {
-	if (t < marks.pickUp) return initial;
-	const rest = initial.filter(([symbol]) => symbol !== dragged);
-	if (t < marks.drop) return rest;
-	// Dropped just left of the chevron: hidden from now on.
-	const at = rest.findIndex(([, section]) => section === 'visible');
-	return [...rest.slice(0, at), [dragged, 'hidden'], ...rest.slice(at)];
-}
-
-/** Lays the items out from the right edge, as the menu bar does. */
-function layout(t: number, cursor: Point): Pick<Frame, 'icons' | 'chevron' | 'line'> {
-	const r = reveal(t);
-	const arranging = Math.min(ramp(t, marks.command + 200, 220), 1 - ramp(t, marks.commandUp, 220));
+function layout(t: number): Pick<Frame, 'icons' | 'folder' | 'itemMenu'> {
 	const m = metrics;
-	let x = m.right;
-	const items = [...order(t)].reverse();
 	const icons: Placed[] = [];
-	for (const [symbol, section] of items) {
-		if (section !== 'visible') continue;
+	let x = m.right;
+	for (const symbol of [...pinned].reverse()) {
 		x -= m.slot;
 		icons.push({ symbol, x, opacity: 1 });
 	}
-	x -= m.chevron;
-	const chevron = { x, open: r > 0.5 };
-	// The divider beside the chevron takes no room until ⌘ is held; then it opens to a marker.
-	x -= m.marker * arranging;
-	const line = { x, opacity: arranging };
-	for (const [symbol, section] of items) {
-		if (section !== 'hidden') continue;
+	x -= m.folder;
+	const folder = { x, open: dropdownOpacity(t) > 0.5 };
+	const r = tidy(t);
+	// The divider stretches, pushing every icon left of the folder past the screen's edge.
+	const push = (1 - r) * (x + 80);
+	for (const [symbol] of [...hidden].reverse()) {
 		x -= m.slot;
-		// Collapsing stretches that divider, pushing these off the screen.
-		icons.push({ symbol, x: x - (1 - r) * 700, opacity: clamp(r * 1.4 - 0.2) });
+		icons.push({ symbol, x: x - push, opacity: clamp(r * 1.4 - 0.2) });
 	}
-	if (t >= marks.pickUp && t < marks.drop) {
-		icons.push({ symbol: dragged, x: cursor.x - m.slot / 2 - 6, opacity: 1, lifted: true });
+	// Opened from the folder, the chosen icon comes in beside it, and goes back once its menu closes.
+	const out = Math.min(ramp(t, marks.choose, 260), 1 - ramp(t, marks.itemClose, 260));
+	if (out > 0) {
+		const [symbol] = hidden[chosen];
+		icons.push({ symbol, x: stage.chosenX - (1 - out) * 120, opacity: out });
 	}
-	return { icons, chevron, line };
+	const itemMenu = {
+		opacity: Math.min(ramp(t, marks.itemOpen, 160), 1 - ramp(t, marks.itemClose, 120)),
+		x: stage.chosenX
+	};
+	return { icons, folder, itemMenu };
+}
+
+function dropdownOpacity(t: number): number {
+	return Math.min(ramp(t, marks.open, 160), 1 - ramp(t, marks.choose, 120));
 }
 
 const y = menuBarHeight / 2;
-const chevronAt = (visible: number) => ({
-	x: metrics.right - visible * metrics.slot - metrics.chevron / 2 + 2,
-	y: y + 3
+const folderCenter = { x: folderX + metrics.folder / 2, y: y + 2 };
+const rowCenter = (i: number) => ({
+	x: stage.dropdown.x + 80,
+	y: stage.dropdown.y + 7 + i * metrics.row + metrics.row / 2
 });
-// The dragged icon starts as the leftmost visible one, and lands just left of the chevron.
-const pickAt = { x: metrics.right - 2.5 * metrics.slot, y };
-// Past the hairline, not just past the chevron: icons dropped between the two stay visible.
-const dropAt = {
-	x: metrics.right - 2 * metrics.slot - metrics.chevron - metrics.marker - metrics.slot / 2 - 4,
-	y
-};
 const crowded = { x: screen.width, y: 0, zoom: 1.25 };
-const close = { x: screen.width, y: 0, zoom: 2.0 };
+const close = { x: screen.width - 260, y: 0, zoom: 1.6 };
 
-/** In on the right of the menu bar, wide enough to show the crowd at first, closer for the details. */
+/** In on the right of the menu bar, wide enough to show the crowd at first, closer for the folder. */
 export const film = direct((d) => {
 	d.camera(wide);
 	d.at(500).camera(crowded);
 	d.at(600).caption('A full menu bar: every app wants a spot.');
-	d.at(3000).point({ x: 1300, y: 300 });
-	d.at(4100).point(chevronAt(3));
-	d.at(4200).click().mark('collapse').caption('One click on the chevron tucks the extras away.');
-	d.at(4700).camera(close);
-	d.at(6000).point(chevronAt(3));
-	d.at(6800).caption('Hover, scroll, or click again to bring them back.');
-	d.at(6900).point({ x: 1100, y: y + 2 });
-	d.at(7200).mark('hoverIn');
-	d.at(8800).point({ x: 1100, y: y + 2 });
-	d.at(9300).mark('hoverOut');
-	d.at(9400).point({ x: 1150, y: 260 });
-	d.at(10_100)
-		.mark('command')
-		.hold('command')
-		.caption('Hold ⌘ and drag an icon past the chevron to hide it.');
-	d.at(10_200).point({ x: 1300, y: 200 });
-	d.at(10_800).point(pickAt);
-	d.at(10_900).mark('pickUp');
-	d.at(11_600).poster();
-	d.at(12_100).point(dropAt);
-	d.at(12_200).mark('drop');
-	d.at(12_700).point(dropAt).mark('commandUp').release();
-	d.at(13_600).point({ x: 1300, y: 280 });
-	d.at(14_200).camera(wide);
-	d.at(14_800).end(2600);
+	d.at(3000).mark('tidy').caption('Common Bar keeps the extras in one folder, out of the way.');
+	d.at(4400).camera(close);
+	d.at(4600).point({ x: 1250, y: 300 });
+	d.at(5600).point(folderCenter);
+	d.at(5700).click().mark('open').caption('Click More to see them, each with its app.');
+	d.at(6500).point(rowCenter(3));
+	d.at(7300).poster();
+	d.at(8000).point(rowCenter(chosen));
+	d.at(8200).mark('hover');
+	d.at(8800).point(rowCenter(chosen));
+	d.at(8900).click().mark('choose').caption('Choose one, and it opens right beside the folder.');
+	d.at(9300).mark('itemOpen');
+	d.at(9600).point({ x: stage.chosenX + 60, y: menuBarHeight + 40 });
+	d.at(11_400).point({ x: 1100, y: 420 });
+	d.at(11_600).click().mark('itemClose').caption('Close it, and it goes back in the folder.');
+	d.at(13_400).camera(wide);
+	d.at(14_000).end(2600);
 });
 
 const marks = film.marks;
 
 export function frameAt(time: number): Frame {
 	const base = film.frame(time);
-	return { ...base, ...layout(base.t, base.cursor!) };
+	const t = base.t;
+	const highlight = t >= marks.hover && t < marks.choose ? chosen : null;
+	return {
+		...base,
+		...layout(t),
+		dropdown: {
+			opacity: dropdownOpacity(t),
+			rows: hidden.map(([symbol, name]) => ({ symbol, name })),
+			highlight
+		}
+	};
 }

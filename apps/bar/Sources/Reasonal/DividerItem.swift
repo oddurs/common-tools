@@ -1,44 +1,45 @@
 import AppKit
 import BarKit
 
-/// A divider status item that is stretched, taken down to nothing, or shown as a slim
-/// marker, without ever being removed or hidden with `isVisible`. On Tahoe either of those
-/// is how the system records a user taking an item out of the menu bar: it writes
-/// `VisibleCC = 0` and forgets the item's saved position. The technique is the one Ice and
-/// Thaw use.
+/// The divider that keeps every icon left of it off-screen by stretching, without ever being
+/// removed or hidden with `isVisible`. On Tahoe either of those is how the system records a user
+/// taking an item out of the menu bar: it writes `VisibleCC = 0` and forgets the item's saved
+/// position. The technique is the one Ice and Thaw use.
 @MainActor
 final class DividerItem {
-    private enum Metric {
+    enum Metric {
         /// A zero-length item can stay a synthetic window with no window-server window; one
         /// point makes a real one before the intended length is applied.
         static let creationLength: CGFloat = 1
         /// The width left when taken down to nothing. Zero would let the window vanish.
         static let collapsedWidth: CGFloat = 1
-        static let markerWidth: CGFloat = 4
         /// What macOS adds to an item's length while its padding constraint is on, measured on Tahoe.
         static let padding: CGFloat = 16
-        static let markerFade: TimeInterval = 0.15
+    }
+
+    private enum State: Equatable {
+        case hiding
+        case down
+        case showing(CGFloat)
     }
 
     let item: NSStatusItem
-    private let marker: NSImage
     /// Holds the button's width to macOS's padding. With it off, the item can be narrower
     /// than an empty item, which is what leaves no gap.
     private let paddingConstraint: NSLayoutConstraint?
-    private var state: DividerState?
+    private var state: State?
 
-    init(named name: String, marker: NSImage) {
+    init(named name: String) {
         DividerItem.markVisible(name)
         item = NSStatusBar.system.statusItem(withLength: Metric.creationLength)
         item.autosaveName = name
-        self.marker = marker
         if let button = item.button, let content = button.window?.contentView {
             let container = button.superview
             paddingConstraint = content.constraintsAffectingLayout(for: .horizontal)
                 .first { $0.secondItem === container }
             button.isEnabled = false
             button.appearsDisabled = true
-            button.imagePosition = .imageOnly
+            button.alphaValue = 0
             button.setAccessibilityElement(false)
         } else {
             paddingConstraint = nil
@@ -54,50 +55,49 @@ final class DividerItem {
         }
     }
 
-    /// Writes only what changed: every status item update on Tahoe is a Control Center
-    /// round trip, and repeating them leaks system resources.
-    func set(_ newState: DividerState, animated: Bool) {
-        guard newState != state, let button = item.button else { return }
-        state = newState
-        setIfChanged(button, \.isHighlighted, false)
-        switch newState {
-        case .stretched:
-            // Measured before stretching, while the item still sits where it ends.
-            let length = reach
-            setIfChanged(button, \.image, nil)
-            setIfChanged(button, \.alphaValue, 0)
-            paddingConstraint?.isActive = true
-            setIfChanged(item, \.length, length)
-        case .collapsed:
-            setIfChanged(button, \.alphaValue, 0)
-            paddingConstraint?.isActive = false
-            setIfChanged(item, \.length, 0)
-            setWindowWidth(Metric.collapsedWidth)
-        case .marker:
-            setIfChanged(button, \.image, marker)
-            paddingConstraint?.isActive = false
-            setIfChanged(item, \.length, Metric.markerWidth)
-            setWindowWidth(Metric.markerWidth)
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = animated ? Metric.markerFade : 0
-                button.animator().alphaValue = 1
-            }
-        }
-    }
-
     /// Where the item is, in Cocoa coordinates, once AppKit has laid it out.
     var frame: NSRect? { item.button?.window?.frame }
 
-    /// Stretches further if the window server shows icons left of this stretched divider still on
-    /// screen: a reveal slid its right end along since its reach was measured. Only ever lengthens,
-    /// so it can't undo itself.
+    /// Stretches until every icon left of it is off-screen.
+    func hide() {
+        guard state != .hiding else { return }
+        // Measured before stretching, while the item still sits where it ends.
+        let length = reach
+        state = .hiding
+        paddingConstraint?.isActive = true
+        setLength(length)
+    }
+
+    /// Takes up no room and hides nothing: for a divider dragged right of the folder, where
+    /// stretching would push the folder and the pinned icons off-screen.
+    func takeDown() {
+        guard state != .down else { return }
+        state = .down
+        paddingConstraint?.isActive = false
+        setLength(0)
+        if let window = item.button?.window, window.frame.width != Metric.collapsedWidth {
+            window.setContentSize(NSSize(width: Metric.collapsedWidth, height: window.frame.height))
+        }
+    }
+
+    /// Stretches only `length`, bringing the nearest icons left of it on screen to open one.
+    func show(length: CGFloat) {
+        guard state != .showing(length) else { return }
+        state = .showing(length)
+        paddingConstraint?.isActive = true
+        setLength(length)
+    }
+
+    /// Stretches further if the window server shows icons left of this divider still on screen:
+    /// its right end has moved since its reach was measured. Only ever lengthens, so it can't
+    /// undo itself.
     func keepClearingScreen() {
-        guard state == .stretched, let window = item.button?.window, let screen = window.screen,
+        guard state == .hiding, let window = item.button?.window, let screen = window.screen,
             MenuBar.hasStatusItem(at: window.frame, on: screen),
             !DividerLayout.clearsScreen(windowMinX: window.frame.minX, screenMinX: screen.frame.minX)
         else { return }
         let length = reach
-        if length > item.length { item.length = length }
+        if length > item.length { setLength(length) }
     }
 
     /// See `DividerLayout.reach`. The full stretch until AppKit's frame for the item agrees
@@ -110,14 +110,9 @@ final class DividerItem {
             dividerEnd: window.frame.maxX, screenMinX: screen.frame.minX, padding: Metric.padding)
     }
 
-    private func setWindowWidth(_ width: CGFloat) {
-        guard let window = item.button?.window, window.frame.width != width else { return }
-        window.setContentSize(NSSize(width: width, height: window.frame.height))
-    }
-
-    private func setIfChanged<Root: AnyObject, Value: Equatable>(
-        _ root: Root, _ keyPath: ReferenceWritableKeyPath<Root, Value>, _ value: Value
-    ) {
-        if root[keyPath: keyPath] != value { root[keyPath: keyPath] = value }
+    /// Writes only what changed: every status item update on Tahoe is a Control Center round
+    /// trip, and repeating them leaks system resources.
+    private func setLength(_ length: CGFloat) {
+        if item.length != length { item.length = length }
     }
 }

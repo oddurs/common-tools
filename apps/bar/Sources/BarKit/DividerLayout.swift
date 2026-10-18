@@ -3,12 +3,10 @@ import Foundation
 /// The status items' autosave names. macOS saves each item's position under its name,
 /// so these never change.
 public enum ItemName {
+    /// The More folder. It was the chevron, and keeps the chevron's name so it stays where the
+    /// chevron was.
     public static let toggle = "toggle"
     public static let divider = "divider"
-    public static let alwaysDivider = "alwaysDivider"
-
-    /// Spacers are numbered from 1: `spacer1`, `spacer2`, …
-    public static func spacer(_ index: Int) -> String { "spacer\(index + 1)" }
 }
 
 /// Each status item's saved distance from the right edge of the menu bar; larger is
@@ -16,46 +14,34 @@ public enum ItemName {
 public struct ItemPositions: Equatable, Sendable {
     public var toggle: Double
     public var divider: Double
-    public var alwaysDivider: Double
 
-    public init(toggle: Double, divider: Double, alwaysDivider: Double) {
+    public init(toggle: Double, divider: Double) {
         self.toggle = toggle
         self.divider = divider
-        self.alwaysDivider = alwaysDivider
     }
 
     /// Fills in positions macOS hasn't saved yet. Without one, a new item lands at the far
-    /// left, which on a crowded notched display is behind the notch. Each starts just left
-    /// of the one before, wherever the user has since moved that one.
-    public static func seeded(toggle: Double?, divider: Double?, alwaysDivider: Double?) -> ItemPositions {
+    /// left, which on a crowded notched display is behind the notch. The divider starts just
+    /// left of the folder, wherever the user has since moved that.
+    public static func seeded(toggle: Double?, divider: Double?) -> ItemPositions {
         let toggle = toggle ?? 0
-        let divider = divider ?? toggle + 1
-        return ItemPositions(toggle: toggle, divider: divider, alwaysDivider: alwaysDivider ?? divider + 1)
+        return ItemPositions(toggle: toggle, divider: divider ?? toggle + 1)
     }
+
+    /// Everything left of the divider is kept off-screen, so it must sit left of the folder:
+    /// stretched right of it, it would push the folder and the pinned icons off-screen too.
+    public var dividerHides: Bool { divider > toggle }
 }
 
-/// How a divider sits in the menu bar. A divider is never removed or hidden with
-/// `isVisible`: on Tahoe either one is how the system records a user taking an item out
-/// of the menu bar, and it forgets where the item was.
-public enum DividerState: Equatable, Sendable {
-    /// Stretched far wider than any screen, pushing everything left of it off-screen.
-    case stretched
-    /// Taken down to nothing: still holding its place, but leaving no gap among the icons.
-    case collapsed
-    /// A slim mark, so the boundary can be seen while arranging.
-    case marker
-}
-
-/// Where each divider stands for a given reveal. The chevron never changes; the dividers
-/// left of it do the hiding.
-public struct DividerLayout: Equatable, Sendable {
+/// How far the divider stretches to keep every icon left of it off-screen.
+public enum DividerLayout {
+    /// The stretch before AppKit and the window server agree on where the divider is.
     public static let stretchedLength: CGFloat = 10_000
 
-    /// How far a divider stretches to hide: until everything left of it is past the screen's
-    /// left edge, with room to spare. Revealed icons then glide in from just off-screen rather
-    /// than sweeping across thousands of points. Reaching only past the notch instead would
-    /// leave icons on screen behind it, where macOS's overflow rules reshuffle the bar.
-    /// `dividerEnd` is the divider's right edge and `padding` what macOS adds to its length.
+    /// Until everything left of the divider is past the screen's left edge, with room to spare.
+    /// Reaching only past the notch instead would leave icons on screen behind it, where
+    /// macOS's overflow rules reshuffle the bar. `dividerEnd` is the divider's right edge and
+    /// `padding` what macOS adds to its length.
     public static func reach(dividerEnd: CGFloat, screenMinX: CGFloat, padding: CGFloat) -> CGFloat {
         min(max(dividerEnd - screenMinX - padding + offscreenMargin, 0), stretchedLength)
     }
@@ -63,41 +49,16 @@ public struct DividerLayout: Equatable, Sendable {
     static let offscreenMargin: CGFloat = 64
 
     /// Whether a stretched divider whose window starts at `windowMinX` has every icon left of it
-    /// off-screen. Its reach is measured when it stretches; a reveal can later slide its right end
-    /// further right, and a reach that was enough then would leave icons on screen behind the
-    /// app's menus or the notch.
+    /// off-screen. Its reach is measured when it stretches, and the divider's right end moves
+    /// when pinned icons come and go, so a reach that was enough then can leave icons on screen
+    /// behind the app's menus or the notch.
     public static func clearsScreen(windowMinX: CGFloat, screenMinX: CGFloat) -> Bool {
         windowMinX <= screenMinX
     }
 
-    public var divider: DividerState
-    public var alwaysDivider: DividerState
-
-    public init(reveal: Reveal, isPeeking: Bool, positions: ItemPositions, alwaysHidden: Bool) {
-        let revealed = isPeeking || !reveal.isCollapsed
-        let revealsAll = isPeeking || (revealed && reveal.showsAlwaysHidden)
-
-        if isPeeking {
-            divider = .marker
-        } else if revealed {
-            divider = .collapsed
-        } else {
-            divider = Self.hiding(inOrder: positions.divider > positions.toggle)
-        }
-
-        if !alwaysHidden {
-            alwaysDivider = .collapsed
-        } else if revealsAll {
-            alwaysDivider = .marker
-        } else {
-            // Stretched while collapsed too, so a reveal never flashes the always-hidden items.
-            alwaysDivider = Self.hiding(inOrder: positions.alwaysDivider > positions.divider)
-        }
-    }
-
-    /// A divider dragged out of order would push the icons meant to stay visible
-    /// off-screen with the rest, so it is left out of the way instead of stretched.
-    static func hiding(inOrder: Bool) -> DividerState {
-        inOrder ? .stretched : .collapsed
+    /// The length that puts the right end of the icons left of the divider at `blockEnd`,
+    /// for a divider ending at `dividerEnd`. Never negative: the divider can't pull icons right.
+    public static func length(showingUpTo blockEnd: CGFloat, dividerEnd: CGFloat, padding: CGFloat) -> CGFloat {
+        max(dividerEnd - padding - blockEnd, 0)
     }
 }
