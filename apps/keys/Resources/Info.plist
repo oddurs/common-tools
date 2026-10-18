@@ -8,11 +8,11 @@
 	<string>Common Keys</string>
 	<!-- The executable and identifier keep the pre-rename name: macOS keys the Accessibility grant and settings to them. -->
 	<key>CFBundleExecutable</key>
-	<string>LangSmart</string>
+	<string>CommonKeys</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.oddurs.langsmart</string>
+	<string>com.oddurs.commonkeys</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

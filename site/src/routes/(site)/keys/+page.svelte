@@ -84,7 +84,7 @@
 	<section class="ruled">
 		<h2>Measured, not promised.</h2>
 		<p class="muted">
-			<code>worldkey eval</code> types 150 dictionary words per language on the right keyboard and on the
+			<code>common-keys eval</code> types 150 dictionary words per language on the right keyboard and on the
 			wrong one, and counts what happens.
 		</p>
 		<table>
@@ -105,18 +105,18 @@
 
 	<section class="engine ruled">
 		<div>
-			<h2>WorldKey inside.</h2>
+			<h2>KeysKit inside.</h2>
 			<p class="muted">
 				The engine that reads keys on any keyboard is a Swift library and a command-line tool, so
 				scripts and other input tools can use it too.
 			</p>
 		</div>
 		<pre><code
-				><span class="prompt">$</span> worldkey convert ghbdtn --from US --to Russian
+				><span class="prompt">$</span> common-keys convert ghbdtn --from US --to Russian
 привет
-<span class="prompt">$</span> worldkey detect /etta --from US
+<span class="prompt">$</span> common-keys detect /etta --from US
 þetta	com.apple.keylayout.Icelandic
-<span class="prompt">$</span> worldkey convert 안녕하세요 --from 2SetKorean --to US
+<span class="prompt">$</span> common-keys convert 안녕하세요 --from 2SetKorean --to US
 dkssudgktpdy</code
 			></pre>
 	</section>

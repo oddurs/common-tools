@@ -55,7 +55,7 @@ import Testing
     }
 
     @Test func downloadIsOptionalAndGarbageThrows() throws {
-        let data = Self.list(Self.release("bar-v0.4.0", assets: ["worldkey.zip"]))
+        let data = Self.list(Self.release("bar-v0.4.0", assets: ["common-keys.zip"]))
         let newest = try #require(try UpdateCheck.newest(in: data, for: Self.bar))
         #expect(newest.download == nil)
         #expect(throws: (any Error).self) { try UpdateCheck.newest(in: Data("<html>".utf8), for: Self.bar) }

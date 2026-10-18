@@ -57,7 +57,7 @@ scripts/task check bar              # one app: lint + test + build
 scripts/task test bar --filter=X    # just the tests whose name matches
 ```
 
-A branch must pass this before it becomes a pull request. A bug fix comes with the test that would have caught it. Each app's `CLAUDE.md` says what else its changes need: accuracy arguments, `worldkey eval` numbers, snapshots.
+A branch must pass this before it becomes a pull request. A bug fix comes with the test that would have caught it. Each app's `CLAUDE.md` says what else its changes need: accuracy arguments, `common-keys eval` numbers, snapshots.
 
 ## Releases
 

@@ -1,4 +1,4 @@
-// The demo video's script. Every fix in it is real engine output, checked with `worldkey convert`:
+// The demo video's script. Every fix in it is real engine output, checked with `common-keys convert`:
 // "/etta" on U.S. is "þetta" on Icelandic, "ghbdtn" is "привет", "dkssudgktpdy" is "안녕하세요".
 //
 // As in the app, a fix lands when the space after the word is pressed, and the space follows it.

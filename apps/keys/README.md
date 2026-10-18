@@ -12,7 +12,7 @@ A menu bar app that fixes words typed on the wrong keyboard layout, for every ke
 - ⌘Z right after a fix undoes it, and that word is left alone from then on.
 - Double-tap right ⌥ converts the word before the cursor; ⌥⇧Space switches layout.
 - Switching apps restores the layout you last used there, or the one you usually write in.
-- It runs on **WorldKey**, an engine that reads keys on any keyboard. Other tools can use it through the `worldkey` command.
+- It runs on **KeysKit**, an engine that reads keys on any keyboard. Other tools can use it through the `common-keys` command.
 
 Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access; what it learns stays in one file on your Mac.
 
@@ -31,14 +31,14 @@ Requires macOS 14.4 or later.
 
 Release builds are signed ad-hoc, so macOS treats each update as a new app. After updating, the switch in Accessibility may show on and still belong to the old copy; turning it off and on again keeps the old one. Choose **Reset and Ask Again…** from the menu, which removes that record and asks again.
 
-### The `worldkey` command
+### The `common-keys` command
 
-Download [worldkey.zip](https://oddurs.github.io/common-tools/keys//download/worldkey.zip), unzip it, and put `worldkey` on your `PATH`:
+Download [common-keys.zip](https://oddurs.github.io/common-tools/keys//download/common-keys.zip), unzip it, and put `common-keys` on your `PATH`:
 
 ```sh
-unzip worldkey.zip
-xattr -d com.apple.quarantine worldkey
-mv worldkey /usr/local/bin/
+unzip common-keys.zip
+xattr -d com.apple.quarantine common-keys
+mv common-keys /usr/local/bin/
 ```
 
 ## Usage
@@ -54,7 +54,7 @@ Common Keys lives in the menu bar as the flag of the current layout, with a lock
   Shortcuts, Exceptions (per-app layouts), Learning, and General (**Open at login**), and ends with
   the Common Tools family and the app's version.
 
-Learned data lives in `~/Library/Application Support/LangSmart/` (the folder keeps the app's former name):
+Learned data lives in `~/Library/Application Support/Common Keys/`:
 
 - `memory.json` holds learned words, mixed-up keys and each app's usual layout. It also holds the words
   you keep, as salted hashes of the keys (never the text), and your adjustments to the engine's weights.
@@ -64,9 +64,9 @@ Learned data lives in `~/Library/Application Support/LangSmart/` (the folder kee
 
 Forget Everything in Settings clears the first two. The third is rebuilt from the system as needed.
 
-## WorldKey
+## KeysKit
 
-The engine is a library, `WorldKey`, in layers. Each layer knows nothing of the ones above it.
+The engine is a library, `KeysKit`, in layers. Each layer knows nothing of the ones above it.
 
 1. **Keys.** A key press is a key code and modifiers, not a character, because the same key means
    a different letter on every keyboard.
@@ -100,15 +100,15 @@ The engine is a library, `WorldKey`, in layers. Each layer knows nothing of the 
    - what the user taught (`Memory`): words corrected, keys mixed up, and words typed and kept three
      times or more, which count as "you write this here".
 4. **Weights.** Each reading becomes a `FeatureVector`, and `Weights` turn the difference between two
-   readings into a score. The weights are fitted, not chosen: `worldkey train` types dictionary words
+   readings into a score. The weights are fitted, not chosen: `common-keys train` types dictionary words
    on their own keyboard (leave them alone) and on every other one (fix them back), and fits a
    logistic regression that counts a false fix 20 times worse than a missed one. The threshold sits
    above every training example that must stay unfixed. One word in five is held out of training by
-   a fixed hash, and `worldkey eval --split heldOut --engine rules|model` compares the fitted weights
-   with the hand-tuned ones on those words only. `Sources/WorldKey/TrainedWeights.swift` is the
+   a fixed hash, and `common-keys eval --split heldOut --engine rules|model` compares the fitted weights
+   with the hand-tuned ones on those words only. `Sources/KeysKit/TrainedWeights.swift` is the
    generated result, so a change to it shows up in review. A second set, `trainedPrefix`, judges the
    start of a word still being typed, with "some word starts this way" in place of "this is a word".
-   `worldkey eval --prefixes` gates it: no start of a correctly typed word may ever be changed.
+   `common-keys eval --prefixes` gates it: no start of a correctly typed word may ever be changed.
 
    On the Mac, every correction is also a lesson for the weights. A retype or the convert shortcut
    says "fix this", ⌘Z after a fix says "don't" (counted double), a fix left standing weakly says
@@ -126,19 +126,19 @@ or the keys replayed, because an input method would read typed Unicode as key pr
 
 ### Using it from other tools
 
-    worldkey sources [--all]
-    worldkey convert ghbdtn --from US --to Russian # привет
-    worldkey convert 안녕하세요 --from 2SetKorean --to US   # dkssudgktpdy
-    worldkey detect /etta --from US                # þetta  com.apple.keylayout.Icelandic
-    worldkey eval --keyboards US,Russian --words 150 --split heldOut --engine rules|model [--prefixes]
-    worldkey train --write Sources/WorldKey/TrainedWeights.swift
+    common-keys sources [--all]
+    common-keys convert ghbdtn --from US --to Russian # привет
+    common-keys convert 안녕하세요 --from 2SetKorean --to US   # dkssudgktpdy
+    common-keys detect /etta --from US                # þetta  com.apple.keylayout.Icelandic
+    common-keys eval --keyboards US,Russian --words 150 --split heldOut --engine rules|model [--prefixes]
+    common-keys train --write Sources/KeysKit/TrainedWeights.swift
 
-Add `--json` for output another program can parse. The `WorldKey` library product is the same engine
+Add `--json` for output another program can parse. The `KeysKit` library product is the same engine
 for Swift code.
 
 ### How well it works
 
-`worldkey eval --split heldOut` takes dictionary words the weights and character models never saw,
+`common-keys eval --split heldOut` takes dictionary words the weights and character models never saw,
 types each on its own keyboard and on the wrong one, and counts the results. Words whose wrong-keyboard
 reading is itself a real word there, like `an` typed on Greek as `αν`, count neither way: leaving
 them alone is right. On macOS 26 with 150 held-out words per language, hand-tuned rules against the
@@ -172,11 +172,11 @@ The Command Line Tools are enough; Xcode is not required.
 
 ```sh
 scripts/dev-cert                          # once: a stable signing identity, see below
-scripts/task build keys                        # universal build → build/keys/Common Keys.app and build/worldkey
+scripts/task build keys                        # universal build → build/keys/Common Keys.app and build/keys/common-keys
 mv "build/keys/Common Keys.app" /Applications/
 ```
 
-`scripts/dev-cert` puts a self-signed "LangSmart Development" certificate in your login keychain, and
+`scripts/dev-cert` puts a self-signed "Common Tools Development" certificate in your login keychain, and
 builds are signed with it. macOS ties the Accessibility grant to that certificate, so you allow
 Common Keys once and it survives rebuilds. Without it, builds are signed ad-hoc and each one needs
 the grant again.
@@ -195,23 +195,22 @@ scripts/task test keys --filter=X  # only the tests whose name matches
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release keys <version>`.
 
-`swift build && .build/debug/LangSmart --snapshot out.png` renders the menu's cards in light and dark
+`swift build && .build/debug/CommonKeys --snapshot out.png` renders the menu's cards in light and dark
 without opening the menu; add `--status` for the menu bar item instead: fixing, locked, and dimmed. `swift scripts/make-icon.swift` redraws the app icon.
 
 Layout:
 
-- `Sources/WorldKey`: the engine. Keys, keyboards, evidence and decisions, with no UI state.
-- `Sources/LangSmart`: the app: event tap and injection, status item and menu, Settings. The target
-  keeps the app's former name.
-- `Sources/WorldKeyCLI`: the `worldkey` command.
-- `Tests/WorldKeyTests`: unit tests, plus system and accuracy tests against the layouts and
+- `Sources/KeysKit`: the engine. Keys, keyboards, evidence and decisions, with no UI state.
+- `Sources/CommonKeys`: the app: event tap and injection, status item and menu, Settings.
+- `Sources/KeysCLI`: the `common-keys` command.
+- `Tests/KeysKitTests`: unit tests, plus system and accuracy tests against the layouts and
   dictionaries installed on the Mac.
 
 ## Licence
 
 MIT. See [LICENSE](../../LICENSE).
 
-The word lists in `Sources/WorldKey/WordLists` are derived from the [Leipzig Corpora
+The word lists in `Sources/KeysKit/WordLists` are derived from the [Leipzig Corpora
 Collection](https://wortschatz.uni-leipzig.de) (CC BY 4.0). Their corpora are built from Wikipedia
 text (CC BY-SA 4.0), except Estonian and Latvian, which are built from news text. Each file names its
 corpus. `scripts/wordlists` regenerates them.

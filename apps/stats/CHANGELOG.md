@@ -13,6 +13,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Common Stats goes by its own name inside too: the bundle identifier is `com.oddurs.commonstats` and the executable `CommonStats`, like every Common Tools app. The first launch after the update quits the old copy if it's still running and brings your settings and the menu bar icon's position over.
+- Open at login should carry over: the first time the old login item opens Common Stats, the new one takes its place. If Common Stats doesn't open at your next login, turn on **Open at login** in Settings › General again; an old Common Stats entry left in System Settings › General › Login Items can be removed with −.
 - The menu's icons are plain symbols in the secondary label colour, so the graphs and numbers are what stand out. Everything coloured in the menu, including legend dots and the memory bar, now follows the color chosen in Settings; only a warning (memory pressure rising, a disk nearly full) or a critical state shows its own orange or red, and normal memory pressure is neutral. The lighter shades get stronger under Increase Contrast, and the Color setting shows the shades the menu will use.
 - The menu bar icon first appears beside the system's icons, where it can be seen, instead of at the far left, where Common Bar, the notch or an app's menus would hide it.
 - Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.

@@ -1,0 +1,269 @@
+import AppKit
+import CommonKit
+import KeysKit
+import SwiftUI
+
+/// The menu bar item: the current layout's flag, and a real menu under it: Common Stats-style cards for
+/// the day's stats, then the keyboards and the few things there are to do.
+@MainActor
+final class StatusMenu: NSObject, NSMenuDelegate {
+    private let engine: Engine
+    private let openSettings: () -> Void
+    private let item: NSStatusItem
+
+    init(engine: Engine, openSettings: @escaping () -> Void) {
+        self.engine = engine
+        self.openSettings = openSettings
+        // The pre-rename name, so the item keeps its place after the rename.
+        item = NSStatusBar.system.commonItem(autosaveName: "keys", length: NSStatusItem.variableLength)
+        super.init()
+        let menu = NSMenu()
+        menu.delegate = self
+        item.menu = menu
+        render()
+    }
+
+    /// Points from the right edge of the screen: just left of Control Center and the clock.
+
+    /// Redraws the button whenever anything it shows changes.
+    private func render() {
+        withObservationTracking {
+            guard let button = item.button else { return }
+            let status = engine.status
+            let flag = engine.currentLayout?.flag
+            let image = status.look == .locked ? flag.flatMap(Self.lockedFlagImage) : flag.flatMap(Self.flagImage)
+            button.image = image ?? Self.keyboardImage
+            // Dimmed, like a disabled menu item, while Common Keys is not fixing anything.
+            button.appearsDisabled = status.look == .dimmed
+            button.toolTip = status.toolTip
+        } onChange: {
+            Task { @MainActor [weak self] in self?.render() }
+        }
+    }
+
+    private static let keyboardImage: NSImage? = {
+        let image = NSImage(systemSymbolName: "keyboard", accessibilityDescription: "Keyboard")
+        image?.isTemplate = true
+        return image
+    }()
+
+    /// A flag as an image cropped to its ink. As a title an emoji sits high: the button centres the
+    /// font's line, and the glyph fills the top of it. The button centres an image on the bar.
+    /// The ink is found by drawing, as an emoji's glyph is a bitmap its font reports only roughly.
+    static func flagImage(_ flag: String) -> NSImage? {
+        let scale: CGFloat = 2
+        let line = CTLineCreateWithAttributedString(
+            NSAttributedString(string: flag, attributes: [.font: NSFont.systemFont(ofSize: 15 * scale)]))
+        let canvas = CTLineGetImageBounds(line, nil).insetBy(dx: -4 * scale, dy: -4 * scale).integral
+        guard
+            let context = CGContext(
+                data: nil, width: Int(canvas.width), height: Int(canvas.height), bitsPerComponent: 8,
+                bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(),
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return nil }
+        context.textPosition = CGPoint(x: -canvas.minX, y: -canvas.minY)
+        CTLineDraw(line, context)
+        guard let pixels = context.data?.assumingMemoryBound(to: UInt8.self) else { return nil }
+        let inked = { (x: Int, y: Int) in pixels[y * context.bytesPerRow + x * 4 + 3] > 0 }
+        // Rows from the top, as a bitmap context stores them and as cropping counts them.
+        let rows = (0..<context.height).filter { y in (0..<context.width).contains { inked($0, y) } }
+        let columns = (0..<context.width).filter { x in rows.contains { inked(x, $0) } }
+        guard let top = rows.first, let bottom = rows.last, let left = columns.first, let right = columns.last,
+            let image = context.makeImage()?.cropping(
+                to: CGRect(x: left, y: top, width: right - left + 1, height: bottom - top + 1))
+        else { return nil }
+        let flagImage = NSImage(
+            cgImage: image, size: NSSize(width: CGFloat(image.width) / scale, height: CGFloat(image.height) / scale))
+        flagImage.accessibilityDescription = flag
+        return flagImage
+    }
+
+    /// The flag with a lock beside it, as one image so the button centres them together. The lock
+    /// is filled when the image is drawn, in the label colour of the bar's appearance, so it reads on
+    /// a light or a dark menu bar as a template image would; the flag keeps its colours.
+    static func lockedFlagImage(_ flag: String) -> NSImage? {
+        guard let flagImage = flagImage(flag),
+            let lock = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: flagImage.size.height * 0.7, weight: .semibold))
+        else { return nil }
+        let gap: CGFloat = 2
+        let size = NSSize(
+            width: flagImage.size.width + gap + lock.size.width,
+            height: max(flagImage.size.height, lock.size.height))
+        let image = NSImage(size: size, flipped: false) { _ in
+            flagImage.draw(
+                at: NSPoint(x: 0, y: (size.height - flagImage.size.height) / 2), from: .zero,
+                operation: .sourceOver, fraction: 1)
+            let rect = NSRect(
+                origin: NSPoint(x: size.width - lock.size.width, y: (size.height - lock.size.height) / 2),
+                size: lock.size)
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            context.beginTransparencyLayer(in: rect, auxiliaryInfo: nil)
+            lock.draw(in: rect)
+            NSColor.labelColor.setFill()
+            rect.fill(using: .sourceIn)
+            context.endTransparencyLayer()
+            return true
+        }
+        // Drawn afresh each time, so the lock follows the bar from light to dark.
+        image.cacheMode = .never
+        image.accessibilityDescription = "\(flag) locked"
+        return image
+    }
+
+    /// Card views exist only while the menu is open, so a closed menu costs nothing.
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        menu.removeAllItems()
+
+        if !engine.trusted {
+            let allow = action("Allow Accessibility Access…") { [engine] in engine.openAccessibilitySettings()
+            }
+            allow.subtitle = "Needed to see and fix what you type"
+            allow.image = symbol("hand.raised.fill")
+            menu.addItem(allow)
+            let reset = action("Reset and Ask Again…") { [engine] in
+                do {
+                    try engine.resetAccess()
+                } catch {
+                    NSApp.activate()
+                    NSAlert(error: error).runModal()
+                }
+            }
+            reset.subtitle = Engine.permission.staleSwitchNote(app: "Common Keys")
+            reset.image = symbol("arrow.counterclockwise")
+            menu.addItem(reset)
+            menu.addItem(.separator())
+        }
+
+        let data = DropdownData(engine: engine)
+        for panel in DropdownPanel.allCases {
+            menu.addItem(hosted(PanelView(data: data, panel: panel)))
+        }
+        menu.addItem(.separator())
+
+        for layout in engine.layouts {
+            let item = action("\(layout.flag)  \(layout.name)") { [engine] in engine.select(layout.id) }
+            item.state = layout.id == engine.currentLayoutID ? .on : .off
+            if layout.id == engine.preferredLayoutID { item.subtitle = "Preferred" }
+            menu.addItem(item)
+        }
+        if engine.layouts.count > 1 {
+            let toggle = action("Next Layout") { [engine] in engine.toggleLayout() }
+            toggle.image = symbol("arrow.triangle.2.circlepath")
+            if let shortcut = engine.prefs.toggleShortcut, let key = shortcut.menuKey {
+                toggle.keyEquivalent = key
+                toggle.keyEquivalentModifierMask = shortcut.menuModifiers
+            }
+            menu.addItem(toggle)
+        }
+
+        menu.addItem(.separator())
+        if let app = engine.frontApp, let bundleID = app.bundleIdentifier,
+            bundleID != Bundle.main.bundleIdentifier
+        {
+            menu.addItem(appItem(app, bundleID))
+        }
+        let pause = action(engine.prefs.autoCorrect ? "Pause Fixing" : "Resume Fixing") { [engine] in
+            engine.prefs.autoCorrect.toggle()
+        }
+        pause.image = symbol(engine.prefs.autoCorrect ? "pause.circle" : "play.circle")
+        if let app = engine.pausedIn { pause.subtitle = "Paused in \(app)" }
+        menu.addItem(pause)
+
+        menu.addItem(.separator())
+        let settings = action("Settings…", key: ",", perform: openSettings)
+        settings.image = symbol("gearshape")
+        menu.addItem(settings)
+        let quit = action("Quit Common Keys", key: "q") { NSApp.terminate(nil) }
+        quit.image = symbol("power")
+        menu.addItem(quit)
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        // Drop the hosting views; menuNeedsUpdate rebuilds them on the next open.
+        for item in menu.items { item.view = nil }
+    }
+
+    private func hosted(_ view: some View) -> NSMenuItem {
+        let host = NSHostingView(rootView: view)
+        host.frame.size = host.fittingSize
+        let item = NSMenuItem()
+        item.view = host
+        return item
+    }
+
+    /// Tahoe gives standard menu items icons; match them. Earlier releases show none.
+    private func symbol(_ name: String) -> NSImage? {
+        guard #available(macOS 26, *) else { return nil }
+        return NSImage(systemSymbolName: name, accessibilityDescription: nil)
+    }
+
+    /// "In Mail" with a submenu: follow what was learned, pin a layout, or pause there.
+    private func appItem(_ app: NSRunningApplication, _ bundleID: String) -> NSMenuItem {
+        let name = app.localizedName ?? bundleID
+        let item = NSMenuItem(title: "In \(name)", action: nil, keyEquivalent: "")
+        item.image = app.icon.map { icon in
+            let small = icon.copy() as? NSImage ?? icon
+            small.size = NSSize(width: 16, height: 16)
+            return small
+        }
+        let pinned = engine.prefs.appLayouts[bundleID]
+        let paused = engine.prefs.excludedApps.contains(bundleID)
+        let usual = engine.memory.usualLayout(app: bundleID).flatMap { engine.layout($0.id) }
+        // A pin still holds the layout while paused, as the lock on the bar shows, so say both.
+        let locked = pinned.flatMap(engine.layout).map { "Locked to \($0.flag) \($0.name)" }
+        let rules = [locked, paused ? "Paused" : nil].compactMap { $0 }
+        item.subtitle =
+            rules.isEmpty ? usual.map { "Usually \($0.flag) \($0.name)" } : rules.joined(separator: " · ")
+
+        let submenu = NSMenu()
+        let automatic = action("Automatic") { [engine] in
+            engine.prefs.appLayouts[bundleID] = nil
+            engine.prefs.excludedApps.removeAll { $0 == bundleID }
+        }
+        automatic.state = pinned == nil && !paused ? .on : .off
+        automatic.subtitle = usual.map { "Learned: \($0.name)" } ?? "Still learning"
+        submenu.addItem(automatic)
+        submenu.addItem(.separator())
+        for layout in engine.layouts {
+            let choice = action("\(layout.flag)  \(layout.name)") { [engine] in
+                engine.prefs.appLayouts[bundleID] = layout.id
+                engine.prefs.excludedApps.removeAll { $0 == bundleID }
+            }
+            choice.state = pinned == layout.id ? .on : .off
+            submenu.addItem(choice)
+        }
+        submenu.addItem(.separator())
+        let pause = action("Pause Here") { [engine] in
+            if paused {
+                engine.prefs.excludedApps.removeAll { $0 == bundleID }
+            } else {
+                engine.prefs.excludedApps.append(bundleID)
+            }
+        }
+        pause.state = paused ? .on : .off
+        submenu.addItem(pause)
+        item.submenu = submenu
+        return item
+    }
+
+    private func action(_ title: String, key: String = "", perform: @escaping () -> Void) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: #selector(MenuAction.run), keyEquivalent: key)
+        let target = MenuAction(perform)
+        item.target = target
+        item.representedObject = target  // The item holds the only reference.
+        return item
+    }
+}
+
+private final class MenuAction: NSObject {
+    private let perform: () -> Void
+
+    init(_ perform: @escaping () -> Void) {
+        self.perform = perform
+    }
+
+    @objc func run() {
+        perform()
+    }
+}

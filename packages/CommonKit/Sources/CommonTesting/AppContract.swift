@@ -3,9 +3,9 @@ import Foundation
 
 /// The contract every app in the family keeps, checked from its source tree by one test in each
 /// app: the names and identifiers in `apps.json`, `CommonTool.all` and `Resources/Info.plist`
-/// agree, and what `scripts/task build` copies into the bundle exists. Identifiers are forever. An
-/// existing install keeps its settings, status item positions, login item and permission grants
-/// only while the bundle identifier and executable name stay what they were.
+/// agree, and what `scripts/task build` copies into the bundle exists. A changed bundle identifier
+/// starts with empty settings, no login item and no permission grants, so a rename ships with a
+/// `LegacyIdentity` migration in the app.
 public struct AppContract {
     public let slug: String
     /// The repository root: the nearest directory above `file` that holds `apps.json`.

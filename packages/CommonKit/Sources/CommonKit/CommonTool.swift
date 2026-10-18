@@ -12,10 +12,10 @@ public struct CommonTool: Identifiable, Sendable {
     public static let all = [
         CommonTool(
             id: "stats", name: "Common Stats", summary: "System stats in the menu bar",
-            bundleIdentifier: "io.github.oddurs.StatBar"),
+            bundleIdentifier: "com.oddurs.commonstats"),
         CommonTool(
             id: "keys", name: "Common Keys", summary: "Fixes words typed on the wrong keyboard",
-            bundleIdentifier: "com.oddurs.langsmart"),
+            bundleIdentifier: "com.oddurs.commonkeys"),
         CommonTool(
             id: "bar", name: "Common Bar", summary: "Hides the menu bar icons you rarely use",
             bundleIdentifier: "com.oddurs.reasonal"),

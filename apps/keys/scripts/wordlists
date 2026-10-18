@@ -5,7 +5,7 @@ set -eu
 # text, and keeps the most frequent words made only of letters. Needs curl, tar and perl.
 
 cd "$(dirname "$0")/.."
-out="Sources/WorldKey/WordLists"
+out="Sources/KeysKit/WordLists"
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
