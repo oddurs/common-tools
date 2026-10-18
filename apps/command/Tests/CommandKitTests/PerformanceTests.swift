@@ -1,4 +1,5 @@
 import CommonTesting
+import CoreGraphics
 import Foundation
 import Testing
 
@@ -50,6 +51,50 @@ struct PerformanceTests {
         }
         print("compose 2,000 + \(files.count) files + \(places.count) places: \(String(format: "%.0f", us)) µs")
         #expect(us < 40_000)
+    }
+
+    /// Each keystroke asks for the whole catalog; it is joined once, not copied every time. About 0.1 ms
+    /// a keystroke for a real catalog when it was rejoined.
+    @Test func askingForTheCatalogIsFreeUntilItChanges() {
+        var catalog = Catalog()
+        catalog.apps = Self.catalog
+        catalog.panes = Self.catalog
+        _ = catalog.candidates(includingPanes: true, includingActions: true)
+        let us = Benchmark.microseconds(iterations: 4) {
+            for _ in 0..<100 { _ = catalog.candidates(includingPanes: true, includingActions: true) }
+        }
+        print("catalog x100: \(String(format: "%.0f", us)) µs")
+        #expect(us < 1_000)
+    }
+
+    /// SwiftUI builds the action menu of every row each time the list draws. Asking the system which apps
+    /// run took about 0.8 ms a row; the set answers a full list in microseconds.
+    @Test func theActionMenuOfAFullListIsCheap() {
+        let bundles = (0..<120).map { URL(filePath: "/Applications/App \($0).app") }
+        let running = RunningApps(bundles: bundles)
+        let rows = (0..<20).map { app("App \($0 * 7)") }
+        let us = Benchmark.microseconds(iterations: 4) {
+            for row in rows { _ = ItemCommand.commands(for: row.item, isRunning: running.contains(row.item)) }
+        }
+        print("action menus for 20 rows: \(String(format: "%.0f", us)) µs")
+        #expect(us < 2_000)
+    }
+
+    /// A prerendered icon is a small bitmap; drawing one costs microseconds, not the 7–20 ms Icon Services
+    /// takes the first time it draws an app's icon.
+    @Test func drawingAPrerenderedIconIsCheap() throws {
+        let cache = IconCache()
+        cache.prerender(["/System/Library/CoreServices/Finder.app"])
+        let icon = try #require(cache.image(forPath: "/System/Library/CoreServices/Finder.app"))
+        let context = try #require(
+            CGContext(
+                data: nil, width: 48, height: 48, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        let us = Benchmark.microseconds(iterations: 20) {
+            context.draw(icon, in: CGRect(x: 0, y: 0, width: 48, height: 48))
+        }
+        print("draw prerendered icon: \(String(format: "%.0f", us)) µs")
+        #expect(us < 2_000)
     }
 
     @Test func scanningTheApplicationsFoldersIsFast() {

@@ -50,6 +50,8 @@ final class AppController: NSObject {
         }
         registerHotKey()
         updateStatusItem()
+        // After launch has finished, so it never delays it.
+        DispatchQueue.main.async { [panel] in panel.prewarm() }
     }
 
     // MARK: Shortcut
