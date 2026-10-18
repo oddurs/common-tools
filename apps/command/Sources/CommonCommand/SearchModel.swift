@@ -107,8 +107,8 @@ final class SearchModel {
             includingPanes: preferences.searchesSettings || scope == .apps,
             includingActions: preferences.searchesActions || scope == .actions)
         sections = Results.compose(
-            query: query, candidates: candidates, files: includesFiles ? files : [], usage: library.usage, now: Date(),
-            options: options)
+            query: query, candidates: candidates, files: includesFiles ? files : [],
+            places: includesFiles ? library.places : [], usage: library.usage, now: Date(), options: options)
         results = sections.rows
         if let selectedID, let index = results.firstIndex(where: { $0.id == selectedID }) {
             selection = index

@@ -32,16 +32,22 @@ public struct ResultSection: Identifiable, Sendable {
 /// typing one is unambiguous. Then the best match on its own as the Top Hit, then the rest grouped by
 /// kind, each group placed by its best match, and last the web search that's always there.
 public enum Results {
+    /// `places` are the well-known folders (`Places`), searched with the files whenever something is typed.
     public static func compose(
-        query: String, candidates: [Candidate], files: [Candidate], usage: Usage, now: Date,
-        options: SearchOptions
+        query: String, candidates: [Candidate], files: [Candidate], places: [Candidate] = [], usage: Usage,
+        now: Date, options: SearchOptions
     ) -> [ResultSection] {
         let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
         let scope = options.scope
         let candidates = candidates.filter { scope.includes($0.item.kind) }
-        let files = scope.includes(.file) ? files : []
+        var files = scope.includes(.file) ? files : []
         guard !text.isEmpty else {
             return scope == .all ? [] : browse(scope, candidates: candidates, files: files)
+        }
+        if scope.includes(.folder), !places.isEmpty {
+            // Spotlight lists some places too, ~/Downloads say; the place's row, with its weight, stands for both.
+            let placeIDs = Set(places.map(\.item.id))
+            files = places + files.filter { !placeIDs.contains($0.item.id) }
         }
         guard scope == .all else {
             let limit = options.scopedLimit

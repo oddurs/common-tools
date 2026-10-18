@@ -220,21 +220,117 @@ public enum FileResults {
     }
 
     static func candidate(_ file: Found, home: String, now: Date) -> Candidate {
-        let url = URL(filePath: file.path, directoryHint: file.isFolder ? .isDirectory : .notDirectory)
-        let parent = url.deletingLastPathComponent().path
-        let shown = parent == home || parent.hasPrefix(home + "/") ? "~" + parent.dropFirst(home.count) : parent
-        let item = Item(
-            id: "file:" + file.path, title: url.lastPathComponent, subtitle: shown,
-            kind: file.isFolder ? .folder : .file, action: .open(url))
+        let item = item(path: file.path, isFolder: file.isFolder, home: home)
         // Something opened this week is more likely the one you mean than something from years ago, and
         // either beats a file nobody has ever opened, which is usually generated.
-        let weight: Int
+        var weight: Int
         if let lastUsed = file.lastUsed {
             let age = now.timeIntervalSince(lastUsed)
             weight = age < 7 * 86400 ? 8 : age < 30 * 86400 ? 4 : 0
         } else {
             weight = -12
         }
+        // Of folders with one name, the one nearer the top is usually meant: ~/Projects, not a Projects
+        // folder five levels into something else. Mild, so it orders look-alikes without outweighing use.
+        if file.isFolder { weight -= depthPenalty(file.path, home: home) }
         return Candidate(item, weight: weight)
+    }
+
+    /// 0 for a folder one or two levels below the home folder or the disk, rising by one for every two
+    /// levels deeper, to at most 3.
+    static func depthPenalty(_ path: String, home: String) -> Int {
+        let relative = path == home || path.hasPrefix(home + "/") ? path.dropFirst(home.count) : Substring(path)
+        let depth = relative.split(separator: "/").count
+        return min(max(depth - 1, 0), 6) / 2
+    }
+
+    /// A row for a file or folder, its subtitle the folder it is in, with the home folder as "~".
+    static func item(path: String, isFolder: Bool, home: String, title: String? = nil) -> Item {
+        let url = URL(filePath: path, directoryHint: isFolder ? .isDirectory : .notDirectory)
+        let parent = url.deletingLastPathComponent().path
+        let shown = parent == home || parent.hasPrefix(home + "/") ? "~" + parent.dropFirst(home.count) : parent
+        return Item(
+            id: "file:" + path, title: title ?? url.lastPathComponent, subtitle: shown,
+            kind: isFolder ? .folder : .file, action: .open(url))
+    }
+}
+
+/// The folders people mean when they type a folder's name: /Applications, not ~/Applications or a copy in
+/// a backup; ~/Library before /Library. Spotlight can't supply them: the file query covers the home folder
+/// only, the index rarely records when a folder was opened, and a name like "Documents" fills the result cap
+/// with app containers before it reaches ~/Documents.
+public enum Places {
+    public struct Place: Sendable, Equatable {
+        public var url: URL
+        public var weight: Int
+
+        public init(url: URL, weight: Int) {
+            self.url = url
+            self.weight = weight
+        }
+    }
+
+    /// Above a look-alike folder opened this week (+8 in `FileResults`), so the main one wins its name. A
+    /// choice for the query (+120) or steady use (up to +40) still overrides it.
+    static let mainWeight = 10
+    /// The system's folders of the same names, below the main ones and below a look-alike used this week.
+    static let systemWeight = 6
+
+    /// The well-known folders that exist on this Mac, from the system's own list rather than spelled-out
+    /// paths. The first URL of each domain is the real folder; later ones are the cryptex copies macOS
+    /// mounts under /System.
+    public static func standard(_ fileManager: FileManager = .default) -> [Place] {
+        func first(_ directory: FileManager.SearchPathDirectory, _ domain: FileManager.SearchPathDomainMask) -> URL? {
+            fileManager.urls(for: directory, in: domain).first
+        }
+        let userLibrary = first(.libraryDirectory, .userDomainMask)
+        let main: [URL?] = [
+            first(.applicationDirectory, .localDomainMask),
+            first(.adminApplicationDirectory, .systemDomainMask),
+            fileManager.homeDirectoryForCurrentUser,
+            first(.desktopDirectory, .userDomainMask),
+            first(.documentDirectory, .userDomainMask),
+            first(.downloadsDirectory, .userDomainMask),
+            first(.picturesDirectory, .userDomainMask),
+            first(.moviesDirectory, .userDomainMask),
+            first(.musicDirectory, .userDomainMask),
+            userLibrary,
+            // iCloud Drive has no search-path constant; it is this folder of the user's Library.
+            userLibrary?.appending(path: "Mobile Documents/com~apple~CloudDocs", directoryHint: .isDirectory),
+            first(.sharedPublicDirectory, .userDomainMask),
+        ]
+        let system: [(URL?, Int)] = [
+            (first(.applicationDirectory, .systemDomainMask), systemWeight),
+            (first(.adminApplicationDirectory, .localDomainMask), systemWeight),
+            (first(.libraryDirectory, .localDomainMask), systemWeight),
+            // Below /Library, which shares its name and is the one people open.
+            (first(.libraryDirectory, .systemDomainMask), systemWeight - 1),
+        ]
+        var seen: Set<String> = []
+        return (main.map { ($0, mainWeight) } + system).compactMap { url, weight in
+            guard let url, fileManager.fileExists(atPath: url.path), seen.insert(url.path).inserted else {
+                return nil
+            }
+            return Place(url: url, weight: weight)
+        }
+    }
+
+    /// Places as folder results. A place named like an app yields to it: "Music" opens Music, with the
+    /// Music folder next.
+    public static func candidates(
+        _ places: [Place], home: String, yieldingTo apps: [Candidate] = [],
+        displayName: (URL) -> String = { FileManager.default.displayName(atPath: $0.path) }
+    ) -> [Candidate] {
+        let appTitles = Set(apps.map { Usage.key($0.item.title) })
+        return places.map { place in
+            let path = place.url.path
+            let title = displayName(place.url)
+            let item = FileResults.item(path: path, isFolder: true, home: home, title: title)
+            // The folder's own name finds it when Finder shows a localised one; the home folder is also "Home".
+            var alternatives = [place.url.lastPathComponent].filter { !$0.contains("~") }
+            if path == home { alternatives.append("Home") }
+            let weight = appTitles.contains(Usage.key(title)) ? AppCatalog.weight - 1 : place.weight
+            return Candidate(item, alternatives: alternatives, weight: weight)
+        }
     }
 }

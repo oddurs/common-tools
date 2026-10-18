@@ -13,6 +13,8 @@ final class Library {
     var commands: [Candidate] = []
     private(set) var shortcuts: [Candidate] = []
     private(set) var appActions: [Candidate] = []
+    /// The well-known folders, searched with files; read with the apps, since a place yields to an app of its name.
+    private(set) var places: [Candidate] = []
     private(set) var usage: Usage
     var onChange: (() -> Void)?
 
@@ -56,10 +58,15 @@ final class Library {
         scanning = true
         let needsPanes = panes.isEmpty
         Task {
-            let (apps, panes) = await Task.detached(priority: .userInitiated) {
-                (AppCatalog.scan(), needsPanes ? SettingsPanes.scan(isPortable: Self.hasBattery) : [])
+            let (apps, panes, places) = await Task.detached(priority: .userInitiated) {
+                let apps = AppCatalog.scan()
+                let places = Places.candidates(
+                    Places.standard(), home: FileManager.default.homeDirectoryForCurrentUser.path,
+                    yieldingTo: apps)
+                return (apps, needsPanes ? SettingsPanes.scan(isPortable: Self.hasBattery) : [], places)
             }.value
             self.apps = apps
+            self.places = places
             // System Settings changes only with macOS, so its panes are read once per launch.
             if needsPanes { self.panes = panes }
             shortcuts = await Task.detached(priority: .userInitiated) { Self.listShortcuts() }.value
