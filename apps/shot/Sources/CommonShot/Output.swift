@@ -56,11 +56,8 @@ enum Output {
         pasteboard.setString(text, forType: .string)
     }
 
-    /// As PNG only. Terminals read the clipboard through AppleScript's `«class PNGf»`, which is this type,
-    /// and every app that takes a pasted image reads it.
-    @MainActor static func copy(_ png: Data) {
-        let pasteboard = NSPasteboard.general
-        pasteboard.clearContents()
-        pasteboard.setData(png, forType: .png)
+    /// The PNG and the file it was saved to; `Clipboard` says which paste target reads which.
+    @MainActor static func copy(_ png: Data, file: URL?) {
+        Clipboard.write(png: png, file: file, to: .general)
     }
 }
