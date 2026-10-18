@@ -286,9 +286,8 @@ final class AppController: NSObject {
             statusItem = nil
             return
         }
-        let item = statusItem ?? NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let item = statusItem ?? NSStatusBar.system.commonItem(autosaveName: "shot", length: NSStatusItem.squareLength)
         statusItem = item
-        item.autosaveName = "shot"
         item.button?.image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Common Shot")
 
         let menu = NSMenu()

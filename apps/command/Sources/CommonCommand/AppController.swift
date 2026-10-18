@@ -101,9 +101,9 @@ final class AppController: NSObject {
             statusItem = nil
             return
         }
-        let item = statusItem ?? NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        let item =
+            statusItem ?? NSStatusBar.system.commonItem(autosaveName: "command", length: NSStatusItem.squareLength)
         statusItem = item
-        item.autosaveName = "command"
         item.button?.image = NSImage(systemSymbolName: "command", accessibilityDescription: "Common Command")
 
         let menu = NSMenu()
