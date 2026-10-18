@@ -4,19 +4,33 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Everything, once a week and by hand: a push checks only what changed, so a runner image or
+  # toolchain update that breaks an area nobody touched shows here. It also keeps every area's
+  # build cache from aging out.
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # A pull request's newer push replaces its older run. Each push to main runs to the end, in a
+  # group of its own: it checks what changed since the last green run, so none may be dropped.
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
 
 jobs:
   plan:
-    # Which areas a change touches: the site, CommonKit, and each app. A pull request checks only
-    # those (CommonKit counts for every app); a push to main checks everything.
+    # Which areas to check: the site, CommonKit, and each app (CommonKit counts for every app).
+    # A pull request checks what it changes. A push to main checks what changed since main's last
+    # green run: the pull request already passed on its own head, and a failed run's areas are
+    # checked again by every push after it until one passes. A change to this workflow, the weekly
+    # run, and a run by hand check everything.
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
       site: ${{ steps.areas.outputs.site }}
       kit: ${{ steps.areas.outputs.kit }}
@@ -26,12 +40,28 @@ jobs:
         with:
           fetch-depth: 0
       - id: areas
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+          case "$GITHUB_EVENT_NAME" in
+          pull_request)
             git fetch --quiet origin "$GITHUB_BASE_REF"
-            areas="$(scripts/task areas "origin/$GITHUB_BASE_REF")"
-          else
+            since="$(git merge-base "origin/$GITHUB_BASE_REF" HEAD)"
+            ;;
+          push)
+            since="$(gh run list --workflow ci.yml --branch "$GITHUB_REF_NAME" --event push --status success --limit 20 \
+              --json headSha --jq '.[].headSha' | while read -r sha; do
+                if git merge-base --is-ancestor "$sha" HEAD 2>/dev/null; then echo "$sha"; break; fi
+              done)"
+            ;;
+          *) since="" ;;
+          esac
+          if [ -z "$since" ] || ! git diff --quiet "$since" HEAD -- .github/workflows/ci.yml; then
+            echo "checking everything"
             areas="$(scripts/task areas --all)"
+          else
+            echo "checking what changed since $since"
+            areas="$(scripts/task areas "$since..HEAD")"
           fi
           echo "areas: $areas"
           echo "site=$(echo "$areas" | grep -qx site && echo true || echo false)" >>"$GITHUB_OUTPUT"
@@ -65,7 +95,21 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: swift
+        run: scripts/ci-cache-prepare
+      - uses: actions/cache/restore@v6
+        with:
+          path: packages/CommonKit/.build
+          key: swift-kit-${{ steps.swift.outputs.toolchain }}-${{ github.sha }}
+          restore-keys: swift-kit-${{ steps.swift.outputs.toolchain }}-
       - run: scripts/task check kit
+      - if: github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: packages/CommonKit/.build
+          key: swift-kit-${{ steps.swift.outputs.toolchain }}-${{ github.sha }}
 
   app:
     needs: plan
@@ -77,10 +121,25 @@ jobs:
     runs-on: macos-26
     steps:
       - uses: actions/checkout@v7
-      - run: swift --version
+        with:
+          fetch-depth: 0
+      - id: swift
+        run: scripts/ci-cache-prepare
+      # Pull requests read the cache main's runs leave; only main writes one, so a pull request
+      # can't fill the cache with builds of code that never merged.
+      - uses: actions/cache/restore@v6
+        with:
+          path: apps/${{ matrix.app }}/.build
+          key: swift-${{ matrix.app }}-${{ steps.swift.outputs.toolchain }}-${{ github.sha }}
+          restore-keys: swift-${{ matrix.app }}-${{ steps.swift.outputs.toolchain }}-
       - run: scripts/task check ${{ matrix.app }} 2>&1 | tee check.log
         # bash, not the default sh: the pipe must fail when check does.
         shell: bash
+      - if: github.event_name != 'pull_request'
+        uses: actions/cache/save@v6
+        with:
+          path: apps/${{ matrix.app }}/.build
+          key: swift-${{ matrix.app }}-${{ steps.swift.outputs.toolchain }}-${{ github.sha }}
       # The built app has to start and stay up; nothing in check launches it.
       - run: scripts/task smoke ${{ matrix.app }}
       - if: always()
@@ -93,7 +152,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "site: ${{ needs.site.result }}, kit: ${{ needs.kit.result }}, apps: ${{ needs.app.result }}"
-          case "${{ needs.site.result }}${{ needs.kit.result }}${{ needs.app.result }}" in
+          echo "plan: ${{ needs.plan.result }}, site: ${{ needs.site.result }}, kit: ${{ needs.kit.result }}, apps: ${{ needs.app.result }}"
+          case "${{ needs.plan.result }}${{ needs.site.result }}${{ needs.kit.result }}${{ needs.app.result }}" in
           *failure* | *cancelled*) exit 1 ;;
           esac

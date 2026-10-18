@@ -37,16 +37,20 @@ changed_files() {
 
 changed_areas() {
     changed_files | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
-        # Workflows, root documents, the hooks, and the scripts other than this one change nothing
-        # a check tests: the workflow tooling, releases, and generated icons, which are committed.
+        # Workflows, root documents and docs/, the hooks, and the scripts other than this one change
+        # nothing a check tests: the workflow tooling, releases, and generated icons, which are committed.
         /^scripts\/task$/    { site = 1; kit = 1; everyapp = 1; next }
         /^scripts\//         { next }
         /^\.githooks\//      { next }
         /^\.github\//        { next }
+        /^docs\//            { next }
         /^[^\/]+\.md$/       { next }
         /^LICENSE$/          { next }
         /^site\//            { site = 1; next }
-        /^packages\//        { kit = 1; everyapp = 1; next }
+        # The site reads the family list in CommonKit and the Common UI tokens, and shows the images in
+        # each app docs folder.
+        /^packages\//        { kit = 1; everyapp = 1; site = 1; next }
+        /^apps\/[^\/]+\/docs\// { site = 1 }
         /^apps\/[^\/]+\//    { split($0, p, "/"); app[p[2]] = 1; next }
         /^shared\//          { everyapp = 1; next }
                              { site = 1; kit = 1; everyapp = 1 }
