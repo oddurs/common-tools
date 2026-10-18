@@ -32,7 +32,7 @@ final class FolderMenu: NSObject, NSMenuDelegate {
         static let afterLaunch: [TimeInterval] = [1, 4]
     }
 
-    static let log = Logger(subsystem: "com.oddurs.reasonal", category: "folders")
+    static let log = Logger(subsystem: "com.oddurs.commonbar", category: "folders")
     private static let askedForAccessKey = "askedForAccessibility"
     private static let family = Set(CommonTool.all.map(\.bundleIdentifier))
 

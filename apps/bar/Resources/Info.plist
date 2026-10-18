@@ -7,11 +7,11 @@
 	<key>CFBundleDisplayName</key>
 	<string>Common Bar</string>
 	<key>CFBundleExecutable</key>
-	<string>Reasonal</string>
+	<string>CommonBar</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.oddurs.reasonal</string>
+	<string>com.oddurs.commonbar</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

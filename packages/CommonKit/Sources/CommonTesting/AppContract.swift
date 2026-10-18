@@ -57,6 +57,11 @@ public struct AppContract {
         same("CFBundleIdentifier", info["CFBundleIdentifier"], entry["BUNDLE"])
         same("CFBundleExecutable", info["CFBundleExecutable"], entry["TARGET"])
         same("LSMinimumSystemVersion", info["LSMinimumSystemVersion"], entry["MIN_MACOS"])
+        // The Common naming. A rename keeps to it and ships with a LegacyIdentity migration in the app.
+        same("BUNDLE", entry["BUNDLE"], "com.oddurs.common\(slug)")
+        same("TARGET", entry["TARGET"], (entry["NAME"] as? String ?? "").replacingOccurrences(of: " ", with: ""))
+        same("REPO", entry["REPO"], "common-\(slug)")
+        same("DIR", entry["DIR"], "common-\(slug)")
         // Menu bar apps: no Dock icon, no app switcher entry.
         same("LSUIElement", info["LSUIElement"] as? Bool, true)
         let version = info["CFBundleShortVersionString"] as? String ?? ""

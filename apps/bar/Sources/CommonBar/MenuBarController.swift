@@ -251,6 +251,7 @@ final class MenuBarController: NSObject {
 
 extension MenuBarController: NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
+        LegacyIdentity.followLoginItem()
         Welcome.showIfNeeded(
             WelcomeInfo(line: "Keeps your menu bar tidy. The icons you rarely use wait in folders."))
         updates.start()

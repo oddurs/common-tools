@@ -18,7 +18,7 @@ public struct CommonTool: Identifiable, Sendable {
             bundleIdentifier: "com.oddurs.commonkeys"),
         CommonTool(
             id: "bar", name: "Common Bar", summary: "Hides the menu bar icons you rarely use",
-            bundleIdentifier: "com.oddurs.reasonal"),
+            bundleIdentifier: "com.oddurs.commonbar"),
         CommonTool(
             id: "glyph", name: "Common Glyph", summary: "Your own image in the menu bar",
             bundleIdentifier: "com.oddurs.commonglyph"),

@@ -7,9 +7,8 @@ let package = Package(
     dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
         .target(name: "BarKit"),
-        // Keeps its pre-rename name: the bundle's executable and login item match it.
         .executableTarget(
-            name: "Reasonal",
+            name: "CommonBar",
             dependencies: [
                 "BarKit", .product(name: "CommonKit", package: "CommonKit"),
                 .product(name: "CommonUI", package: "CommonKit"),
