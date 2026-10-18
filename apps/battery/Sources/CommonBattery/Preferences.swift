@@ -6,9 +6,16 @@ import Foundation
 final class Preferences {
     private let defaults: UserDefaults
 
-    var style: BarStyle { didSet { defaults.set(style.rawValue, forKey: "style") } }
-    var showsTime: Bool { didSet { defaults.set(showsTime, forKey: "showsTime") } }
-    var colorsAlerts: Bool { didSet { defaults.set(colorsAlerts, forKey: "colorsAlerts") } }
+    /// The parts go under `barParts` and the icon's look under `iconStyle`. `style` and
+    /// `showsTime`, from before the parts could be arranged, count only while `barParts` is
+    /// missing, so an install keeps what it showed. They're never written again.
+    var appearance: BarAppearance {
+        didSet {
+            defaults.set(appearance.storedParts, forKey: "barParts")
+            defaults.set(appearance.iconStyle.rawValue, forKey: "iconStyle")
+            defaults.set(appearance.colorsAlerts, forKey: "colorsAlerts")
+        }
+    }
     /// Percent; 0 is off.
     var lowAlert: Int { didSet { defaults.set(lowAlert, forKey: "lowAlert") } }
     /// Percent; 0 is off.
@@ -19,18 +26,16 @@ final class Preferences {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        let standard = BarAppearance.standard
         defaults.register(defaults: [
-            "showsTime": standard.showsTime, "colorsAlerts": standard.colorsAlerts, "lowAlert": 20, "chargedAlert": 0,
+            "colorsAlerts": BarAppearance.standard.colorsAlerts, "lowAlert": 20, "chargedAlert": 0,
         ])
-        style = defaults.string(forKey: "style").flatMap(BarStyle.init) ?? standard.style
-        showsTime = defaults.bool(forKey: "showsTime")
-        colorsAlerts = defaults.bool(forKey: "colorsAlerts")
+        appearance = BarAppearance.restored(
+            parts: defaults.stringArray(forKey: "barParts"), iconStyle: defaults.string(forKey: "iconStyle"),
+            legacyStyle: defaults.string(forKey: "style"), legacyShowsTime: defaults.bool(forKey: "showsTime"),
+            colorsAlerts: defaults.bool(forKey: "colorsAlerts"))
         lowAlert = defaults.integer(forKey: "lowAlert")
         chargedAlert = defaults.integer(forKey: "chargedAlert")
     }
-
-    var appearance: BarAppearance { BarAppearance(style: style, showsTime: showsTime, colorsAlerts: colorsAlerts) }
 
     var notifies: Bool { lowAlert > 0 || chargedAlert > 0 }
 }

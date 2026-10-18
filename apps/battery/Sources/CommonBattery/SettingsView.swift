@@ -16,12 +16,8 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section {
-                BarPreview(appearance: preferences.appearance, reading: state.reading)
-                Picker("Style", selection: $preferences.style) {
-                    ForEach(BarStyle.allCases, id: \.self) { Text($0.name) }
-                }
-                Toggle("Show time remaining", isOn: $preferences.showsTime)
-                Toggle("Color when low or in Low Power Mode", isOn: $preferences.colorsAlerts)
+                BarEditor(preferences: preferences, reading: state.reading)
+                Toggle("Color when low or in Low Power Mode", isOn: $preferences.appearance.colorsAlerts)
             } header: {
                 Text("Menu Bar")
             } footer: {
@@ -32,6 +28,9 @@ struct SettingsView: View {
                             symbol: "eye.slash"
                         )
                     }
+                    SettingsFootnote(
+                        "Time remaining shows while the battery charges or drains. On power, the icon shows a plug; without the icon, a plug takes the time’s place."
+                    )
                     SettingsFootnote(
                         "Time remaining learns from how you use your Mac, so it holds steady when you start something brief and knows your usual day. What it learns stays on this Mac."
                     )
@@ -87,25 +86,5 @@ struct SettingsView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { notificationsBlocked = await controller.notificationsBlocked }
         }
-    }
-}
-
-/// The item as it looks right now, on a strip of menu bar, so a style can be judged before leaving Settings.
-private struct BarPreview: View {
-    let appearance: BarAppearance
-    let reading: BatteryReading?
-
-    var body: some View {
-        Card {
-            HStack {
-                Spacer()
-                // The renderer draws at the menu bar's own metrics, so the strip is a menu bar's height.
-                Image(nsImage: BarRenderer(appearance: appearance, height: 24).image(reading))
-                    .foregroundStyle(.primary)
-                Spacer()
-            }
-        }
-        .accessibilityElement()
-        .accessibilityLabel("Preview: \(BarRenderer.accessibilityText(reading))")
     }
 }

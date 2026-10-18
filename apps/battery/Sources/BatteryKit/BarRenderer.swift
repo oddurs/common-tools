@@ -1,35 +1,9 @@
 import AppKit
 
-public enum BarStyle: String, Codable, CaseIterable, Sendable {
-    case icon, iconAndPercent, percentInIcon, percent
-
-    public var name: String {
-        switch self {
-        case .icon: "Icon"
-        case .iconAndPercent: "Icon and Percentage"
-        case .percentInIcon: "Percentage in Icon"
-        case .percent: "Percentage"
-        }
-    }
-}
-
-public struct BarAppearance: Equatable, Sendable {
-    public var style: BarStyle
-    public var showsTime: Bool
-    /// Red when low, yellow in Low Power Mode, as the system's own battery icon does.
-    public var colorsAlerts: Bool
-
-    public init(style: BarStyle, showsTime: Bool, colorsAlerts: Bool) {
-        self.style = style
-        self.showsTime = showsTime
-        self.colorsAlerts = colorsAlerts
-    }
-
-    public static let standard = BarAppearance(style: .iconAndPercent, showsTime: false, colorsAlerts: true)
-}
-
 /// Draws the menu bar item. Widths depend only on the appearance, never on the reading, so the
-/// item never shifts its neighbours as the level or the state changes.
+/// item never shifts its neighbours as the level or the state changes. Within that width, what is
+/// drawn is centred by its ink, so a short reading ("8%", or a time-only item showing a plug) sits
+/// in the middle rather than against one side.
 ///
 /// Everything is black at varying opacity in a template image, so AppKit tints it like the
 /// system's battery icon. Only an alert (low, or Low Power Mode, with colours on) draws in
@@ -37,29 +11,15 @@ public struct BarAppearance: Equatable, Sendable {
 public struct BarRenderer {
     public let appearance: BarAppearance
     public let height: CGFloat
-    let parts: [(part: Part, x: CGFloat, width: CGFloat)]
-
-    enum Part: Equatable { case time, percent, icon }
+    public let size: CGSize
 
     public init(appearance: BarAppearance, height: CGFloat) {
         self.appearance = appearance
         self.height = height
-        var kinds: [Part] = []
-        if appearance.showsTime { kinds.append(.time) }
-        if appearance.style == .iconAndPercent || appearance.style == .percent { kinds.append(.percent) }
-        if appearance.style != .percent { kinds.append(.icon) }
-        var x: CGFloat = 0
-        var placed: [(Part, CGFloat, CGFloat)] = []
-        for kind in kinds {
-            if !placed.isEmpty { x += Self.partGap }
-            let w = Self.width(of: kind, appearance.style)
-            placed.append((kind, x, w))
-            x += w
-        }
-        parts = placed
+        let widths = appearance.parts.map { Self.width(of: $0, appearance.iconStyle) }
+        let gaps = Self.partGap * CGFloat(widths.count - 1)
+        size = CGSize(width: ceil(widths.reduce(0, +) + gaps), height: height)
     }
-
-    public var size: CGSize { CGSize(width: ceil(parts.last.map { $0.x + $0.width } ?? 0), height: height) }
 
     // MARK: Geometry
 
@@ -72,16 +32,20 @@ public struct BarRenderer {
     static let outlineAlpha: CGFloat = 0.45
     static let nubGap: CGFloat = 1
     static let nubSize = CGSize(width: 1.5, height: 4.5)
+    static let plugSize = CGSize(width: 15, height: 10)
 
-    static func bodySize(_ style: BarStyle) -> CGSize {
-        style == .percentInIcon ? CGSize(width: 33, height: 12.5) : CGSize(width: 23, height: 11.5)
+    static func bodySize(_ style: IconStyle) -> CGSize {
+        style == .percentInside ? CGSize(width: 33, height: 12.5) : CGSize(width: 23, height: 11.5)
     }
 
-    static func width(of part: Part, _ style: BarStyle) -> CGFloat {
+    static func iconWidth(_ style: IconStyle) -> CGFloat { bodySize(style).width + nubGap + nubSize.width }
+
+    /// The most a part can take, whatever the reading.
+    static func width(of part: BarPart, _ style: IconStyle) -> CGFloat {
         switch part {
         case .time: measure(["88:88"], textFont)
         case .percent: measure(["100%"], textFont)
-        case .icon: bodySize(style).width + nubGap + nubSize.width
+        case .battery: iconWidth(style)
         }
     }
 
@@ -116,13 +80,20 @@ public struct BarRenderer {
 
     // MARK: Drawing
 
+    /// Something drawn in the item: how far it advances, where its ink starts and ends relative
+    /// to its origin, and how to draw it there.
+    struct Piece {
+        let advance: CGFloat
+        let ink: ClosedRange<CGFloat>
+        let draw: (CGFloat) -> Void
+    }
+
     /// The item's image. Without a battery, a plug: the Mac runs on power from the wall.
     public func image(_ reading: BatteryReading?) -> NSImage {
         guard let reading else {
-            let size = CGSize(width: 15, height: height)
+            let size = CGSize(width: Self.plugSize.width, height: height)
             let image = NSImage(size: size, flipped: true) { _ in
-                NSColor.black.setFill()
-                Self.place(Self.plugGlyph, in: CGRect(x: 0, y: (size.height - 10) / 2, width: 15, height: 10)).fill()
+                self.plugPiece(.black).draw(0)
                 return true
             }
             image.isTemplate = true
@@ -130,36 +101,73 @@ public struct BarRenderer {
         }
         let ink = self.ink(reading)
         let image = NSImage(size: size, flipped: true) { _ in
-            for (part, x, width) in self.parts {
-                switch part {
-                case .time:
-                    // A battery that isn't moving has no time to show; one still being estimated shows a dash.
-                    guard reading.state == .charging || reading.state == .discharging else { break }
-                    let text = reading.minutesRemaining.map { Format.duration(minutes: $0) } ?? Format.missing
-                    self.drawText(text, ink: ink, x: x, width: width)
-                case .percent:
-                    self.drawText(Format.percent(reading.percent), ink: ink, x: x, width: width)
-                case .icon:
-                    self.drawIcon(reading, ink: ink, x: x)
-                }
-            }
+            let pieces = self.pieces(reading, ink: ink)
+            for (piece, x) in zip(pieces, self.positions(pieces)) { piece.draw(x) }
             return true
         }
         image.isTemplate = ink.isTemplate
         return image
     }
 
-    private func drawText(_ text: String, ink: Ink, x: CGFloat, width: CGFloat) {
+    private func pieces(_ reading: BatteryReading, ink: Ink) -> [Piece] {
+        appearance.parts.compactMap { part in
+            switch part {
+            case .time:
+                // One still being estimated shows a dash. A battery that isn't moving has no time:
+                // beside the icon, which already shows the plug, nothing; on its own, the plug, so
+                // the item never goes blank.
+                if reading.state == .charging || reading.state == .discharging {
+                    let time = reading.minutesRemaining.map { Format.duration(minutes: $0) }
+                    return textPiece(time ?? Format.missing, ink)
+                }
+                return appearance.parts.contains(.battery) ? nil : plugPiece(ink.text)
+            case .percent:
+                return textPiece(Format.percent(reading.percent), ink)
+            case .battery:
+                let width = Self.iconWidth(appearance.iconStyle)
+                return Piece(advance: width, ink: 0...width) { self.drawIcon(reading, ink: ink, x: $0) }
+            }
+        }
+    }
+
+    /// Where each piece goes: one gap apart, on whole points so the icon's outline stays sharp,
+    /// and as a group centred by ink in the item's fixed width, so the slack falls evenly on
+    /// both sides however short the reading is.
+    private func positions(_ pieces: [Piece]) -> [CGFloat] {
+        guard let first = pieces.first, let last = pieces.last else { return [] }
+        var xs: [CGFloat] = [0]
+        for piece in pieces.dropLast() { xs.append((xs[xs.count - 1] + piece.advance + Self.partGap).rounded()) }
+        let lo = first.ink.lowerBound, hi = xs[xs.count - 1] + last.ink.upperBound
+        let offset = ((size.width - (hi - lo)) / 2 - lo).rounded()
+        return xs.map { $0 + offset }
+    }
+
+    private func textPiece(_ text: String, _ ink: Ink) -> Piece {
         let font = Self.textFont
         let string = NSAttributedString(string: text, attributes: [.font: font, .foregroundColor: ink.text])
+        // The glyphs' own extent, not the advance: digits and "%" carry side bearings.
+        let bounds = CTLineGetImageBounds(CTLineCreateWithAttributedString(string), nil)
         let baseline = (height + font.capHeight) / 2
-        // In a flipped context the drawing origin is the line's top; the baseline sits one ascender below.
-        string.draw(at: CGPoint(x: x + width - string.size().width, y: baseline - font.ascender))
+        return Piece(advance: string.size().width, ink: bounds.minX...bounds.maxX) { x in
+            // In a flipped context the drawing origin is the line's top; the baseline sits one ascender below.
+            string.draw(at: CGPoint(x: x, y: baseline - font.ascender))
+        }
+    }
+
+    private func plugPiece(_ color: NSColor) -> Piece {
+        let size = Self.plugSize
+        return Piece(advance: size.width, ink: 0...size.width) { x in
+            color.setFill()
+            Self.place(
+                Self.plugGlyph,
+                in: CGRect(x: x, y: (self.height - size.height) / 2, width: size.width, height: size.height)
+            ).fill()
+        }
     }
 
     private func drawIcon(_ reading: BatteryReading, ink: Ink, x: CGFloat) {
         guard let ctx = NSGraphicsContext.current?.cgContext else { return }
-        let style = appearance.style
+        let style = appearance.iconStyle
         let size = Self.bodySize(style)
         let body = CGRect(x: x, y: ((height - size.height) / 2).rounded(), width: size.width, height: size.height)
 
@@ -182,7 +190,7 @@ public struct BarRenderer {
 
         // The bolt sits over the middle with a clear halo and spills past the body, as the system
         // draws it, so it reads over any fill.
-        if reading.state == .charging, style != .percentInIcon {
+        if reading.state == .charging, style != .percentInside {
             let h = size.height + 2
             let w = h * Self.aspect(Self.bolt)
             let path = Self.place(
@@ -207,7 +215,7 @@ public struct BarRenderer {
             }
         var marks: [NSBezierPath] = []
         var text: (NSAttributedString, CGPoint)?
-        if style == .percentInIcon {
+        if style == .percentInside {
             var content = inner.insetBy(dx: 1, dy: 0)
             if let glyph {
                 let h = glyph === Self.bolt ? inner.height - 1 : inner.height - 2.5
