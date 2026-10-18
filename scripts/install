@@ -7,11 +7,12 @@ set -eu
 #   scripts/install --after-merge <old-rev>
 #
 # No app means every app in apps.json; --changed-since keeps only the apps whose apps/<slug>/
-# changed between <rev> and HEAD, or all of them when packages/CommonKit or shared/ did. Each app
-# is built with scripts/task build, which signs it with the shared development identity so its
-# permission grants carry over; an ad-hoc signed build is refused. A running copy is quit first
-# and opened again after; an app that wasn't installed before is opened too. A failed build is
-# skipped, the rest still install, and the script exits non-zero at the end.
+# changed between <rev> and HEAD, or all of them when packages/CommonKit or shared/ did. The apps
+# are built first, several at once (half the cores' worth), with scripts/task build, which signs
+# each with the shared development identity so its permission grants carry over; an ad-hoc signed
+# build is refused. Then they are installed one at a time: a running copy is quit first and opened
+# again after, and an app that wasn't installed before is opened too. A failed build is skipped,
+# the rest still install, and the script exits non-zero at the end.
 #
 # --after-merge is what scripts/agent done and the post-merge hook call. It does nothing unless
 # this Mac opted in with `git config commontools.autoinstall true`. Then it returns at once and a
@@ -133,14 +134,11 @@ install_app() {
         return 0
     fi
 
-    build_log="$(mktemp -t common-tools-install)"
-    if ! "$root/scripts/task" build "$slug" >"$build_log" 2>&1; then
-        cat "$build_log" >&2
-        command rm -f "$build_log"
+    if [ ! -e "$builds/$slug.ok" ]; then
+        cat "$builds/$slug.log" >&2
         report "$slug" "$name" "build failed; skipped"
         return 1
     fi
-    command rm -f "$build_log"
     # An ad-hoc signature would get grants of its own and orphan the ones the identity holds.
     if ! codesign --verify --strict "$bundle" 2>/dev/null ||
         ! codesign -dvv "$bundle" 2>&1 | grep -qx "Authority=$identity"; then
@@ -296,6 +294,26 @@ fi
 
 if [ "$dry_run" -eq 0 ] && ! security find-identity -v -p codesigning | grep -q "\"$identity\""; then
     die "no valid '$identity' signing identity; run scripts/dev-cert once on this Mac"
+fi
+
+builds="$(mktemp -d -t common-tools-install)"
+trap 'command rm -rf "$builds"' EXIT
+if [ "$dry_run" -eq 0 ]; then
+    # Each app has its own .build, so builds don't share anything but the cores. Swift already
+    # spreads one build across them, but much of a build is a step that doesn't: planning,
+    # linking, signing. Only installing touches the running apps, and that stays one at a time.
+    jobs=$(($(sysctl -n hw.ncpu) / 2))
+    [ "$jobs" -ge 1 ] || jobs=1
+    echo "==> building$apps, $jobs at a time"
+    # The inner shell expands its own variables; $apps is meant to split.
+    # shellcheck disable=SC2016,SC2086
+    printf '%s\n' $apps | xargs -P "$jobs" -I {} sh -c '
+        if "$1/scripts/task" build "$2" >"$3/$2.log" 2>&1; then
+            touch "$3/$2.ok"
+            echo "    built $2"
+        else
+            echo "    $2 did not build"
+        fi' sh "$root" {} "$builds"
 fi
 
 failed=0
