@@ -29,12 +29,13 @@ final class StatusMenu: NSObject, NSMenuDelegate {
     private func render() {
         withObservationTracking {
             guard let button = item.button else { return }
-            let layout = engine.currentLayout
-            button.image = layout.flatMap { Self.flagImage($0.flag) } ?? Self.keyboardImage
+            let status = engine.status
+            let flag = engine.currentLayout?.flag
+            let image = status.look == .locked ? flag.flatMap(Self.lockedFlagImage) : flag.flatMap(Self.flagImage)
+            button.image = image ?? Self.keyboardImage
             // Dimmed, like a disabled menu item, while Common Keys is not fixing anything.
-            button.appearsDisabled = !engine.isWorking
-            button.toolTip = [layout?.name, engine.pausedIn.map { "Paused in \($0)" }]
-                .compactMap { $0 }.joined(separator: " · ")
+            button.appearsDisabled = status.look == .dimmed
+            button.toolTip = status.toolTip
         } onChange: {
             Task { @MainActor [weak self] in self?.render() }
         }
@@ -75,6 +76,39 @@ final class StatusMenu: NSObject, NSMenuDelegate {
             cgImage: image, size: NSSize(width: CGFloat(image.width) / scale, height: CGFloat(image.height) / scale))
         flagImage.accessibilityDescription = flag
         return flagImage
+    }
+
+    /// The flag with a lock beside it, as one image so the button centres them together. The lock
+    /// is filled when the image is drawn, in the label colour of the bar's appearance, so it reads on
+    /// a light or a dark menu bar as a template image would; the flag keeps its colours.
+    static func lockedFlagImage(_ flag: String) -> NSImage? {
+        guard let flagImage = flagImage(flag),
+            let lock = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: nil)?
+                .withSymbolConfiguration(.init(pointSize: flagImage.size.height * 0.7, weight: .semibold))
+        else { return nil }
+        let gap: CGFloat = 2
+        let size = NSSize(
+            width: flagImage.size.width + gap + lock.size.width,
+            height: max(flagImage.size.height, lock.size.height))
+        let image = NSImage(size: size, flipped: false) { _ in
+            flagImage.draw(
+                at: NSPoint(x: 0, y: (size.height - flagImage.size.height) / 2), from: .zero,
+                operation: .sourceOver, fraction: 1)
+            let rect = NSRect(
+                origin: NSPoint(x: size.width - lock.size.width, y: (size.height - lock.size.height) / 2),
+                size: lock.size)
+            guard let context = NSGraphicsContext.current?.cgContext else { return false }
+            context.beginTransparencyLayer(in: rect, auxiliaryInfo: nil)
+            lock.draw(in: rect)
+            NSColor.labelColor.setFill()
+            rect.fill(using: .sourceIn)
+            context.endTransparencyLayer()
+            return true
+        }
+        // Drawn afresh each time, so the lock follows the bar from light to dark.
+        image.cacheMode = .never
+        image.accessibilityDescription = "\(flag) locked"
+        return image
     }
 
     /// Card views exist only while the menu is open, so a closed menu costs nothing.
@@ -176,9 +210,11 @@ final class StatusMenu: NSObject, NSMenuDelegate {
         let pinned = engine.prefs.appLayouts[bundleID]
         let paused = engine.prefs.excludedApps.contains(bundleID)
         let usual = engine.memory.usualLayout(app: bundleID).flatMap { engine.layout($0.id) }
+        // A pin still holds the layout while paused, as the lock on the bar shows, so say both.
+        let locked = pinned.flatMap(engine.layout).map { "Locked to \($0.flag) \($0.name)" }
+        let rules = [locked, paused ? "Paused" : nil].compactMap { $0 }
         item.subtitle =
-            paused
-            ? "Paused" : (pinned.flatMap(engine.layout) ?? usual).map { "Usually \($0.flag) \($0.name)" }
+            rules.isEmpty ? usual.map { "Usually \($0.flag) \($0.name)" } : rules.joined(separator: " · ")
 
         let submenu = NSMenu()
         let automatic = action("Automatic") { [engine] in
@@ -194,7 +230,7 @@ final class StatusMenu: NSObject, NSMenuDelegate {
                 engine.prefs.appLayouts[bundleID] = layout.id
                 engine.prefs.excludedApps.removeAll { $0 == bundleID }
             }
-            choice.state = pinned == layout.id && !paused ? .on : .off
+            choice.state = pinned == layout.id ? .on : .off
             submenu.addItem(choice)
         }
         submenu.addItem(.separator())

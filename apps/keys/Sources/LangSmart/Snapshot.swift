@@ -5,9 +5,11 @@ import WorldKey
 
 /// `LangSmart --snapshot out.png` renders the menu's cards in light and dark, once with a day of
 /// sample use and once as on the first day, for design review without opening the menu.
+/// With `--status` it renders the menu bar item instead: fixing, locked to a layout, and dimmed.
 @MainActor
 enum SnapshotCommand {
-    static func run(path: String) {
+    static func run(path: String, status: Bool) {
+        if status { return write(statusItem(), to: path) }
         let busy = sample()
         let empty = DropdownData(
             today: UsageStats.Day(date: ""), week: Array(repeating: UsageStats.Day(date: ""), count: 7),
@@ -31,13 +33,56 @@ enum SnapshotCommand {
             .background(Color(white: 0.5)))
         renderer.scale = 2
         guard let image = renderer.nsImage, let tiff = image.tiffRepresentation,
-            let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:])
+            let bitmap = NSBitmapImageRep(data: tiff)
         else { fatalError("could not render the menu") }
+        write(bitmap, to: path)
+    }
+
+    private static func write(_ bitmap: NSBitmapImageRep, to path: String) {
+        guard let png = bitmap.representation(using: .png, properties: [:]) else {
+            fatalError("could not encode \(path)")
+        }
         do {
             try png.write(to: URL(filePath: path))
         } catch {
             fatalError("could not write \(path): \(error)")
         }
+    }
+
+    /// The three looks on a light and a dark bar, each drawn by a status bar button of its own so
+    /// the dimming is the system's.
+    private static func statusItem() -> NSBitmapImageRep {
+        let looks: [(image: NSImage?, dimmed: Bool)] = [
+            (StatusMenu.flagImage("🇺🇸"), false),
+            (StatusMenu.lockedFlagImage("🇮🇸"), false),
+            (StatusMenu.flagImage("🇺🇸"), true),
+        ]
+        let cell = NSSize(width: 48, height: 24)
+        let canvas = NSView(
+            frame: NSRect(x: 0, y: 0, width: cell.width * CGFloat(looks.count), height: cell.height * 2))
+        for (row, name) in [NSAppearance.Name.darkAqua, .aqua].enumerated() {
+            let bar = BarBackground(
+                frame: NSRect(x: 0, y: CGFloat(row) * cell.height, width: canvas.frame.width, height: cell.height))
+            bar.appearance = NSAppearance(named: name)
+            for (column, look) in looks.enumerated() {
+                let button = NSStatusBarButton(
+                    frame: NSRect(origin: NSPoint(x: CGFloat(column) * cell.width, y: 0), size: cell))
+                button.isBordered = false
+                button.image = look.image
+                button.imagePosition = .imageOnly
+                button.appearsDisabled = look.dimmed
+                bar.addSubview(button)
+            }
+            canvas.addSubview(bar)
+        }
+        // Never shown: a window gives the views the appearance and backing scale they draw with.
+        let window = NSWindow(contentRect: canvas.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        window.contentView = canvas
+        guard let bitmap = canvas.bitmapImageRepForCachingDisplay(in: canvas.bounds) else {
+            fatalError("could not render the status item")
+        }
+        canvas.cacheDisplay(in: canvas.bounds, to: bitmap)
+        return bitmap
     }
 
     /// A plausible afternoon: English and Icelandic, a few fixes, three apps.
@@ -77,5 +122,14 @@ enum SnapshotCommand {
                 .init(bundleID: "com.apple.Notes", words: 131, flag: nil),
             ],
             learnedWords: 23, mixedUp: ("/", "þ", 14), hour: 15)
+    }
+}
+
+/// The menu bar's fill in the view's appearance, behind a snapshot of the status item.
+private final class BarBackground: NSView {
+    override func draw(_ dirtyRect: NSRect) {
+        NSColor.windowBackgroundColor.setFill()
+        // Not the dirty rect: caching the display passes the whole canvas, and the other bar with it.
+        bounds.fill()
     }
 }

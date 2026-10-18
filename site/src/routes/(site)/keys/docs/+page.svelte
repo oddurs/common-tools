@@ -95,10 +95,12 @@
 
 	<h2 id="menu">The menu</h2>
 	<p>
-		The menu bar shows the current layout's flag, dimmed while Common Keys is paused. Its menu opens with
-		cards for today's fixes, the languages you wrote in each app, the week, what it has learned, and the
-		keys you mix up most. Below them are your layouts (with the preferred one marked), <b>Next Layout</b>,
-		the front app's settings,
+		The menu bar shows the current layout's flag. In an app pinned to that layout a lock sits beside it.
+		The flag is dimmed while Common Keys isn't fixing: without Accessibility access, after
+		<b>Pause Fixing</b>, or in an app paused without a pin. Its menu opens with cards for today's fixes,
+		the languages you wrote in each app, the week, what it has learned, and the keys you mix up most.
+		Below them are your layouts (with the preferred one marked), <b>Next Layout</b>, the front app's
+		settings,
 		<b>Pause Fixing</b>, <b>Settings…</b>, and <b>Quit</b>.
 	</p>
 
