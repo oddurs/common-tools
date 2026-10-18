@@ -14,7 +14,7 @@ This is one app of the Common Tools monorepo. The workflow, the `scripts/task` s
 - The app activates while the overlay is up, so the crosshair shows and keys arrive, and hands focus back to the previous app when it closes.
 - `CommonTools.swift` is shared word for word across the Common Tools apps. Change it in all of them together.
 - A bug fix comes with the test that would have caught it.
-- For visual review: `scripts/task build shot && apps/shot/.build/debug/CommonShot --overlay out.png 300,250,640,380` and inspect `out.png`; `--capture out.png` checks the pipeline end to end, clipboard included.
+- For visual review: `swift build && .build/debug/CommonShot --render <folder>` writes every overlay state and the preview, light and dark, drawn offscreen over a made-up desktop on a 2× and a 1× display (`Render`); look at the PNGs before claiming anything about how Shot looks. It shows nothing on screen and needs no permission. `--overlay out.png 300,250,640,380` shows the real overlay on your screens and captures it; `--capture out.png` checks the pipeline end to end, clipboard included.
 - Screen Recording access is tied to the code signature. With ad hoc signing each rebuild must be allowed again, and the old switch in System Settings looks on but no longer applies; `scripts/dev-cert` once per Mac fixes that for every Common Tools app.
 - The app icon comes from the glyph region of `scripts/make-icon shot`, which writes `Resources/AppIcon.icns` and `docs/icon.png`. Edit the script, not the images; `Resources/CommonTools/shot.png` comes from the standard, so a new glyph goes there too.
 

@@ -7,14 +7,20 @@ import AppKit
 ///   copy to the clipboard, then write what the clipboard holds to `out.png`.
 /// - `CommonShot --overlay out.png [x,y,w,h]` shows the overlay, with that selection dragged if given or
 ///   the window under the pointer highlighted if not, captures it, and quits.
+/// - `CommonShot --render <folder>` draws every state of the overlay, and the preview, offscreen over a
+///   made-up desktop, in light and dark. It shows nothing and needs no permission (`Render`).
 @MainActor
 enum Review {
     enum Request {
         case capture(String)
         case overlay(String, selection: CGRect?)
+        case render(String)
     }
 
     static func request(from arguments: [String]) -> Request? {
+        if let index = arguments.firstIndex(of: "--render"), index + 1 < arguments.count {
+            return .render(arguments[index + 1])
+        }
         if let index = arguments.firstIndex(of: "--capture"), index + 1 < arguments.count {
             return .capture(arguments[index + 1])
         }
@@ -29,24 +35,33 @@ enum Review {
     }
 
     static func run(_ request: Request) {
-        let preferences = Preferences(defaults: UserDefaults(suiteName: "review")!)
-        preferences.showsPreview = false
-        preferences.historyLimit = 0
-        let controller = AppController(preferences: preferences, interactive: false)
-        Task {
-            do {
-                let freeze = try await Capture.freeze()
-                switch request {
-                case .capture(let output):
-                    let still = freeze.stills[0]
+        switch request {
+        case .render(let folder):
+            finish {
+                try Render.run(into: URL(filePath: folder, directoryHint: .isDirectory))
+                print("wrote the renders to \(folder)")
+                return 0
+            }
+        case .capture(let output):
+            let preferences = Preferences(defaults: UserDefaults(suiteName: "review")!)
+            preferences.showsPreview = false
+            preferences.historyLimit = 0
+            let controller = AppController(preferences: preferences, interactive: false)
+            Task {
+                await finish {
+                    let still = try await Capture.freeze().stills[0]
                     try await controller.deliver(still.image, scale: still.scale, screen: nil)
                     guard let png = NSPasteboard.general.data(forType: .png) else { throw OutputError.encoding }
                     try png.write(to: URL(filePath: output))
                     print(
                         "captured \(still.image.width) × \(still.image.height), wrote the clipboard's PNG to \(output)")
-                    exit(0)
-                case .overlay(let output, let selection):
-                    let overlay = Overlay(freeze: freeze)
+                    return 0
+                }
+            }
+        case .overlay(let output, let selection):
+            Task {
+                await finish {
+                    let overlay = Overlay(freeze: try await Capture.freeze())
                     overlay.show()
                     if let selection { overlay.select(selection) }
                     try await Task.sleep(for: .milliseconds(400))
@@ -56,12 +71,27 @@ enum Review {
                     try capture.run()
                     capture.waitUntilExit()
                     print("wrote \(output)")
-                    exit(capture.terminationStatus)
+                    return capture.terminationStatus
                 }
-            } catch {
-                print("failed: \(error.localizedDescription)")
-                exit(1)
             }
+        }
+    }
+
+    private static func finish(_ body: () throws -> Int32) -> Never {
+        do {
+            exit(try body())
+        } catch {
+            print("failed: \(error.localizedDescription)")
+            exit(1)
+        }
+    }
+
+    private static func finish(_ body: () async throws -> Int32) async -> Never {
+        do {
+            exit(try await body())
+        } catch {
+            print("failed: \(error.localizedDescription)")
+            exit(1)
         }
     }
 }

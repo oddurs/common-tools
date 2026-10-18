@@ -78,7 +78,9 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent st
 
 [docs/design.md](docs/design.md) is the design spec: each moment of the flow, benchmarked against macOS and the best third-party tools, and what Shot decides.
 
-Two flags check changes without pressing the shortcut. Both need Screen Recording access for the terminal running them, and neither touches your settings:
+To see how a change looks without pressing the shortcut or covering a screen, `.build/debug/CommonShot --render <folder>` draws every state of the overlay (idle, a window hovered, mid-drag with the size and the loupe, ⌥ for text, a drag into a corner, a drag on a 1× display beside a 2× one) and the preview, in light and dark, over a made-up desktop, and writes them as PNGs. It needs no permission and shows nothing on screen.
+
+Two flags check changes end to end. Both need Screen Recording access for the terminal running them, and neither touches your settings:
 
 - `swift build && .build/debug/CommonShot --capture out.png` runs the whole pipeline on the main display: freeze, size, encode, copy to the clipboard, and write what the clipboard holds to `out.png`.
 - `.build/debug/CommonShot --overlay out.png 300,250,640,380` shows the overlay with that area dragged (points from the bottom-left), or with the window under the pointer highlighted if no area is given, captures it, and quits.

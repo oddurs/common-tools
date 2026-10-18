@@ -122,7 +122,7 @@ final class AppController: NSObject {
             return (still.image, still)
         case .area(let still, let rect):
             let pixels = Geometry.pixels(
-                of: rect, viewSize: still.screen.frame.size, imageWidth: still.image.width,
+                of: rect, viewSize: still.frame.size, imageWidth: still.image.width,
                 imageHeight: still.image.height)
             guard let image = still.image.cropping(to: pixels) else { throw OutputError.encoding }
             return (image, still)
@@ -152,7 +152,7 @@ final class AppController: NSObject {
     }
 
     /// Copies the text in `image` rather than the image: exact, searchable, and far fewer tokens.
-    private func deliverText(from image: CGImage, scale: CGFloat, screen: NSScreen) async throws {
+    private func deliverText(from image: CGImage, scale: CGFloat, screen: NSScreen?) async throws {
         let text = try await Task.detached(priority: .userInitiated) { try Recognize.text(in: image) }.value
         guard !text.isEmpty else {
             toast.show(image, scale: scale, on: screen, caption: "No text found", detail: "The clipboard is unchanged")

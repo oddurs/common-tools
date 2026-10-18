@@ -17,19 +17,20 @@ enum Pick {
 final class Overlay {
     var onPick: ((pick: Pick, asText: Bool)?) -> Void = { _ in }
     private let freeze: Freeze
+    /// One per display, in the order of `freeze.stills`. They draw without a window, which is how
+    /// `--render` pictures them offscreen.
+    let views: [OverlayView]
     private var windows: [OverlayWindow] = []
     private var dragging = false
 
     init(freeze: Freeze) {
         self.freeze = freeze
+        views = freeze.stills.map(OverlayView.init)
+        for view in views { view.overlay = self }
     }
 
     func show() {
-        windows = freeze.stills.map { still in
-            let window = OverlayWindow(still: still)
-            window.overlayView.overlay = self
-            return window
-        }
+        windows = views.map(OverlayWindow.init)
         for window in windows { window.orderFrontRegardless() }
         let mouse = NSEvent.mouseLocation
         (windows.first { NSMouseInRect(mouse, $0.frame, false) } ?? windows.first)?.makeKey()
@@ -45,25 +46,25 @@ final class Overlay {
 
     /// Highlights the window under the pointer, on whichever screens it spans, and moves the loupe.
     func pointerMoved(to mouse: NSPoint) {
-        for window in windows { window.overlayView.showLoupe(at: mouse) }
+        for view in views { view.showLoupe(at: mouse) }
         guard !dragging else { return }
         let hovered = still(at: mouse).flatMap { still -> WindowFrame? in
-            let local = NSPoint(x: mouse.x - still.screen.frame.minX, y: mouse.y - still.screen.frame.minY)
+            let local = NSPoint(x: mouse.x - still.frame.minX, y: mouse.y - still.frame.minY)
             return WindowFrame.topmost(
                 at: Geometry.global(local, displayBounds: still.displayBounds), in: freeze.windows)
         }
-        for window in windows { window.overlayView.show(hovered: hovered) }
+        for view in views { view.show(hovered: hovered) }
     }
 
     func modifiersChanged(_ flags: NSEvent.ModifierFlags) {
         let asText = flags.contains(.option)
-        for window in windows { window.overlayView.asText = asText }
+        for view in views { view.asText = asText }
     }
 
     func dragBegan(in view: OverlayView) {
         guard !dragging else { return }
         dragging = true
-        for window in windows where window.overlayView !== view { window.overlayView.show(hovered: nil) }
+        for other in views where other !== view { other.show(hovered: nil) }
     }
 
     func dragEnded(in view: OverlayView, selection: CGRect, asText: Bool) {
@@ -93,26 +94,26 @@ final class Overlay {
         onPick(nil)
     }
 
-    /// As if `rect` had been dragged on the main display, for `--overlay`.
-    func select(_ rect: CGRect) {
-        guard let view = windows.first?.overlayView else { return }
-        dragBegan(in: view)
-        view.showSelection(rect)
+    /// As if `rect` had been dragged on the display at `index`, for `--overlay` and `--render`.
+    func select(_ rect: CGRect, on index: Int = 0) {
+        guard views.indices.contains(index) else { return }
+        dragBegan(in: views[index])
+        views[index].showSelection(rect)
     }
 
     private func still(at mouse: NSPoint) -> Still? {
-        freeze.stills.first { NSMouseInRect(mouse, $0.screen.frame, false) }
+        freeze.stills.first { NSMouseInRect(mouse, $0.frame, false) }
     }
 }
 
 final class OverlayWindow: NSPanel {
     let overlayView: OverlayView
 
-    init(still: Still) {
-        overlayView = OverlayView(still: still)
+    init(view: OverlayView) {
+        overlayView = view
+        let frame = view.still.frame
         super.init(
-            contentRect: still.screen.frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered,
-            defer: false)
+            contentRect: frame, styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
         level = .screenSaver
         isOpaque = true
         hasShadow = false
@@ -122,7 +123,7 @@ final class OverlayWindow: NSPanel {
         acceptsMouseMovedEvents = true
         collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         contentView = overlayView
-        setFrame(still.screen.frame, display: false)
+        setFrame(frame, display: false)
     }
 
     override var canBecomeKey: Bool { true }
@@ -160,9 +161,9 @@ final class OverlayView: NSView {
 
     init(still: Still) {
         self.still = still
-        super.init(frame: NSRect(origin: .zero, size: still.screen.frame.size))
+        super.init(frame: NSRect(origin: .zero, size: still.frame.size))
         wantsLayer = true
-        let scale = still.screen.backingScaleFactor
+        let scale = still.screen?.backingScaleFactor ?? still.scale
         picture.contents = still.image
         picture.contentsGravity = .resize
         picture.frame = bounds
@@ -246,7 +247,7 @@ final class OverlayView: NSView {
 
     /// Magnifies the frozen pixels under `mouse`, given in screen coordinates, beside the pointer.
     func showLoupe(at mouse: NSPoint) {
-        let point = NSPoint(x: mouse.x - still.screen.frame.minX, y: mouse.y - still.screen.frame.minY)
+        let point = NSPoint(x: mouse.x - still.frame.minX, y: mouse.y - still.frame.minY)
         guard bounds.contains(point) else {
             withoutAnimation { loupe.isHidden = true }
             return
