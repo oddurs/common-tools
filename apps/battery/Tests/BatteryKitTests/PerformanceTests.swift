@@ -18,7 +18,7 @@ struct PerformanceTests {
 
     @Test func drawingIsCheap() throws {
         let renderer = BarRenderer(
-            appearance: BarAppearance(style: .percentInIcon, showsTime: true, colorsAlerts: true), height: 24)
+            appearance: BarAppearance(parts: [.time, .percent, .battery], iconStyle: .percentInside), height: 24)
         let rep = try #require(
             NSBitmapImageRep(
                 bitmapDataPlanes: nil, pixelsWide: 120, pixelsHigh: 48, bitsPerSample: 8, samplesPerPixel: 4,

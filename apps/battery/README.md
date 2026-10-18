@@ -5,13 +5,13 @@
 
 The battery in the macOS menu bar, done properly: the level, the time left, and what the battery is doing, plus alerts when it runs low or reaches your charge level. It replaces the system's battery icon. **[oddurs.github.io/common-tools/battery](https://oddurs.github.io/common-tools/battery/)**
 
-![Every style in every state, on light and dark menu bars](docs/bar.png)
+![Six layouts in every state, on light and dark menu bars](docs/bar.png)
 
 Common Battery is built to feel like part of macOS:
 
 - **The menu bar draws it.** The icon is a template image, so macOS tints it for light and dark menu bars and inactive displays, like the system's own. It turns red when low and yellow in Low Power Mode, as the system's does; turn that off and it stays monochrome.
 - **A time remaining that learns.** macOS divides the charge left by the last minute's draw, so the time leaps when a build starts and balloons when the screen dims. Common Battery learns how this Mac is used, on the Mac, and counts down steadily instead. Details under [Time remaining](#time-remaining).
-- **Four styles.** Icon, Icon and Percentage, Percentage in Icon (the number cut out of the charge), or Percentage, each with the time remaining if you want it. The item's width never changes with the level, so it never nudges the icons beside it.
+- **Show what you want, in the order you want.** The item has three parts: the battery icon, the percentage, and the time remaining. Show any of them, even just the time, and drag them into order. The icon can carry the percentage inside it, cut out of the charge. The item's width never changes with the level, so it never nudges the icons beside it, and what it shows sits in its middle.
 - **The dropdown is a real menu.** It shows the level and status, a chart of the last 12 hours with time on the charger in green, and the details: power source and adapter wattage, live watts in or out, cycle count, full-charge capacity, and temperature.
 - **Alerts you choose.** A notification as the battery drains to 10–30%, and one as it charges to 80, 90, or 100%. Each comes once per crossing, not every minute after.
 - **VoiceOver reads it:** "Battery 72%, 2:41 remaining".
@@ -38,7 +38,7 @@ Click the item for the menu. **Battery Settings…** opens the system's Battery 
 
 ![The menu in light and dark](docs/bar-menu.png)
 
-Settings has four sections. **Menu Bar**: a live preview, **Style**, **Show time remaining**, and **Color when low or in Low Power Mode**. Below it, the way to hide the system's battery icon. **Notifications**: **Warn at** and **Tell me when charged to**. **General**: **Open at login**. **Common Tools**: the other apps in the family.
+Settings has four sections. **Menu Bar**: the item as it looks now, to arrange by dragging, with a tray of the parts it isn't showing; click a part to remove it or, for the icon, to show the percentage inside it. Then **Color when low or in Low Power Mode**. Below it, the way to hide the system's battery icon. **Notifications**: **Warn at** and **Tell me when charged to**. **General**: **Open at login**. **Common Tools**: the other apps in the family.
 
 If the item lands behind the camera housing or a menu bar manager, Settings says so. Open Common Battery again from Finder or Spotlight at any time to get Settings.
 
@@ -109,7 +109,7 @@ scripts/task test battery --filter=X  # only the tests whose name matches
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release battery <version>`.
 
-`swift build && .build/debug/CommonBattery --snapshot out.png` renders every style in every state to `out.png`, and the menu (this Mac's battery now, a made-up afternoon, and a Mac without a battery) to `out-menu.png`, each in light and dark. The images above were made this way.
+`swift build && .build/debug/CommonBattery --snapshot out.png` renders six layouts in every state to `out.png`, and the menu (this Mac's battery now, a made-up afternoon, and a Mac without a battery) to `out-menu.png`, each in light and dark. The images above were made this way.
 
 Layout:
 

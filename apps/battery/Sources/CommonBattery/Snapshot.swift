@@ -3,7 +3,7 @@ import BatteryKit
 import CommonUI
 import SwiftUI
 
-/// `CommonBattery --snapshot out.png` writes every bar style in every battery state at 2x on light
+/// `CommonBattery --snapshot out.png` writes a range of layouts in every battery state at 2x on light
 /// and dark menu bars to `out.png`, and the menu panel in light and dark to `out-menu.png`: this
 /// Mac's battery as it is now, then a made-up afternoon with a charge in it. Used for README images
 /// and for design review without screen-recording permission.
@@ -73,10 +73,14 @@ enum SnapshotCommand {
     }
 
     private static func writeBar(to path: String) {
-        let appearances =
-            BarStyle.allCases.map { BarAppearance(style: $0, showsTime: false, colorsAlerts: true) } + [
-                BarAppearance(style: .iconAndPercent, showsTime: true, colorsAlerts: true)
-            ]
+        let appearances: [BarAppearance] = [
+            BarAppearance(parts: [.battery]),
+            BarAppearance(parts: [.percent, .battery]),
+            BarAppearance(parts: [.battery], iconStyle: .percentInside),
+            BarAppearance(parts: [.percent]),
+            BarAppearance(parts: [.time]),
+            BarAppearance(parts: [.time, .percent, .battery]),
+        ]
         let height: CGFloat = 24
         let renderers = appearances.map { BarRenderer(appearance: $0, height: height) }
         let column = (renderers.map(\.size.width).max() ?? 0) + 16
@@ -103,7 +107,8 @@ enum SnapshotCommand {
                     let image = renderer.image(reading)
                     let y = band.maxY - row * CGFloat(r + 1) - 2
                     let rect = CGRect(
-                        x: 8 + column * CGFloat(c) + column - 8 - image.size.width, y: y, width: image.size.width,
+                        x: (8 + column * CGFloat(c) + (column - image.size.width) / 2).rounded(), y: y,
+                        width: image.size.width,
                         height: image.size.height)
                     NSAppearance(named: dark ? .darkAqua : .aqua)?.performAsCurrentDrawingAppearance {
                         (image.isTemplate ? tint(image, dark ? .white : .black) : image).draw(in: rect)
