@@ -10,12 +10,12 @@ import Testing
                 == "Free and open source, forever. Nothing you do is ever reported; nothing leaves your Mac.")
     }
 
-    @Test func aReleaseShowsItsVersionAlone() {
+    @Test @MainActor func aReleaseShowsItsVersionAlone() {
         #expect(CommonToolsSection.versionLine(name: "Common Bar", version: "0.4.0", commit: nil) == "Common Bar 0.4.0")
         #expect(CommonToolsSection.versionLine(name: "Common Bar", version: "0.4.0", commit: "") == "Common Bar 0.4.0")
     }
 
-    @Test func aDevelopmentBuildShowsItsCommit() {
+    @Test @MainActor func aDevelopmentBuildShowsItsCommit() {
         let sha = "1a2b3c4d5e6f708192a3b4c5d6e7f8091a2b3c4d"
         #expect(
             CommonToolsSection.versionLine(name: "Common Bar", version: "0.4.0", commit: sha)

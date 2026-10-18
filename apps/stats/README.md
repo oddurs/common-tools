@@ -78,7 +78,7 @@ The test suite fails if sampling or drawing gets about 10× slower. A leak test 
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build stats  # universal build → build/stats/Common Stats.app
+scripts/task build stats  # build for this Mac → build/stats/Common Stats.app
 mv "build/stats/Common Stats.app" /Applications/
 ```
 

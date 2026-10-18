@@ -172,7 +172,7 @@ The Command Line Tools are enough; Xcode is not required.
 
 ```sh
 scripts/dev-cert                          # once: a stable signing identity, see below
-scripts/task build keys                        # universal build → build/keys/Common Keys.app and build/keys/common-keys
+scripts/task build keys                        # build for this Mac → build/keys/Common Keys.app and build/keys/common-keys
 mv "build/keys/Common Keys.app" /Applications/
 ```
 

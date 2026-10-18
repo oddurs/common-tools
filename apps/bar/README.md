@@ -57,7 +57,7 @@ More in the [documentation](https://oddurs.github.io/common-tools/bar/docs/).
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build bar                          # universal build → build/bar/Common Bar.app
+scripts/task build bar                          # build for this Mac → build/bar/Common Bar.app
 mv "build/bar/Common Bar.app" /Applications/
 ```
 

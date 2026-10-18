@@ -58,7 +58,7 @@ The tests check these against reference values: CSS Color 4's OKLCH figures for 
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build color  # universal build → build/color/Common Color.app
+scripts/task build color  # build for this Mac → build/color/Common Color.app
 ```
 
 ## Development

@@ -3,12 +3,13 @@ set -eu
 
 # The one seam CI and the git hooks call, for every part of the monorepo.
 #
-#   scripts/task <verb> [area ...] [--changed]
+#   scripts/task <verb> [area ...] [--changed] [--filter=<test>] [--universal]
 #
 # Verbs: fmt fmt:check lint test build package run smoke cover check. Areas: site, kit
 # (packages/CommonKit), or an app by its slug (apps/<slug>); none means all of them, and --changed
 # means only what differs from origin/main (CommonKit changes count for every app, since they all
-# depend on it).
+# depend on it). An app builds for this Mac's architecture; --universal adds the other, and package
+# always does, since a release is what runs on both.
 
 cd "$(dirname "$0")/.."
 root="$(pwd)"
@@ -56,9 +57,11 @@ existing_areas() {
 areas=""
 changed=0
 filter=""
+universal=0
 for arg in "$@"; do
     case "$arg" in
     --changed) changed=1 ;;
+    --universal) universal=1 ;;
     --filter=*) filter="${arg#--filter=}" ;;
     *) areas="$areas $arg" ;;
     esac
@@ -103,6 +106,14 @@ sign() {
     fi
 }
 
+# Lint and test build the same debug configuration: SwiftPM rebuilds every module when the flags
+# change, so lint's build, with the tests in it, is the one test runs, and the next lint is
+# incremental instead of starting over.
+debug_flags() {
+    printf '%s\n' -Xswiftc -warnings-as-errors
+    test_flags
+}
+
 swift_package() {
     # $1 = verb, in a package directory
     case "$1" in
@@ -110,10 +121,11 @@ swift_package() {
     fmt:check) swift format lint --strict --recursive Package.swift Sources Tests ;;
     lint)
         swift format lint --strict --recursive Package.swift Sources Tests
-        swift build -Xswiftc -warnings-as-errors
+        # shellcheck disable=SC2046
+        swift build --build-tests $(debug_flags)
         ;;
     # shellcheck disable=SC2046
-    test) swift test $(test_flags) ${filter:+--filter "$filter"} ;;
+    test) swift test $(debug_flags) ${filter:+--filter "$filter"} ;;
     cover)
         # Line coverage from a test run. CommonKit's lines show in an app's report too, since the
         # app's tests run them.
@@ -192,9 +204,12 @@ app() {
         ;;
     build)
         # One build per architecture, joined with lipo: `--arch a --arch b` needs Xcode's build
-        # system, which Command Line Tools lack.
+        # system, which Command Line Tools lack. Only a release needs both, and each one is a
+        # whole release compile.
+        archs="$(uname -m)"
+        [ "$universal" -eq 0 ] || archs="arm64 x86_64"
         dirs=""
-        for arch in arm64 x86_64; do
+        for arch in $archs; do
             triple="$arch-apple-macosx$min_macos"
             echo "==> building $name for $arch"
             swift build -c release --triple "$triple"
@@ -225,7 +240,9 @@ app() {
         ;;
     package)
         # What a release publishes. The names carry no version; the site links each release's tag.
-        [ -d "$bundle" ] || app "$slug" build
+        # Built again here, universal: the bundle check and run leave holds this Mac's arch only.
+        universal=1
+        app "$slug" build
         # Signed with a Developer ID and notarized when the environment has one; otherwise it says
         # so and the build's signature stays (docs/signing.md).
         "$root/scripts/notarize" "$bundle"
@@ -267,7 +284,7 @@ areas)
     ;;
 fmt | fmt:check | lint | test | build | package | run | smoke | cover | check) ;;
 *)
-    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|smoke|cover|check} [site|kit|<app> ...] [--changed] [--filter=<test>]" >&2
+    echo "usage: scripts/task {fmt|fmt:check|lint|test|build|package|run|smoke|cover|check} [site|kit|<app> ...] [--changed] [--filter=<test>] [--universal]" >&2
     exit 2
     ;;
 esac

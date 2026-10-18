@@ -53,7 +53,7 @@ A glyph's image and its text each keep their own edits, so switching between the
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build glyph                          # universal build → build/glyph/Common Glyph.app
+scripts/task build glyph                          # build for this Mac → build/glyph/Common Glyph.app
 mv "build/glyph/Common Glyph.app" /Applications/
 ```
 
