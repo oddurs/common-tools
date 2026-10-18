@@ -33,6 +33,25 @@ struct PerformanceTests {
         #expect(us < 40_000)
     }
 
+    /// A keystroke's whole ranking: the catalog, a full page of Spotlight folders, and the places among them.
+    @Test func composingWithFilesAndPlacesTakesWellUnderAFrame() {
+        let catalog = Self.catalog
+        let now = Date()
+        let files = FileResults.candidates(
+            // 60 is the cap FileSearch puts on a Spotlight query.
+            (0..<60).map {
+                FileResults.Found(path: "/Users/me/Code/project \($0)/Library", isFolder: true, lastUsed: nil)
+            }, home: "/Users/me", now: now)
+        let places = Places.candidates(Places.standard(), home: "/Users/me")
+        let us = Benchmark.microseconds(iterations: 4) {
+            _ = Results.compose(
+                query: "library", candidates: catalog, files: files, places: places, usage: Usage(), now: now,
+                options: SearchOptions())
+        }
+        print("compose 2,000 + \(files.count) files + \(places.count) places: \(String(format: "%.0f", us)) µs")
+        #expect(us < 40_000)
+    }
+
     @Test func scanningTheApplicationsFoldersIsFast() {
         let us = Benchmark.microseconds(iterations: 3) { _ = AppCatalog.scan() }
         print("scan apps: \(String(format: "%.0f", us)) µs")

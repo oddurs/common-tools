@@ -42,6 +42,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Typing a main folder's name finds that folder first: "applications" gives /Applications, not ~/Applications or a copy in a backup, and the same goes for Utilities, your home folder, Desktop, Documents, Downloads, Pictures, Movies, Music, Library, iCloud Drive and Public. Spotlight never returned several of them. An app keeps its name ("Music" still opens Music), and a folder you choose for a query still comes first next time. Among other folders with the same name, shallower ones rank higher.
 - Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 - Settings no longer opens by itself on first launch.
 - A file Spotlight listed twice showed as two rows.
