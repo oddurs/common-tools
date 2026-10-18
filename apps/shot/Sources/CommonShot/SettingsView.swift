@@ -67,6 +67,7 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 Toggle("Show a preview", isOn: $preferences.showsPreview)
+                Toggle("Play the screenshot sound", isOn: $preferences.playsSound)
             } header: {
                 Text("Image")
             } footer: {

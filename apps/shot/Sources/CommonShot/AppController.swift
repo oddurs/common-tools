@@ -17,6 +17,7 @@ final class AppController: NSObject {
     let preferences: Preferences
     private let hotKey = HotKey()
     private let toast = Toast()
+    private let shutter = Shutter()
     let history = History()
     private let settings = SettingsWindowHost(title: "Common Shot Settings")
     let updates = UpdateCheck(tool: CommonTool.thisApp!)
@@ -116,16 +117,19 @@ final class AppController: NSObject {
             busy = false
             return
         }
+        // The shutter as the overlay goes, the moment of the shot; cancelling makes no sound.
+        if preferences.playsSound { shutter.play() }
         Task {
             defer { busy = false }
             do {
                 let (image, still) = try await Self.image(for: choice.pick, windowShots: windowShots, content: content)
+                let source = Self.source(of: choice.pick)
                 if choice.asText {
-                    try await deliverText(from: image, scale: still.scale, screen: still.screen)
+                    try await deliverText(from: image, scale: still.scale, screen: still.screen, from: source)
                 } else {
                     try await deliver(
                         image, scale: still.scale, screen: still.screen,
-                        detail: fromTerminal ? "Paste with Ctrl+V in Claude Code" : nil)
+                        detail: fromTerminal ? "Paste with Ctrl+V in Claude Code" : nil, from: source)
                 }
                 Self.latency.info(
                     "\(choice.asText ? "text" : "image") on the clipboard \(Self.milliseconds(.now - picked)) ms after the pick"
@@ -168,6 +172,19 @@ final class AppController: NSObject {
         }
     }
 
+    /// Where the pick was on screen, in AppKit's global coordinates, for the preview to fly from.
+    private static func source(of pick: Pick) -> CGRect {
+        switch pick {
+        case .screen(let still):
+            return still.frame
+        case .area(let still, let rect):
+            return rect.offsetBy(dx: still.frame.minX, dy: still.frame.minY)
+        case .window(let window, let still):
+            return Geometry.local(window.frame, displayBounds: still.displayBounds)
+                .offsetBy(dx: still.frame.minX, dy: still.frame.minY)
+        }
+    }
+
     /// `rect`, in the still's points from its bottom-left corner, cut from the frozen picture.
     private static func frozen(_ rect: CGRect, of still: Still) throws -> CGImage {
         let pixels = Geometry.pixels(
@@ -180,45 +197,76 @@ final class AppController: NSObject {
         Int((duration / .milliseconds(1)).rounded())
     }
 
-    /// Sizes and encodes off the main thread: a 5K PNG takes long enough to notice.
-    func deliver(_ image: CGImage, scale: CGFloat, screen: NSScreen?, detail: String? = nil) async throws {
+    /// The preview starts at once, from the picture as it was picked, while the PNG is sized and encoded
+    /// off the main thread; the clipboard follows within tens of milliseconds, and the preview becomes
+    /// draggable once the file it would drag exists.
+    func deliver(
+        _ image: CGImage, scale: CGFloat, screen: NSScreen?, detail: String? = nil, from source: CGRect? = nil
+    ) async throws {
         let size = preferences.imageSize
-        let (sized, density, png) = try await Task.detached(priority: .userInitiated) {
-            let sized = try PNG.prepared(image, size: size)
-            // The density shrinks with the pixels, so a shot opens at its on-screen size, down to 1×.
-            let density = max(1, scale * CGFloat(sized.width) / CGFloat(image.width))
-            return (sized, density, try PNG.data(sized, scale: density))
-        }.value
-        let date = Date()
-        // Saved first, so the clipboard can point at the file.
-        let file =
-            try history.add(png, width: sized.width, height: sized.height, at: date, keeping: preferences.historyLimit)
-            ?? Output.temporaryFile(png, at: date)
-        Output.copy(png, file: file)
-        if preferences.showsPreview, let screen {
-            toast.show(sized, scale: density, on: screen, caption: Self.caption(sized), detail: detail, file: file)
+        let fit = size.fit(width: image.width, height: image.height)
+        // The density shrinks with the pixels, so a shot opens at its on-screen size, down to 1×.
+        let density = max(1, scale * CGFloat(fit.width) / CGFloat(image.width))
+        let showsPreview = preferences.showsPreview && screen != nil
+        if showsPreview {
+            toast.show(
+                image, scale: scale, on: screen, caption: Self.caption(width: fit.width, height: fit.height),
+                detail: detail, from: source)
+        }
+        do {
+            let (sized, png) = try await Task.detached(priority: .userInitiated) {
+                let sized = try PNG.prepared(image, size: size)
+                return (sized, try PNG.data(sized, scale: density))
+            }.value
+            let date = Date()
+            // Saved first, so the clipboard can point at the file.
+            let file =
+                try history.add(
+                    png, width: sized.width, height: sized.height, at: date, keeping: preferences.historyLimit)
+                ?? Output.temporaryFile(png, at: date)
+            Output.copy(png, file: file)
+            if showsPreview { toast.attach(file: file) }
+            Self.announce("Copied \(sized.width) by \(sized.height)")
+        } catch {
+            // Nothing was copied, so the preview mustn't say it was.
+            toast.dismiss()
+            throw error
         }
     }
 
+    /// For VoiceOver, which can't see the preview's corner.
+    private static func announce(_ text: String) {
+        NSAccessibility.post(
+            element: NSApp as Any, notification: .announcementRequested,
+            userInfo: [.announcement: text, .priority: NSAccessibilityPriorityLevel.high.rawValue])
+    }
+
     /// Copies the text in `image` rather than the image: exact, searchable, and far fewer tokens.
-    private func deliverText(from image: CGImage, scale: CGFloat, screen: NSScreen?) async throws {
+    private func deliverText(
+        from image: CGImage, scale: CGFloat, screen: NSScreen?, from source: CGRect? = nil
+    ) async throws {
         let text = try await Task.detached(priority: .userInitiated) { try Recognize.text(in: image) }.value
         guard !text.isEmpty else {
-            toast.show(image, scale: scale, on: screen, caption: "No text found", detail: "The clipboard is unchanged")
+            toast.show(
+                image, scale: scale, on: screen, caption: "No text found", detail: "The clipboard is unchanged",
+                from: source)
+            Self.announce("No text found")
             return
         }
         Output.copy(text: text)
         let lines = text.split(separator: "\n", omittingEmptySubsequences: false).count
+        let caption = "Copied text · \(lines) \(lines == 1 ? "line" : "lines")"
         if preferences.showsPreview {
             toast.show(
-                image, scale: scale, on: screen, caption: "Copied text · \(lines) \(lines == 1 ? "line" : "lines")",
-                detail: text.count > 60 ? String(text.prefix(57)) + "…" : text)
+                image, scale: scale, on: screen, caption: caption,
+                detail: text.count > 60 ? String(text.prefix(57)) + "…" : text, from: source)
         }
+        Self.announce(caption)
     }
 
-    private static func caption(_ image: CGImage) -> String {
-        let tokens = ImageSize.estimatedTokens(width: image.width, height: image.height)
-        return "Copied · \(image.width) × \(image.height) · \(ImageSize.describe(tokens: tokens))"
+    private static func caption(width: Int, height: Int) -> String {
+        let tokens = ImageSize.estimatedTokens(width: width, height: height)
+        return "Copied · \(width) × \(height) · \(ImageSize.describe(tokens: tokens))"
     }
 
     /// A shot from the menu goes back on the clipboard exactly as it was first copied.
@@ -232,7 +280,8 @@ final class AppController: NSObject {
                 let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
             {
                 toast.show(
-                    image, scale: screen.backingScaleFactor, on: screen, caption: Self.caption(image), file: url)
+                    image, scale: screen.backingScaleFactor, on: screen,
+                    caption: Self.caption(width: image.width, height: image.height), file: url)
             }
         } catch {
             Self.present(error)
