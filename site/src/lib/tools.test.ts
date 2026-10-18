@@ -26,7 +26,8 @@ describe('tools', () => {
 			'glyph',
 			'command',
 			'shot',
-			'battery'
+			'battery',
+			'color'
 		]);
 		for (const t of all) expect(t.repo).toBe(`${github}/tree/main/apps/${t.slug}`);
 	});

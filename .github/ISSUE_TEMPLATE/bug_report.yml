@@ -14,6 +14,7 @@ body:
         - Common Command
         - Common Shot
         - Common Battery
+        - Common Color
         - The website
     validations:
       required: true

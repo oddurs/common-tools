@@ -103,5 +103,20 @@
 		"topics": ["screenshot", "clipboard"],
 		"published": false,
 		"PERMISSIONS": "ScreenCapture"
+	},
+	"color": {
+		"NAME": "Common Color",
+		"REPO": "common-color",
+		"DIR": "common-color",
+		"ASSET": "CommonColor",
+		"TARGET": "CommonColor",
+		"KIT": "ColorKit",
+		"BUNDLE": "com.oddurs.commoncolor",
+		"MIN_MACOS": "14.0",
+		"TOOLS": "",
+		"description": "Pick a colour from anywhere on screen and paste it as code: hex, CSS, SwiftUI, or AppKit.",
+		"topics": ["menu-bar", "menubar-app", "color-picker"],
+		"published": false,
+		"PERMISSIONS": ""
 	}
 }

@@ -14,6 +14,7 @@ Small, native utilities for the Mac. Each does one thing and gets out of the way
 | [Common Command](apps/command) | A small, fast launcher | in development |
 | [Common Shot](apps/shot) | Screenshots straight to the clipboard | in development |
 | [Common Battery](apps/battery) | The battery in the menu bar, done properly | in development |
+| [Common Color](apps/color) | Pick a color from anywhere, paste it as code | in development |
 
 **Free forever.** No trial, no subscription, no paid tier. **Open source** under the MIT licence: every line is here to read, build, and change. **Private:** no network access, no analytics, no crash reports, no account. Nothing you do is ever reported, and nothing leaves your Mac.
 
