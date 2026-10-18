@@ -4,7 +4,7 @@ set -eu
 # The front door for working on the family on this Mac.
 #
 #   scripts/dev setup [--dry-run]            once: tools, hooks, signing identity, install on merge
-#   scripts/dev status                       each app's installed build, permissions, PRs; worktrees
+#   scripts/dev status                       CI on main; each app's installed build, permissions, PRs; worktrees
 #   scripts/dev watch <app> [--build-only]   rebuild and relaunch the app whenever its sources change
 #   scripts/dev logs <app> [--since 10m] [--all]  the app's log, live or for the last while
 #   scripts/dev install [...]                scripts/install
@@ -115,6 +115,15 @@ status() {
     trap 'command rm -rf "$tmp"' EXIT
     gh_into "$tmp/open" pr list --state open --limit 100 --json number,headRefName,files,statusCheckRollup --jq "$ci_jq"
     gh_into "$tmp/recent" pr list --state all --limit 100 --json number,headRefName,state --jq '.[] | "\(.headRefName)\t\(.number)\t\(.state)"'
+    # Pull requests merge without being rebased onto every merge before them, so CI on the default
+    # branch is what says the merged whole still passes: its last finished run, and how many runs
+    # are still going. A cancelled run checked nothing, so it doesn't count.
+    gh_into "$tmp/main_ci" run list --workflow CI --branch "$(default_ref | sed 's|^refs/remotes/origin/||')" --event push --limit 20 \
+        --json status,conclusion,headSha,url --jq '[.[] | select(.conclusion != "cancelled")] as $r
+            | ($r | map(select(.status == "completed")) | first) as $last
+            | ($r | map(select(.status != "completed")) | length) as $going
+            | if $last == null then "no finished run" else if $last.conclusion == "success" then "passing at \($last.headSha[0:7])" else "FAILING at \($last.headSha[0:7]) (\($last.conclusion)): \($last.url)" end end
+              + (if $going > 0 then "; \($going) still running" else "" end)'
 
     apps_list="$(all_apps | tr '\n' ' ')"
     ref="$(default_ref)"
@@ -183,6 +192,11 @@ status() {
     fi
 
     echo "${ref#refs/remotes/} at $(git rev-parse --short "$main"), fetched $fetched"
+    if [ -s "$tmp/main_ci" ] && [ ! -s "$tmp/main_ci.err" ]; then
+        echo "CI on ${ref#refs/remotes/origin/}: $(cat "$tmp/main_ci")"
+    else
+        echo "CI on ${ref#refs/remotes/origin/}: unavailable ($(head -1 "$tmp/main_ci.err" 2>/dev/null))"
+    fi
     echo
     while IFS='|' read -r slug name running installed grants last; do
         echo "$name ($slug): $running; $installed"

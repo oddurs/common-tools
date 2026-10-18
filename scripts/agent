@@ -30,9 +30,14 @@ current_branch() { git rev-parse --abbrev-ref HEAD; }
 # The full check, recorded against HEAD when the tree is clean, so the pre-push hook can skip running
 # the same check again on exactly the commit being pushed.
 check_and_record() {
+    record="$(git rev-parse --git-dir)/agent-checked"
+    if [ -z "$(git status --porcelain)" ] && [ "$(cat "$record" 2>/dev/null || :)" = "$(git rev-parse HEAD)" ]; then
+        echo "==> $(git rev-parse --short HEAD) already passed the check"
+        return
+    fi
     "$root/scripts/task" check --changed
     if [ -z "$(git status --porcelain)" ]; then
-        git rev-parse HEAD >"$(git rev-parse --git-dir)/agent-checked"
+        git rev-parse HEAD >"$record"
     fi
 }
 
@@ -134,8 +139,8 @@ pr)
     gh pr view "$branch" --json url --jq .url
     ;;
 ship)
-    # Commit (when given a message), open the pull request with auto-merge, keep it current with the
-    # default branch while CI runs, and clean up once it merges. Stops on a failed check or a conflict.
+    # Commit (when given a message), open the pull request with auto-merge, rebase it while CI runs
+    # only when it must, and clean up once it merges. Stops on a failed check or a conflict.
     branch="$(current_branch)"
     base="$(default_branch)"
     [ "$branch" != "$base" ] || die "on the default branch; start a branch with 'scripts/agent start'"
@@ -152,31 +157,64 @@ ship)
         fi
     fi
     [ -z "$(git status --porcelain)" ] || die "uncommitted changes; pass a commit message or commit them first"
+    # Branch protection doesn't require a branch to be up to date, so GitHub merges on a green
+    # check whatever $base did meanwhile, and $base's own CI checks each merge once it lands.
+    # Rebasing on every move restarted CI for nothing. This rebases only when the pull request
+    # can't merge as it is, or when $base gained a change to an area this branch changes too:
+    # then the check runs on what will land, not on what the branch started from.
+    merged() { [ "$(gh pr view "$branch" --json state --jq .state)" = "MERGED" ]; }
+    # The areas both this branch and $base changed since they forked. Each list names an area
+    # once, so an area in both shows up twice.
+    overlap() {
+        mine="$("$root/scripts/task" areas "origin/$base")"
+        theirs="$("$root/scripts/task" areas "$(git merge-base HEAD "origin/$base")..origin/$base")"
+        # shellcheck disable=SC2086 # one area per word
+        printf '%s\n' $mine $theirs | sort | uniq -d | tr '\n' ' '
+    }
+    git fetch --quiet origin
+    shared="$(overlap)"
+    if [ -n "$shared" ]; then
+        echo "==> rebasing onto $base, which changed ${shared% } too"
+        git rebase --quiet "origin/$base" || die "conflicts with $base; resolve them, then run 'scripts/agent ship' again"
+    fi
     "$0" pr "$@"
     echo "==> waiting for $branch to merge"
-    merged() { [ "$(gh pr view "$branch" --json state --jq .state)" = "MERGED" ]; }
+    seen="$(git rev-parse "origin/$base")"
     while :; do
-        state="$(gh pr view "$branch" --json state --jq .state)"
+        pr_state="$(gh pr view "$branch" --json state,mergeable,mergeStateStatus --jq '"\(.state) \(.mergeable) \(.mergeStateStatus)"')"
+        read -r state mergeable merge_state <<EOF
+$pr_state
+EOF
         [ "$state" = "MERGED" ] && break
         [ "$state" = "CLOSED" ] && die "the pull request was closed without merging"
         git fetch --quiet origin
-        if ! git merge-base --is-ancestor "origin/$base" HEAD; then
-            # The move may be this pull request landing, between the state read and the fetch; its
-            # own squash is then on $base and these commits have nothing to rebase onto.
-            merged && continue
-            # Test against what it will land on, not what it branched from.
-            echo "==> $base moved; rebasing and checking again"
-            if ! git rebase --quiet "origin/$base"; then
-                if merged; then
-                    git rebase --abort
-                    continue
-                fi
-                die "conflicts with $base; resolve them, then run 'scripts/agent ship' again"
+        reason=""
+        if git merge-base --is-ancestor "origin/$base" HEAD; then
+            # Already on top of $base: a conflict GitHub still reports is from before the last push.
+            :
+        elif [ "$mergeable" = "CONFLICTING" ]; then
+            reason="it conflicts with $base"
+        elif [ "$merge_state" = "BEHIND" ]; then
+            reason="branch protection wants it up to date with $base"
+        elif [ "$(git rev-parse "origin/$base")" != "$seen" ]; then
+            seen="$(git rev-parse "origin/$base")"
+            shared="$(overlap)"
+            if [ -n "$shared" ]; then
+                reason="$base changed ${shared% } too"
+            else
+                echo "==> $base moved, outside what this branch changes; leaving it as it is"
             fi
-            check_and_record
-            # Auto-merge may have landed the pull request while the check ran, deleting the branch.
-            merged && continue
-            git push --quiet --force-with-lease origin "$branch" || merged || die "could not push $branch"
+        fi
+        if [ -n "$reason" ]; then
+            # Hold auto-merge first, so the head checked against the old $base can't land while
+            # the rebased one is checked; `pr` checks it, pushes it, and turns auto-merge back on.
+            gh pr merge "$branch" --disable-auto >/dev/null 2>&1 || :
+            # The move may be this pull request landing, between the state read and the fetch.
+            merged && break
+            echo "==> rebasing onto $base: $reason"
+            git rebase --quiet "origin/$base" || die "conflicts with $base; resolve them, then run 'scripts/agent ship' again"
+            "$0" pr
+            seen="$(git rev-parse "origin/$base")"
         fi
         # Only the checks that gate the merge: auto-merge goes ahead past any other failure.
         # gh pr checks exits 1 on a failure, 8 while pending; "no checks reported" means not started yet.

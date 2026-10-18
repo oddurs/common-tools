@@ -22,10 +22,26 @@ all_apps() { ls "$root/apps" 2>/dev/null || :; }
 # A field of one app from apps.json. plutil reads JSON, so no other tool is needed.
 app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
 
-changed_areas() {
+# What differs from origin/main, committed or not; or, with changed_range=<from>..<to>, only what
+# those commits changed.
+changed_files() {
+    if [ -n "${changed_range:-}" ]; then
+        git diff --name-only "$changed_range"
+        return
+    fi
     base="${changed_base:-$(git merge-base origin/main HEAD 2>/dev/null || git rev-parse HEAD)}"
-    { git diff --name-only "$base"; git diff --name-only; git ls-files --others --exclude-standard; } | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
-        # Workflows and root documents change nothing a local check can test.
+    git diff --name-only "$base"
+    git diff --name-only
+    git ls-files --others --exclude-standard
+}
+
+changed_areas() {
+    changed_files | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
+        # Workflows, root documents, the hooks, and the scripts other than this one change nothing
+        # a check tests: the workflow tooling, releases, and generated icons, which are committed.
+        /^scripts\/task$/    { site = 1; kit = 1; everyapp = 1; next }
+        /^scripts\//         { next }
+        /^\.githooks\//      { next }
         /^\.github\//        { next }
         /^[^\/]+\.md$/       { next }
         /^LICENSE$/          { next }
@@ -274,12 +290,19 @@ app() {
 
 case "$verb" in
 areas)
-    # The areas a change touches, for CI: `areas <base>` against a ref, or `areas --all`.
-    if [ "${1:-}" = "--all" ]; then
-        printf '%s\n' site kit $(all_apps)
-    else
-        changed_base="$(git merge-base "${1:-origin/main}" HEAD)" changed_areas | existing_areas
-    fi
+    # The areas a change touches: `areas <base>` against a ref, `areas <from>..<to>` for what those
+    # commits changed, or `areas --all`.
+    case "${1:-}" in
+    --all) printf '%s\n' site kit $(all_apps) ;;
+    *..*)
+        # A pipe would hide git's failure, and no areas means nothing to check.
+        for end in "${1%%..*}" "${1#*..}"; do
+            git rev-parse --verify --quiet "$end^{commit}" >/dev/null || { echo "task: no commit '$end'" >&2; exit 2; }
+        done
+        changed_range="$1" changed_areas | existing_areas
+        ;;
+    *) changed_base="$(git merge-base "${1:-origin/main}" HEAD)" changed_areas | existing_areas ;;
+    esac
     exit 0
     ;;
 fmt | fmt:check | lint | test | build | package | run | smoke | cover | check) ;;

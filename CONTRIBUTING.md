@@ -37,7 +37,7 @@ scripts/task run bar                         # build it and open it
 scripts/agent ship "fix(bar): stay revealed after a ⌘-drag" "Why it changed." --body-file pr.md
 ```
 
-`ship` commits, runs the check on what changed, opens the pull request with auto-merge, and waits. The pull request squash-merges itself once the `required` check passes. While it waits, `ship` rebases onto `main` whenever `main` moves and checks again. If a check fails or the rebase conflicts, it stops and says so: fix it, then run `scripts/agent ship` again. `commit`, `pr`, and `done` still work one step at a time.
+`ship` commits, runs the check on what changed, opens the pull request with auto-merge, and waits. The pull request squash-merges itself once the `required` check passes. Branches don't have to be up to date to merge, so `ship` leaves a branch where it is when `main` moves elsewhere: a rebase would only restart CI. It rebases and checks again, before the first push or while it waits, when GitHub reports a conflict or `main` changed an area the branch changes too (the areas of `scripts/task areas`; CommonKit and `shared/` count for every app). Each merge is then checked again by CI on `main`; `scripts/dev status` shows how that last ended. If a check fails or the rebase conflicts, it stops and says so: fix it, then run `scripts/agent ship` again. `commit`, `pr`, and `done` still work one step at a time.
 
 The pull request takes its title from the branch's first commit, and that title becomes the squash commit on `main`, so make the first commit the one that names the change. The body states the problem, the approach, and where a reviewer should be sceptical.
 
@@ -65,7 +65,7 @@ A branch must pass this before it becomes a pull request. A bug fix comes with t
 
 ```sh
 scripts/dev setup                 # once, and safe to repeat: tools, hooks, signing identity, install on merge
-scripts/dev status                # each app: installed build vs origin/main, running, permissions, PRs, last install
+scripts/dev status                # CI on main; each app: installed build vs origin/main, running, permissions, PRs, last install
 scripts/dev watch bar             # rebuild and relaunch Common Bar whenever its sources or CommonKit change
 scripts/dev logs bar --since 10m  # its log (live without --since; --all adds every framework's chatter)
 ```
@@ -97,4 +97,4 @@ The Release workflow publishes the zip, a disk image, the command-line tools, an
 
 ## Review
 
-This is a solo-maintained project, so branch protection requires zero approvals, and pull requests merge themselves once the `required` check is green. Branches don't have to be up to date with `main` to merge; `ship` keeps them current instead.
+This is a solo-maintained project, so branch protection requires zero approvals, and pull requests merge themselves once the `required` check is green. Branches don't have to be up to date with `main` to merge; `ship` rebases only a branch that conflicts with `main` or shares an area with what `main` gained, and CI on `main` checks every merge.
