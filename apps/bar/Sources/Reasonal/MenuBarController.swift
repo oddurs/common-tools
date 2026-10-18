@@ -15,14 +15,15 @@ final class MenuBarController: NSObject {
         static let pollInterval: TimeInterval = 0.05
         /// How long an icon may take to come on screen before opening it is given up.
         static let arrivalTimeout: TimeInterval = 1.5
-        static let rowIcon = NSSize(width: 16, height: 16)
     }
 
     static let accessibility = Permission.accessibility(reason: "to see which app each icon belongs to and open it")
-    private static let askedForAccessKey = "askedForAccessibility"
+    /// Whether a folder shows its name beside its symbol. On to start with.
+    static let showsFolderNamesKey = "showsFolderNames"
 
     private let folder: NSStatusItem
     private let divider: DividerItem
+    private var folderMenu: FolderMenu!
     private var settleTimer: Timer?
     private var opening: Opening?
     private var openTimer: Timer?
@@ -31,20 +32,24 @@ final class MenuBarController: NSObject {
     private let updates = UpdateCheck(tool: CommonTool.thisApp!)
 
     override init() {
+        // Once, before anything observes the defaults: registering posts a change notification.
+        UserDefaults.standard.register(defaults: [Self.showsFolderNamesKey: true])
         Self.seedPositions()
         DividerItem.markVisible(ItemName.toggle)
-        folder = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        folder = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         divider = DividerItem(named: ItemName.divider)
         super.init()
 
         folder.autosaveName = ItemName.toggle
-        if let button = folder.button {
-            button.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "More")
-            button.target = self
-            button.action = #selector(folderClicked)
-            // Menu bar extras respond on press, not release.
-            button.sendAction(on: [.leftMouseDown, .rightMouseDown])
-        }
+        folder.button?.image = NSImage(systemSymbolName: "ellipsis.circle", accessibilityDescription: "More")
+        folder.button?.imagePosition = .imageLeading
+        folderMenu = FolderMenu(
+            inputs: { [weak self] in self?.folderInputs },
+            choose: { [weak self] id in self?.open(id) },
+            fillAppMenu: { [weak self] menu in self?.fillAppMenu(menu) })
+        // The status item's own menu: AppKit opens it on the press, highlighted, with no click of ours.
+        folder.menu = folderMenu.menu
+        showFolderName()
 
         // The divider's right end moves as pinned icons come and go and as screens change, and the
         // folder can be ⌘-dragged, which rewrites its saved position.
@@ -53,22 +58,40 @@ final class MenuBarController: NSObject {
         observers = [
             center.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) {
                 [weak self] _ in
-                MainActor.assumeIsolated { self?.apply() }
+                MainActor.assumeIsolated {
+                    self?.showFolderName()
+                    self?.apply()
+                }
             },
             center.addObserver(
                 forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
             ) { [weak self] _ in
-                MainActor.assumeIsolated { self?.apply() }
+                MainActor.assumeIsolated {
+                    self?.apply()
+                    self?.folderMenu.refresh(after: [Metric.settleDelay])
+                }
             },
             workspace.addObserver(forName: NSWorkspace.didLaunchApplicationNotification, object: nil, queue: .main) {
-                [weak self] _ in MainActor.assumeIsolated { self?.scheduleSettle() }
+                [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.scheduleSettle()
+                    self?.folderMenu.appsChanged()
+                }
             },
             workspace.addObserver(
                 forName: NSWorkspace.didTerminateApplicationNotification, object: nil, queue: .main
-            ) { [weak self] _ in MainActor.assumeIsolated { self?.scheduleSettle() } },
+            ) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    self?.scheduleSettle()
+                    self?.folderMenu.appsChanged()
+                }
+            },
         ]
 
         apply()
+        // Once the divider has pushed the icons away, so the first open of More finds rows waiting;
+        // again a little later, since at launch the divider may not be laid out by the first.
+        folderMenu.refresh(after: [Metric.settleDelay, 3])
     }
 
     private static func positionKey(_ name: String) -> String {
@@ -127,120 +150,28 @@ final class MenuBarController: NSObject {
 
     // MARK: Folder
 
-    @objc private func folderClicked() {
-        let event = NSApp.currentEvent
-        if event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true {
-            show(appMenu())
-        } else {
-            show(folderMenu())
+    private var folderInputs: FolderMenu.Inputs? {
+        guard let screen else { return nil }
+        let apps = NSWorkspace.shared.runningApplications.map {
+            MenuBarExtras.App(pid: $0.processIdentifier, bundleID: $0.bundleIdentifier, name: $0.localizedName ?? "")
         }
+        return FolderMenu.Inputs(own: ownItems, geometry: MenuBar.geometry(of: screen), apps: apps)
     }
 
-    private func show(_ menu: NSMenu) {
-        folder.menu = menu
-        folder.button?.performClick(nil)
-        folder.menu = nil
+    /// The folder's name beside its symbol, unless Settings says not to.
+    private func showFolderName() {
+        let title = UserDefaults.standard.bool(forKey: Self.showsFolderNamesKey) ? "More" : ""
+        if folder.button?.title != title { folder.button?.title = title }
     }
 
-    private func appMenu() -> NSMenu {
-        let menu = NSMenu()
+    /// The menu a right-click or ⌃-click on the folder opens.
+    private func fillAppMenu(_ menu: NSMenu) {
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
         menu.addItem(
             NSMenuItem(title: "Quit Common Bar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-        return menu
-    }
-
-    private func folderMenu() -> NSMenu {
-        let menu = NSMenu()
-        guard let screen else { return menu }
-        let model = MenuBar.model(of: screen, own: ownItems)
-        let hiddenCount = model.items.filter { $0.section == .hidden }.count
-
-        guard Self.accessibility.isGranted else {
-            addPermissionItems(to: menu, hiddenCount: hiddenCount)
-            return menu
-        }
-
-        let entries = model.folderEntries(Self.accessibleItems(), ownPID: Self.ownPID)
-        if entries.isEmpty {
-            menu.addItem(note(hiddenCount == 0 ? "Every icon is in the menu bar." : "No app answered for its icons."))
-        }
-        for entry in entries {
-            let row = NSMenuItem(title: entry.name, action: #selector(entryChosen(_:)), keyEquivalent: "")
-            row.target = self
-            row.representedObject = entry.item.id
-            if let icon = NSRunningApplication(processIdentifier: entry.owner.pid)?.icon {
-                icon.size = Metric.rowIcon
-                row.image = icon
-            }
-            menu.addItem(row)
-        }
-        return menu
-    }
-
-    /// Until Accessibility is allowed, the folder says why it's needed and how, instead of an
-    /// empty list. It is asked here, the first time a folder opens, and never at launch.
-    private func addPermissionItems(to menu: NSMenu, hiddenCount: Int) {
-        let permission = Self.accessibility
-        menu.addItem(note("Common Bar needs \(permission.name) access \(permission.reason)."))
-        let asked = UserDefaults.standard.bool(forKey: Self.askedForAccessKey)
-        let allow = NSMenuItem(
-            title: asked ? "Open System Settings…" : "Allow \(permission.name)…", action: #selector(allowAccess),
-            keyEquivalent: "")
-        allow.target = self
-        menu.addItem(allow)
-        if asked {
-            menu.addItem(.separator())
-            menu.addItem(note("\(permission.staleSwitchNote(app: "Common Bar")) Reset and Ask Again clears it."))
-            let reset = NSMenuItem(title: "Reset and Ask Again", action: #selector(resetAccess), keyEquivalent: "")
-            reset.target = self
-            menu.addItem(reset)
-        }
-        if hiddenCount > 0 {
-            menu.addItem(.separator())
-            menu.addItem(
-                note(hiddenCount == 1 ? "1 icon is in this folder." : "\(hiddenCount) icons are in this folder."))
-        }
-    }
-
-    /// A line of explanation in a menu: not choosable, and wrapped rather than one long row.
-    private func note(_ text: String) -> NSMenuItem {
-        let item = NSMenuItem()
-        let label = NSTextField(wrappingLabelWithString: text)
-        label.textColor = Tokens.Text.secondary.nsColor
-        label.font = .menuFont(ofSize: NSFont.smallSystemFontSize)
-        label.preferredMaxLayoutWidth = Tokens.Layout.menuPanelWidth - 2 * Tokens.Space.md
-        let size = label.fittingSize
-        let container = NSView(
-            frame: NSRect(x: 0, y: 0, width: size.width + 2 * Tokens.Space.md, height: size.height + Tokens.Space.xs))
-        label.frame = NSRect(x: Tokens.Space.md, y: Tokens.Space.xxs, width: size.width, height: size.height)
-        container.addSubview(label)
-        item.view = container
-        item.isEnabled = false
-        return item
-    }
-
-    @objc private func allowAccess() {
-        let permission = Self.accessibility
-        if UserDefaults.standard.bool(forKey: Self.askedForAccessKey) {
-            NSWorkspace.shared.open(permission.settingsURL)
-        } else {
-            UserDefaults.standard.set(true, forKey: Self.askedForAccessKey)
-            permission.request()
-        }
-    }
-
-    /// Clears a record left by an earlier copy, whose switch shows on but doesn't apply to this one.
-    @objc private func resetAccess() {
-        do {
-            try Self.accessibility.resetAndRequest()
-        } catch {
-            NSApp.activate()
-            NSAlert(error: error).runModal()
-        }
     }
 
     // MARK: Opening
@@ -250,14 +181,6 @@ final class MenuBarController: NSObject {
         let target: UInt32
         let started: Date
         var pressed: (pid: Int32, before: Set<UInt32>, watch: OpenWatch)?
-    }
-
-    @objc private func entryChosen(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? UInt32 else { return }
-        // After the folder's menu has closed, so it isn't taken for the icon's.
-        DispatchQueue.main.async { [weak self] in
-            MainActor.assumeIsolated { self?.open(id) }
-        }
     }
 
     private func open(_ id: UInt32) {
@@ -285,6 +208,7 @@ final class MenuBarController: NSObject {
         openTimer = nil
         opening = nil
         apply()
+        folderMenu.refresh(after: [Metric.settleDelay])
     }
 
     /// One step of opening an icon: wait for it to arrive on screen, press it, then wait for its

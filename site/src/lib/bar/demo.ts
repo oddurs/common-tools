@@ -1,6 +1,6 @@
 // The Common Bar demo: a crowded menu bar tidied into the More folder, the folder opened to list
 // the icons in it by app, and one of them opened from there. Sizes and the folder's symbol are the
-// app's own (MenuBarController). Opening an icon brings it on screen just long enough for its
+// app's own (MenuBarController, FolderMenu). Opening an icon brings it on screen just long enough for its
 // menu: the one chosen here is the nearest the divider, which Common Bar shows right beside the
 // folder (MenuBarModel.blockEnd). The scene is a pure function of time, so the recorder can step
 // through it.
@@ -47,8 +47,8 @@ export type Frame = BaseFrame & {
 export const metrics = {
 	right: extrasRight,
 	slot: statusSlot,
-	/** The folder: a square status item showing ellipsis.circle. */
-	folder: 32,
+	/** The folder: ellipsis.circle and its name, More, as Common Bar shows it to start with. */
+	folder: 70,
 	row: 24,
 	dropdownWidth: 210,
 	itemMenuWidth: 190

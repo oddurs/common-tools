@@ -24,7 +24,7 @@
 			class="icon"
 			class:open={frame.folder.open}
 			style:left="{frame.folder.x}px"
-			style:width="{metrics.folder}px"><Symbol name="ellipsis.circle" /></span
+			style:width="{metrics.folder}px"><Symbol name="ellipsis.circle" /><b class="name">More</b></span
 		>
 	{/snippet}
 
@@ -79,6 +79,11 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 8px;
+	}
+	/* The folder's name beside its symbol, as the menu bar sets a status item's title. */
+	.name {
+		margin-left: 5px;
+		font-weight: 500;
 	}
 	/* macOS 26 marks an open menu bar extra with a soft capsule. */
 	.icon.open {

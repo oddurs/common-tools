@@ -134,3 +134,53 @@ public struct OpenWatch: Sendable {
         return now.timeIntervalSince(since) >= Self.closeGrace ? .done : .open
     }
 }
+
+/// The groups a folder's menu shows, in order, with a separator between each: other apps' icons,
+/// then the Common Tools family's, then macOS's own.
+public enum FolderGroup: Int, Comparable, Sendable {
+    case apps
+    case commonTools
+    case system
+
+    public static func < (a: FolderGroup, b: FolderGroup) -> Bool { a.rawValue < b.rawValue }
+
+    /// `family` is the Common Tools bundle identifiers.
+    public init(bundleID: String?, family: Set<String>) {
+        if let bundleID, family.contains(bundleID) || bundleID.hasPrefix("io.github.oddurs.") {
+            self = .commonTools
+        } else if bundleID?.hasPrefix("com.apple.") == true {
+            self = .system
+        } else {
+            self = .apps
+        }
+    }
+}
+
+extension FolderEntry {
+    /// What a row shows. A refresh that changes nothing here leaves an open menu alone, however
+    /// far the icons' frames have moved.
+    public struct Signature: Equatable, Sendable {
+        public let id: UInt32
+        public let name: String
+        public let pid: Int32
+    }
+
+    public var signature: Signature { Signature(id: id, name: name, pid: owner.pid) }
+
+    /// Rows for a folder's menu: in groups (`FolderGroup`), each app's icons together, apps in the
+    /// order their first icon has in the menu bar. Empty groups are left out.
+    public static func grouped(_ entries: [FolderEntry], family: Set<String>) -> [[FolderEntry]] {
+        var apps: [Int32: [FolderEntry]] = [:]
+        var order: [Int32] = []
+        for entry in entries {
+            if apps[entry.owner.pid] == nil { order.append(entry.owner.pid) }
+            apps[entry.owner.pid, default: []].append(entry)
+        }
+        var groups: [FolderGroup: [FolderEntry]] = [:]
+        for pid in order {
+            let rows = apps[pid]!
+            groups[FolderGroup(bundleID: rows[0].owner.bundleID, family: family), default: []] += rows
+        }
+        return groups.keys.sorted().map { groups[$0]! }
+    }
+}

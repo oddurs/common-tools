@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- More opens at once. It is the status item's own menu now, opened by macOS on the press like any other, and its rows are worked out ahead of time in the background instead of asking every app on each click.
+- More's rows come in groups with a line between: other apps' icons, then Common Tools', then macOS's own, each app's icons together.
+- More shows its name beside its symbol. Turn that off with **Show folder names in the menu bar** in Settings.
 - Common Bar is now a folder. The chevron became **More**, and every icon left of it stays off-screen all the time instead of sliding into the menu bar on request, so nothing lands under the notch or behind the app's menus and nothing reshuffles. Click More to see those icons, each with its app's icon and name, and choose one to open it: Common Bar brings it on screen just long enough for its menu, then puts it back. Icons you had hidden, always-hidden ones included, are all in More now; icons right of the chevron stay in the menu bar.
 - Common Bar needs Accessibility to list and open the icons in More, and asks the first time you open it, never at launch. Until then More says why and how many icons it holds. Tidying the menu bar still needs no permission.
 - Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
