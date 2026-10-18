@@ -2,6 +2,8 @@
 
 Common UI is the design system for Common Tools: the apps' Settings windows and menus, and the website, read from one set of tokens. `tokens.json` is the source; `build.mjs` renders it for each surface; tests on both surfaces fail when an output is older than the source.
 
+See it: [oddurs.github.io/common-tools/design/](https://oddurs.github.io/common-tools/design/), every token, scale and primitive drawn from this source when the site is built (`/design/` on the dev server).
+
 ```
 tokens.json                                         the source of truth
   └─ build.mjs
@@ -12,7 +14,12 @@ tokens.json                                         the source of truth
 ```sh
 node packages/common-ui/build.mjs          # after editing tokens.json
 node packages/common-ui/build.mjs --check  # what the tests do
+swift run --package-path packages/CommonKit DesignRender   # after changing a CommonUI primitive
 ```
+
+`DesignRender` draws each CommonUI primitive offscreen, light and dark, into `site/static/design/` for the design page, with `renders.json` carrying a hash of the Swift it was drawn from. `DesignRenderTests` fails while that hash is older than the sources, so a pull request that changes a primitive carries its new images. The images follow this Mac's accent colour and installed apps (the Common Tools section says Open or Get…), so they differ a little from Mac to Mac; the hash doesn't.
+
+`tokens.css` also honours `data-theme="light"` or `"dark"` on any element: on the root it overrides the system's appearance for the page, and on an element it shows that subtree in one appearance, as the design page does to draw each swatch in both.
 
 ## Layers
 

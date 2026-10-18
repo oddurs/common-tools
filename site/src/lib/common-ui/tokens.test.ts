@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { colors, entries, outputs, render, source } from '../../../../packages/common-ui/build.mjs';
+import { contrast } from './contrast.ts';
 
 const { tokens } = source();
 const rendered = render();
@@ -18,20 +19,6 @@ function styledFiles(dir = 'src'): string[] {
 			return ['film', 'mac', 'common-ui', '(demo)'].includes(entry.name) ? [] : styledFiles(path);
 		return /\.(svelte|css)$/.test(entry.name) && !entry.name.endsWith('Demo.svelte') ? [path] : [];
 	});
-}
-
-/** The relative luminance of #rrggbb, per WCAG 2. */
-function luminance(hex: string): number {
-	const channel = (i: number) => {
-		const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-		return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-	};
-	return 0.2126 * channel(1) + 0.7152 * channel(3) + 0.0722 * channel(5);
-}
-
-function contrast(fg: string, bg: string): number {
-	const [a, b] = [luminance(fg), luminance(bg)].sort((x, y) => y - x);
-	return (a + 0.05) / (b + 0.05);
 }
 
 describe('generated outputs', () => {

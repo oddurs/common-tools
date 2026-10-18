@@ -13,6 +13,9 @@ import PackageDescription
 //   CommonTesting  what every app's tests share: the family contract and benchmark gates. A plain
 //                  library, not a test target, so apps link it from theirs; it imports nothing
 //                  from Testing itself.
+//   DesignRender   draws the CommonUI primitives into the site's design page, light and dark:
+//                  `swift run --package-path packages/CommonKit DesignRender`. Not a product, so no
+//                  app builds it; it lives here so the kit's lint and tests build it with the rest.
 let package = Package(
     name: "CommonKit",
     platforms: [.macOS(.v14)],
@@ -27,8 +30,10 @@ let package = Package(
         .target(name: "CommonKit", dependencies: ["CommonUI"]),
         .target(name: "CommonShortcut", dependencies: ["CommonUI"], linkerSettings: [.linkedFramework("Carbon")]),
         .target(name: "CommonTesting", dependencies: ["CommonKit"]),
+        .executableTarget(name: "DesignRender", dependencies: ["CommonKit", "CommonUI"]),
         .testTarget(name: "CommonKitTests", dependencies: ["CommonKit", "CommonTesting"]),
         .testTarget(name: "CommonUITests", dependencies: ["CommonUI"]),
         .testTarget(name: "CommonShortcutTests", dependencies: ["CommonShortcut"]),
+        .testTarget(name: "DesignRenderTests", dependencies: ["DesignRender"]),
     ]
 )
