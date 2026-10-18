@@ -4,13 +4,16 @@ import ShotKit
 
 /// One display as it looked the moment the shortcut was pressed.
 struct Still {
-    let screen: NSScreen
+    /// Where the display sits in AppKit's global coordinates: points up from the main display's bottom-left.
+    let frame: CGRect
     /// Where the display sits in global display coordinates, down from the main display's top-left corner.
     let displayBounds: CGRect
     let image: CGImage
+    /// The screen it was captured from; nil for a made-up one rendered offscreen.
+    let screen: NSScreen?
 
     /// Pixels per point, which can be fractional on a scaled display.
-    var scale: CGFloat { CGFloat(image.width) / screen.frame.width }
+    var scale: CGFloat { CGFloat(image.width) / frame.width }
 }
 
 /// Every display frozen, and the windows on them, front to back.
@@ -51,7 +54,8 @@ enum Capture {
             let filter = SCContentFilter(display: display, excludingApplications: ownApp, exceptingWindows: [])
             let image = try await SCScreenshotManager.captureImage(
                 contentFilter: filter, configuration: configuration(for: filter))
-            stills.append(Still(screen: screen, displayBounds: CGDisplayBounds(id), image: image))
+            stills.append(
+                Still(frame: screen.frame, displayBounds: CGDisplayBounds(id), image: image, screen: screen))
         }
         guard !stills.isEmpty else { throw CaptureError.noDisplays }
         return Freeze(stills: stills, windows: windows)
