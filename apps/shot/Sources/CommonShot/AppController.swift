@@ -1,6 +1,8 @@
 import AppKit
 import CommonKit
 import CommonUI
+import OSLog
+import ScreenCaptureKit
 import ShotKit
 
 /// Wires the shortcut, the overlay, the menu bar item, and Settings together, and sends each shot to
@@ -25,6 +27,13 @@ final class AppController: NSObject {
     private var busy = false
     private var overlay: Overlay?
     private var previousApp: NSRunningApplication?
+    /// What ScreenCaptureKit saw when the overlay froze, and each hovered window's capture, already
+    /// under way so a click copies at once.
+    private var frozenContent: SCShareableContent?
+    private var windowShots: [UInt32: Task<CGImage?, Error>] = [:]
+    /// How long the shortcut and the copy take, for `log stream --level info --predicate
+    /// 'subsystem == "com.oddurs.commonshot"'`. Times only; nothing about what was captured.
+    private static let latency = Logger(subsystem: "com.oddurs.commonshot", category: "latency")
 
     init(preferences: Preferences = Preferences(), interactive: Bool = true) {
         self.preferences = preferences
@@ -67,14 +76,23 @@ final class AppController: NSObject {
         guard !busy, ensureAccess() else { return }
         busy = true
         previousApp = NSWorkspace.shared.frontmostApplication
+        let pressed = ContinuousClock.now
         Task {
             do {
-                let overlay = Overlay(freeze: try await Capture.freeze(), imageSize: preferences.imageSize)
+                let freeze = try await Capture.freeze()
+                let captured = ContinuousClock.now
+                let overlay = Overlay(freeze: freeze, imageSize: preferences.imageSize)
                 overlay.onPick = { [weak self] in self?.finish($0) }
+                overlay.onHover = { [weak self] in self?.prefetch($0) }
+                frozenContent = freeze.content
                 self.overlay = overlay
                 // Active, so the crosshair cursor shows and Escape and Return reach the overlay.
                 NSApp.activate()
                 overlay.show()
+                let shown = ContinuousClock.now
+                Self.latency.info(
+                    "overlay up \(Self.milliseconds(shown - pressed)) ms after the shortcut: \(freeze.stills.count) displays captured in \(Self.milliseconds(captured - pressed)) ms"
+                )
             } catch {
                 busy = false
                 Self.present(error)
@@ -83,19 +101,25 @@ final class AppController: NSObject {
     }
 
     private func finish(_ choice: (pick: Pick, asText: Bool)?) {
+        let picked = ContinuousClock.now
         overlay?.close()
         overlay = nil
+        let windowShots = windowShots
+        self.windowShots = [:]
+        let content = frozenContent
+        frozenContent = nil
         let fromTerminal = previousApp?.bundleIdentifier.map(Self.terminals.contains) ?? false
         if let previousApp, previousApp != .current { previousApp.activate() }
         previousApp = nil
         guard let choice else {
+            for shot in windowShots.values { shot.cancel() }
             busy = false
             return
         }
         Task {
             defer { busy = false }
             do {
-                let (image, still) = try await Self.image(for: choice.pick)
+                let (image, still) = try await Self.image(for: choice.pick, windowShots: windowShots, content: content)
                 if choice.asText {
                     try await deliverText(from: image, scale: still.scale, screen: still.screen)
                 } else {
@@ -103,6 +127,9 @@ final class AppController: NSObject {
                         image, scale: still.scale, screen: still.screen,
                         detail: fromTerminal ? "Paste with Ctrl+V in Claude Code" : nil)
                 }
+                Self.latency.info(
+                    "\(choice.asText ? "text" : "image") on the clipboard \(Self.milliseconds(.now - picked)) ms after the pick"
+                )
             } catch {
                 Self.present(error)
             }
@@ -116,29 +143,51 @@ final class AppController: NSObject {
         "net.kovidgoyal.kitty", "org.alacritty", "com.github.wez.wezterm", "co.zeit.hyper",
     ]
 
-    private static func image(for pick: Pick) async throws -> (CGImage, Still) {
+    /// Starts capturing a window as soon as the pointer is over it; a window passed over twice is
+    /// captured once.
+    private func prefetch(_ id: UInt32) {
+        guard windowShots[id] == nil else { return }
+        let content = frozenContent
+        windowShots[id] = Task { try await Capture.image(ofWindow: id, in: content) }
+    }
+
+    private static func image(
+        for pick: Pick, windowShots: [UInt32: Task<CGImage?, Error>], content: SCShareableContent?
+    ) async throws -> (CGImage, Still) {
         switch pick {
         case .screen(let still):
             return (still.image, still)
         case .area(let still, let rect):
-            let pixels = Geometry.pixels(
-                of: rect, viewSize: still.frame.size, imageWidth: still.image.width,
-                imageHeight: still.image.height)
-            guard let image = still.image.cropping(to: pixels) else { throw OutputError.encoding }
-            return (image, still)
-        case .window(let id, let still):
-            return (try await Capture.image(ofWindow: id), still)
+            return (try frozen(rect, of: still), still)
+        case .window(let window, let still):
+            let shot = windowShots[window.id] ?? Task { try await Capture.image(ofWindow: window.id, in: content) }
+            if let image = try await shot.value { return (image, still) }
+            // Closed since: what was on screen is still in the frozen picture, which is what was picked.
+            let local = Geometry.local(window.frame, displayBounds: still.displayBounds)
+            return (try frozen(local.intersection(CGRect(origin: .zero, size: still.frame.size)), of: still), still)
         }
+    }
+
+    /// `rect`, in the still's points from its bottom-left corner, cut from the frozen picture.
+    private static func frozen(_ rect: CGRect, of still: Still) throws -> CGImage {
+        let pixels = Geometry.pixels(
+            of: rect, viewSize: still.frame.size, imageWidth: still.image.width, imageHeight: still.image.height)
+        guard let image = still.image.cropping(to: pixels) else { throw PNG.Failure.encoding }
+        return image
+    }
+
+    private static func milliseconds(_ duration: Duration) -> Int {
+        Int((duration / .milliseconds(1)).rounded())
     }
 
     /// Sizes and encodes off the main thread: a 5K PNG takes long enough to notice.
     func deliver(_ image: CGImage, scale: CGFloat, screen: NSScreen?, detail: String? = nil) async throws {
         let size = preferences.imageSize
         let (sized, density, png) = try await Task.detached(priority: .userInitiated) {
-            let sized = try Output.resized(image, to: size)
+            let sized = try PNG.prepared(image, size: size)
             // The density shrinks with the pixels, so a shot opens at its on-screen size, down to 1×.
             let density = max(1, scale * CGFloat(sized.width) / CGFloat(image.width))
-            return (sized, density, try Output.png(sized, scale: density))
+            return (sized, density, try PNG.data(sized, scale: density))
         }.value
         let date = Date()
         // Saved first, so the clipboard can point at the file.
@@ -373,6 +422,15 @@ extension AppController: NSApplicationDelegate {
             WelcomeInfo(
                 line: "Screenshots straight to the clipboard: press ⇧⌘2, drag, paste.", permission: Self.permission))
         updates.start()
+        Overlay.warmUp()
+        Task {
+            do {
+                try await Capture.warmUp()
+            } catch {
+                // The shortcut asks again and reports a real failure; this was only to save it time.
+                Self.latency.error("warming up ScreenCaptureKit failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     /// Opening the app again while it runs is how people look for its settings.

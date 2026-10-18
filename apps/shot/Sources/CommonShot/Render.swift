@@ -249,13 +249,13 @@ enum Render {
                 data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
                 space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
             let layer = view.layer
-        else { throw OutputError.encoding }
+        else { throw PNG.Failure.encoding }
         context.scaleBy(x: scale, y: scale)
         // `render(in:)` ignores a layer's magnification filter; the picture is drawn 1:1 anyway, so
         // nearest-neighbour everywhere shows the loupe as the screen does.
         context.interpolationQuality = .none
         layer.render(in: context)
-        guard let image = context.makeImage() else { throw OutputError.encoding }
+        guard let image = context.makeImage() else { throw PNG.Failure.encoding }
         return image
     }
 
@@ -263,13 +263,13 @@ enum Render {
     private static func cropped(_ image: CGImage, to rect: CGRect, in view: OverlayView) throws -> CGImage {
         let pixels = Geometry.pixels(
             of: rect, viewSize: view.bounds.size, imageWidth: image.width, imageHeight: image.height)
-        guard let cropped = image.cropping(to: pixels) else { throw OutputError.encoding }
+        guard let cropped = image.cropping(to: pixels) else { throw PNG.Failure.encoding }
         return cropped
     }
 
     /// `rect` in points from the top-left, at `scale`.
     private static func crop(_ image: CGImage, _ rect: CGRect) throws -> CGImage {
-        guard let cropped = image.cropping(to: rect) else { throw OutputError.encoding }
+        guard let cropped = image.cropping(to: rect) else { throw PNG.Failure.encoding }
         return cropped
     }
 
@@ -287,14 +287,14 @@ enum Render {
                 bitmapDataPlanes: nil, pixelsWide: Int(card.frame.width * scale),
                 pixelsHigh: Int(card.frame.height * scale), bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true,
                 isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)
-        else { throw OutputError.encoding }
+        else { throw PNG.Failure.encoding }
         rep.size = card.frame.size
         card.cacheDisplay(in: card.bounds, to: rep)
         guard let cardImage = rep.cgImage,
             let context = CGContext(
                 data: nil, width: backdrop.width, height: backdrop.height, bitsPerComponent: 8, bytesPerRow: 0,
                 space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
-        else { throw OutputError.encoding }
+        else { throw PNG.Failure.encoding }
         context.draw(backdrop, in: CGRect(x: 0, y: 0, width: backdrop.width, height: backdrop.height))
         // Inset by the preview's margin from the visible frame's corner.
         context.draw(
@@ -302,14 +302,14 @@ enum Render {
             in: CGRect(
                 x: CGFloat(backdrop.width - cardImage.width) - 32 * scale, y: 32 * scale,
                 width: CGFloat(cardImage.width), height: CGFloat(cardImage.height)))
-        guard let image = context.makeImage() else { throw OutputError.encoding }
+        guard let image = context.makeImage() else { throw PNG.Failure.encoding }
         return image
     }
 
     private static func write(_ image: CGImage, to url: URL) throws {
         guard let destination = CGImageDestinationCreateWithURL(url as CFURL, UTType.png.identifier as CFString, 1, nil)
-        else { throw OutputError.encoding }
+        else { throw PNG.Failure.encoding }
         CGImageDestinationAddImage(destination, image, nil)
-        guard CGImageDestinationFinalize(destination) else { throw OutputError.encoding }
+        guard CGImageDestinationFinalize(destination) else { throw PNG.Failure.encoding }
     }
 }

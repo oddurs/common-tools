@@ -7,7 +7,7 @@ enum Pick {
     /// A dragged rectangle, in the points of the still's screen, from its bottom-left corner.
     case area(Still, CGRect)
     case screen(Still)
-    case window(UInt32, on: Still)
+    case window(WindowFrame, on: Still)
 }
 
 /// The frozen displays, one window each, over everything including the menu bar. Drag for an area,
@@ -16,6 +16,8 @@ enum Pick {
 @MainActor
 final class Overlay {
     var onPick: ((pick: Pick, asText: Bool)?) -> Void = { _ in }
+    /// The window under the pointer changed to this one.
+    var onHover: (UInt32) -> Void = { _ in }
     private let freeze: Freeze
     /// One per display, in the order of `freeze.stills`. They draw without a window, which is how
     /// `--render` pictures them offscreen.
@@ -49,6 +51,24 @@ final class Overlay {
         }
     }
 
+    /// The first overlay in a process takes about 55 ms longer to build than any after it, and the first
+    /// blur about 40 ms longer, while AppKit, Core Animation and Core Image load what they need. One
+    /// built at launch and never shown moves that out of the first shortcut.
+    static func warmUp() {
+        guard
+            let context = CGContext(
+                data: nil, width: 8, height: 8, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue),
+            let image = context.makeImage()
+        else { return }
+        let frame = CGRect(x: 0, y: 0, width: 8, height: 8)
+        let still = Still(frame: frame, displayBounds: frame, image: image, screen: nil)
+        let overlay = Overlay(freeze: Freeze(stills: [still], windows: []), imageSize: .prompt)
+        _ = overlay.views.map(OverlayWindow.init)
+        overlay.pointerMoved(to: CGPoint(x: 4, y: 4))
+        Task.detached(priority: .utility) { _ = Backdrop.blurred(image) }
+    }
+
     /// The blur at once, for `--render`.
     func prepareBackdrops() {
         for view in views { view.backdrop = Backdrop.blurred(view.still.image) }
@@ -71,6 +91,7 @@ final class Overlay {
                 at: Geometry.global(local, displayBounds: still.displayBounds), in: freeze.windows)
         }
         for view in views { view.show(hovered: hovered) }
+        if let hovered { onHover(hovered.id) }
     }
 
     func modifiersChanged(_ flags: NSEvent.ModifierFlags) {
@@ -89,7 +110,7 @@ final class Overlay {
         dragging = false
         switch Gesture.from(selection: selection, dragged: dragged, overWindow: view.hovered != nil) {
         case .area(let rect): onPick((.area(view.still, rect), asText))
-        case .window: if let hovered = view.hovered { onPick((.window(hovered.id, on: view.still), asText)) }
+        case .window: if let hovered = view.hovered { onPick((.window(hovered, on: view.still), asText)) }
         case .nothing: pointerMoved(to: NSEvent.mouseLocation)
         }
     }

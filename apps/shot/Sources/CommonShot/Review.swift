@@ -1,4 +1,5 @@
 import AppKit
+import ShotKit
 
 /// For checking changes without pressing the shortcut. Both use their own settings, so they never
 /// change yours, and need Screen Recording access for the terminal running them.
@@ -51,7 +52,7 @@ enum Review {
                 await finish {
                     let still = try await Capture.freeze().stills[0]
                     try await controller.deliver(still.image, scale: still.scale, screen: nil)
-                    guard let png = NSPasteboard.general.data(forType: .png) else { throw OutputError.encoding }
+                    guard let png = NSPasteboard.general.data(forType: .png) else { throw PNG.Failure.encoding }
                     try png.write(to: URL(filePath: output))
                     print(
                         "captured \(still.image.width) × \(still.image.height), wrote the clipboard's PNG to \(output)")
