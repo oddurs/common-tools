@@ -4,7 +4,8 @@ import Testing
 
 @testable import ColorKit
 
-/// Reference values: CSS Color 4's matrices, and ColorSync itself, which is what macOS converts with.
+/// Reference values: CSS Color 4's worked examples and sample code, Björn Ottosson's published
+/// OKLab table, and ColorSync itself, which is what macOS converts with.
 @Suite struct ConversionTests {
     func close(_ a: SIMD3<Double>, _ b: SIMD3<Double>, within tolerance: Double = 0.0001) -> Bool {
         (a - b).map(abs).max() <= tolerance
@@ -57,6 +58,49 @@ import Testing
         #expect(!beyond.isInGamut(.displayP3))
     }
 
+    @Test func oklchMatchesCSSExamples() {
+        // CSS Color 4 sample code; oklch.com gives the same to the places shown.
+        let expected: [(UInt32, Double, Double, Double)] = [
+            (0xff0000, 0.62796, 0.25768, 29.2339),
+            (0x00ff00, 0.86644, 0.29483, 142.4953),
+            (0x0000ff, 0.45201, 0.31321, 264.0520),
+        ]
+        for (hex, l, c, h) in expected {
+            let lch = srgb(hex).oklch
+            #expect(abs(lch.l - l) < 0.00001, "L of \(String(hex, radix: 16))")
+            #expect(abs(lch.c - c) < 0.00001, "C of \(String(hex, radix: 16))")
+            #expect(abs(lch.h - h) < 0.001, "h of \(String(hex, radix: 16))")
+        }
+        let white = srgb(0xffffff).oklch
+        #expect(abs(white.l - 1) < 0.0001)
+        #expect(white.c < 0.0001)
+        #expect(srgb(0x000000).oklch.l == 0)
+    }
+
+    @Test func oklabMatchesOttossonsTable() {
+        // "A perceptual color space for image processing", the XYZ (D65) to OKLab table.
+        let table: [(SIMD3<Double>, SIMD3<Double>)] = [
+            (SIMD3(0.950, 1.000, 1.089), SIMD3(1.000, 0.000, 0.000)),
+            (SIMD3(1.000, 0.000, 0.000), SIMD3(0.450, 1.236, -0.019)),
+            (SIMD3(0.000, 1.000, 0.000), SIMD3(0.922, -0.671, 0.263)),
+            (SIMD3(0.000, 0.000, 1.000), SIMD3(0.153, -1.415, -0.449)),
+        ]
+        for (xyz, expected) in table {
+            let lab = ColorValue(linearSRGB: RGBSpace.sRGB.fromXYZ * xyz).oklab
+            // Three places, as published; his sRGB matrices are fitted, not derived, so the
+            // last place can differ by one.
+            #expect(close(SIMD3(lab.l, lab.a, lab.b), expected, within: 0.0015), "\(xyz)")
+        }
+    }
+
+    @Test func oklabRoundTrips() {
+        for color in [srgb(0x3a7bd5), srgb(0x777777), ColorValue(.displayP3, red: 0, green: 1, blue: 0)] {
+            // Ottosson publishes his matrices to ten places, so each is the other's inverse to about 1e-7.
+            #expect(close(ColorValue(color.oklab).linearSRGB, color.linearSRGB, within: 1e-6))
+            #expect(close(ColorValue(OKLab(color.oklch)).linearSRGB, color.linearSRGB, within: 1e-6))
+        }
+    }
+
     @Test func derivesTheMatricesCSSPublishes() {
         // CSS Color 4, lin_sRGB_to_XYZ, first row: 506752/1228815, 87881/245763, 12673/70218.
         let row = RGBSpace.sRGB.toXYZ.rows[0]
@@ -66,4 +110,24 @@ import Testing
         #expect(close(p3, SIMD3(35783 / 156275, 247089 / 357200, 198249 / 2500400), within: 1e-12))
     }
 
+    @Test func gamutMappingKeepsHueAndLandsInside() {
+        for p3 in [SIMD3(0.0, 1, 0), SIMD3(1, 0.5, 0), SIMD3(1, 0, 0), SIMD3(0.2, 0.4, 1)] {
+            let color = ColorValue(.displayP3, red: p3.x, green: p3.y, blue: p3.z)
+            #expect(!color.isInGamut(.sRGB))
+            let mapped = color.mapped(into: .sRGB)
+            #expect(mapped.min() >= 0 && mapped.max() <= 1)
+            let result = ColorValue(.sRGB, red: mapped.x, green: mapped.y, blue: mapped.z).oklch
+            var hueShift = abs(result.h - color.oklch.h)
+            hueShift = min(hueShift, 360 - hueShift)
+            // Chroma reduction holds hue; the last clip moves it by under a just-noticeable step.
+            #expect(hueShift < 3, "hue moved \(hueShift)° for \(p3)")
+            #expect(abs(result.l - color.oklch.l) < 0.03, "lightness for \(p3)")
+            #expect(result.c < color.oklch.c)
+        }
+    }
+
+    @Test func aColourInsideIsLeftAlone() {
+        let blue = srgb(0x3a7bd5)
+        #expect(close(blue.mapped(into: .sRGB), blue.components(in: .sRGB), within: 1e-12))
+    }
 }

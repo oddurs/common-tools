@@ -12,6 +12,7 @@ let package = Package(
             dependencies: [
                 "ColorKit", .product(name: "CommonKit", package: "CommonKit"),
                 .product(name: "CommonUI", package: "CommonKit"),
+                .product(name: "CommonShortcut", package: "CommonKit"),
             ],
             linkerSettings: [.linkedFramework("ServiceManagement")]
         ),

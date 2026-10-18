@@ -77,19 +77,19 @@ Keep the Mac awake while a build, a download or a long agent session runs, then 
 
 ## color-0.1 — Common Color 0.1: pick a colour from anywhere and paste it as code
 
-`###·······` 25% · 1 of 4 done
+`########··` 75% · 3 of 4 done
 
 Press a shortcut, click any pixel on any screen, and the colour is on the clipboard in the format you write: hex, CSS, SwiftUI or AppKit, converted correctly from the display's colour space. Recent picks wait in the menu, and two picks show their contrast.
 
-### backlog
+### blocked
 
 - [ ] [`0030`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0030-pick-a-pixel-with-the-system-sampler.md) Pick a pixel with the system sampler <sup>feature · p2</sup>
-- [ ] [`0031`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0031-copy-a-colour-in-the-format-you-write-converted-correctly.md) Copy a colour in the format you write, converted correctly <sup>feature · p2</sup>
-- [ ] [`0032`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0032-recent-picks-and-the-contrast-between-two.md) Recent picks and the contrast between two <sup>feature · p2</sup>
 
 ### done
 
 - [x] [`0029`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0029-make-common-color-a-family-member.md) Make Common Color a family member <sup>chore · p2</sup>
+- [x] [`0031`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0031-copy-a-colour-in-the-format-you-write-converted-correctly.md) Copy a colour in the format you write, converted correctly <sup>feature · p2</sup>
+- [x] [`0032`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0032-recent-picks-and-the-contrast-between-two.md) Recent picks and the contrast between two <sup>feature · p2</sup>
 
 ## context-0.1 — Common Context 0.1: files and folders as prompt-ready text
 

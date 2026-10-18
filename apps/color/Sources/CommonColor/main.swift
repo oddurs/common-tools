@@ -22,6 +22,11 @@ import AppKit
 }
 
 MainActor.assumeIsolated {
+    let arguments = CommandLine.arguments
+    if let flag = arguments.firstIndex(of: "--snapshot"), arguments.indices.contains(flag + 1) {
+        SnapshotCommand.run(path: arguments[flag + 1])
+        exit(0)
+    }
     let app = NSApplication.shared
     app.mainMenu = makeMainMenu()
     app.setActivationPolicy(.accessory)
