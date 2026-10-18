@@ -8,7 +8,7 @@ import os
 /// should, the icon is pressed wherever it is on screen instead, and left wherever it ends up
 /// rather than dragged about blindly. Every step is logged:
 ///
-///     log show --last 5m --predicate 'subsystem == "com.oddurs.reasonal" AND category == "open"'
+///     log show --last 5m --predicate 'subsystem == "com.oddurs.commonbar" AND category == "open"'
 @MainActor
 final class Opener {
     struct Context {
@@ -29,7 +29,7 @@ final class Opener {
         static let watchPoll: TimeInterval = 0.1
     }
 
-    static let log = Logger(subsystem: "com.oddurs.reasonal", category: "open")
+    static let log = Logger(subsystem: "com.oddurs.commonbar", category: "open")
     private let context: Context
     private(set) var isBusy = false
 

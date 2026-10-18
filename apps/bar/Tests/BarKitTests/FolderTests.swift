@@ -53,11 +53,11 @@ import Testing
         ax(controlCenter, "com.apple.controlcenter", "Control Center", -4061, -4044, label: "Now Playing"),
         ax(controlCenter, "com.apple.controlcenter", "Control Center", -4028, -4002, label: "Battery"),
         ax(82007, "com.oddurs.commonglyph", "Common Glyph", -3995, -3962, label: "Glyph 2"),
-        ax(27442, "com.oddurs.langsmart", "Common Keys", -3964, -3932, label: "🇺🇸"),
-        ax(bar, "com.oddurs.reasonal", "Common Bar", -3926, 1076),
-        ax(bar, "com.oddurs.reasonal", "Common Bar", 1091, 1103, label: "More"),
+        ax(27442, "com.oddurs.commonkeys", "Common Keys", -3964, -3932, label: "🇺🇸"),
+        ax(bar, "com.oddurs.commonbar", "Common Bar", -3926, 1076),
+        ax(bar, "com.oddurs.commonbar", "Common Bar", 1091, 1103, label: "More"),
         ax(74876, "com.oddurs.commonbattery", "Common Battery", 1109, 1161, label: "Battery 34%"),
-        ax(9425, "io.github.oddurs.StatBar", "Common Stats", 1159, 1465),
+        ax(9425, "com.oddurs.commonstats", "Common Stats", 1159, 1465),
         ax(controlCenter, "com.apple.controlcenter", "Control Center", 1590, 1722, label: "Clock"),
     ]
 
@@ -72,12 +72,12 @@ import Testing
     @Test func everyHiddenIconIsMatchedToItsApp() {
         #expect(entries.count == 17)
         #expect(entries.first?.owner.bundleID == "com.oddurs.commoncommand")
-        #expect(entries.last?.owner.bundleID == "com.oddurs.langsmart")
+        #expect(entries.last?.owner.bundleID == "com.oddurs.commonkeys")
         #expect(entries.map(\.id) == model.items.filter { $0.section == .hidden }.map(\.id))
     }
 
     @Test func pinnedIconsAreNotInTheFolder() {
-        #expect(!entries.contains { $0.owner.bundleID == "io.github.oddurs.StatBar" })
+        #expect(!entries.contains { $0.owner.bundleID == "com.oddurs.commonstats" })
         #expect(!entries.contains { $0.owner.pid == Self.bar })
     }
 
@@ -114,7 +114,7 @@ import Testing
     // MARK: Groups
 
     static let family: Set<String> = [
-        "io.github.oddurs.StatBar", "com.oddurs.langsmart", "com.oddurs.reasonal", "com.oddurs.commonglyph",
+        "com.oddurs.commonstats", "com.oddurs.commonkeys", "com.oddurs.commonbar", "com.oddurs.commonglyph",
         "com.oddurs.commoncommand", "com.oddurs.commonshot", "com.oddurs.commonbattery",
     ]
 

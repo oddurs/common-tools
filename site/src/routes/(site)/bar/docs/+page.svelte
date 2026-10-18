@@ -153,7 +153,8 @@
 		would still take the keyboard. An app places its icon's menu from where it last knew the icon to be,
 		which can lag behind the move; when a menu opens away from its icon, Common Bar closes it and opens it
 		again. Every step is logged:
-		<code>log show --last 5m --predicate 'subsystem == "com.oddurs.reasonal" AND category == "open"'</code
+		<code
+			>log show --last 5m --predicate 'subsystem == "com.oddurs.commonbar" AND category == "open"'</code
 		>.
 	</p>
 

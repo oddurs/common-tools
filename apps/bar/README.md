@@ -75,7 +75,7 @@ scripts/task test bar --filter=X  # only the tests whose name matches
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release bar <version>`.
 
-The app was called Reasonal before 0.1.0. The executable, bundle identifier, and preference keys keep that name so an existing install keeps its item positions and settings.
+The app had another name before 0.1.0. Since then its bundle identifier is `com.oddurs.commonbar`; the first launch of a renamed copy brings the earlier copy's item positions and settings over.
 
 ## Licence
 
