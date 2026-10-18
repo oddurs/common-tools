@@ -181,7 +181,7 @@
 	<pre><code
 			>git clone https://github.com/oddurs/common-tools
 cd common-tools
-scripts/task build stats      # universal build → build/stats/Common Stats.app
+scripts/task build stats      # build for this Mac → build/stats/Common Stats.app
 		></code
 		></pre>
 </Docs>

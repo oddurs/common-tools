@@ -88,7 +88,7 @@ Measured on an M4 Pro with a release build:
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build command  # universal build → build/command/Common Command.app
+scripts/task build command  # build for this Mac → build/command/Common Command.app
 mv "build/command/Common Command.app" /Applications/
 ```
 

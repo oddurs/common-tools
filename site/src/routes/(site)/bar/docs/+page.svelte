@@ -162,7 +162,7 @@
 	<pre><code
 			>git clone https://github.com/oddurs/common-tools
 cd common-tools
-scripts/task build bar      # universal build → build/bar/Common Bar.app
+scripts/task build bar      # build for this Mac → build/bar/Common Bar.app
 		></code
 		></pre>
 </Docs>

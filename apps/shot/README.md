@@ -58,7 +58,7 @@ Text recognition runs on your Mac with Vision. It reads code well but not perfec
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build shot  # universal build → build/shot/Common Shot.app
+scripts/task build shot  # build for this Mac → build/shot/Common Shot.app
 mv "build/shot/Common Shot.app" /Applications/
 ```
 

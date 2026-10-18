@@ -87,7 +87,7 @@ Every source is public and unprivileged. A value that can't be read isn't shown,
 The Command Line Tools are enough; Xcode is not required.
 
 ```sh
-scripts/task build battery  # universal build → build/battery/Common Battery.app
+scripts/task build battery  # build for this Mac → build/battery/Common Battery.app
 mv "build/battery/Common Battery.app" /Applications/
 ```
 

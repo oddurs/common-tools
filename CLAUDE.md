@@ -10,7 +10,7 @@ Do all automation through `scripts/task`. CI and the git hooks call nothing else
 scripts/task <verb> [area ...] [--changed] [--filter=<test>]
 ```
 
-Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors), `test`, `build` (a universal, signed `build/<app>/<Name>.app`), `package` (`dist/<app>/`, what a release publishes), `run` (build, quit the running copy, open the new one), `smoke` (launch the built app and fail if it quits within five seconds), `cover` (line coverage of a Swift area), `check` (lint + test + build). Areas: `site`, `kit`, or an app's slug; none means all, `--changed` means what differs from `origin/main`, and CommonKit changes count for every app. CI runs `check` and then `smoke` on the changed areas of a pull request and on everything for `main`.
+Verbs: `fmt`, `fmt:check`, `lint` (format, then a debug build of the code and its tests with warnings as errors), `test` (runs that same build, so it compiles nothing more), `build` (a signed `build/<app>/<Name>.app` for this Mac's architecture; `--universal` adds the other), `package` (`dist/<app>/`, what a release publishes, always universal), `run` (build, quit the running copy, open the new one), `smoke` (launch the built app and fail if it quits within five seconds), `cover` (line coverage of a Swift area), `check` (lint + test + build). Areas: `site`, `kit`, or an app's slug; none means all, `--changed` means what differs from `origin/main`, and CommonKit changes count for every app. CI runs `check` and then `smoke` on the changed areas of a pull request and on everything for `main`.
 
 ## Tests
 
