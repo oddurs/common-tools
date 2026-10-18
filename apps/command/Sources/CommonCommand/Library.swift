@@ -8,11 +8,13 @@ import os
 /// Everything that can be searched, and what has been chosen before.
 @MainActor
 final class Library {
-    private(set) var apps: [Candidate] = []
-    private(set) var panes: [Candidate] = []
-    var commands: [Candidate] = []
-    private(set) var shortcuts: [Candidate] = []
-    private(set) var appActions: [Candidate] = []
+    private var catalog = Catalog()
+    var commands: [Candidate] {
+        get { catalog.commands }
+        set { catalog.commands = newValue }
+    }
+    /// What runs now, for Quit and Hide and for the action menu. Read when the panel opens.
+    private(set) var running = RunningApps()
     /// The well-known folders, searched with files; read with the apps, since a place yields to an app of its name.
     private(set) var places: [Candidate] = []
     private(set) var usage: Usage
@@ -34,29 +36,49 @@ final class Library {
         usage =
             (try? Data(contentsOf: Self.usageURL)).flatMap { try? JSONDecoder().decode(Usage.self, from: $0) }
             ?? Usage()
+        // App icons have dark variants, and the drawn ones follow the system's appearance when it changes.
+        DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("AppleInterfaceThemeChangedNotification"), object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                IconCache.shared.removeAll()
+                Icons.shared.removeAll()
+                self?.prerenderIcons()
+            }
+        }
     }
 
     func candidates(includingPanes: Bool, includingActions: Bool) -> [Candidate] {
-        apps + (includingPanes ? panes : []) + commands + (includingActions ? shortcuts + appActions : [])
+        catalog.candidates(includingPanes: includingPanes, includingActions: includingActions)
     }
 
-    /// Quit and Hide for the apps running now. Read when the panel opens; cheap, and always current.
-    func refreshRunningApps() {
+    /// Reads the running apps off the main thread when the panel opens: asking each of a hundred processes
+    /// for its name and bundle takes 5 ms, more on the first open. The panel shows at once with the list
+    /// from last time, which is nearly always the same, and updates only if it changed.
+    func refreshRunningApps() async {
         let own = Bundle.main.bundleIdentifier
-        appActions = Actions.appActions(
-            NSWorkspace.shared.runningApplications.compactMap { app in
-                guard app.activationPolicy == .regular, let id = app.bundleIdentifier, id != own,
-                    let url = app.bundleURL, let name = app.localizedName
-                else { return nil }
-                return Actions.RunningApp(name: name, bundleIdentifier: id, url: url)
-            })
+        let running = await Task.detached(priority: .userInitiated) {
+            let apps = NSWorkspace.shared.runningApplications
+            return RunningApps(
+                actions: apps.compactMap { app in
+                    guard app.activationPolicy == .regular, let id = app.bundleIdentifier, id != own,
+                        let url = app.bundleURL, let name = app.localizedName
+                    else { return nil }
+                    return Actions.RunningApp(name: name, bundleIdentifier: id, url: url)
+                },
+                bundles: apps.compactMap(\.bundleURL))
+        }.value
+        guard running != self.running else { return }
+        self.running = running
+        catalog.appActions = Actions.appActions(running.actions)
+        onChange?()
     }
 
     /// Rescans in the background; the current lists keep answering until the new ones arrive.
     func refreshIfStale() {
         guard !scanning, scannedAt.map({ Date().timeIntervalSince($0) > Self.staleAfter }) ?? true else { return }
         scanning = true
-        let needsPanes = panes.isEmpty
+        let needsPanes = catalog.panes.isEmpty
         Task {
             let (apps, panes, places) = await Task.detached(priority: .userInitiated) {
                 let apps = AppCatalog.scan()
@@ -65,15 +87,23 @@ final class Library {
                     yieldingTo: apps)
                 return (apps, needsPanes ? SettingsPanes.scan(isPortable: Self.hasBattery) : [], places)
             }.value
-            self.apps = apps
+            catalog.apps = apps
             self.places = places
             // System Settings changes only with macOS, so its panes are read once per launch.
-            if needsPanes { self.panes = panes }
-            shortcuts = await Task.detached(priority: .userInitiated) { Self.listShortcuts() }.value
+            if needsPanes { catalog.panes = panes }
+            prerenderIcons()
+            catalog.shortcuts = await Task.detached(priority: .userInitiated) { Self.listShortcuts() }.value
             scannedAt = Date()
             scanning = false
             onChange?()
         }
+    }
+
+    /// Draws the icons of every app and pane in the background, once each, so a row never waits on Icon
+    /// Services. Only new apps cost anything after the first scan.
+    private func prerenderIcons() {
+        let paths = (catalog.apps + catalog.panes).compactMap { $0.item.fileURL?.path ?? $0.item.iconFile?.path }
+        Task.detached(priority: .utility) { IconCache.shared.prerender(paths) }
     }
 
     nonisolated static let shortcutsApp = URL(filePath: "/System/Applications/Shortcuts.app")

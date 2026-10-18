@@ -233,12 +233,17 @@ private struct ItemIcon: View {
     }
 }
 
-/// Icons from the file system, cached: each one costs a trip to Launch Services the first time.
+/// Icons from the file system, cached: each one costs a trip to Launch Services the first time. Apps and
+/// panes come drawn already from `IconCache`; files, whose icons are cheap, are looked up as they appear.
 @MainActor
 final class Icons {
     static let shared = Icons()
     private var cache: [String: NSImage] = [:]
-    private lazy var settingsIcon = NSWorkspace.shared.icon(forFile: "/System/Applications/System Settings.app")
+    private var settingsIcon: NSImage { cached("/System/Applications/System Settings.app") }
+
+    func removeAll() {
+        cache = [:]
+    }
 
     func image(for item: Item) -> NSImage? {
         switch item.kind {
@@ -256,7 +261,9 @@ final class Icons {
 
     private func cached(_ path: String) -> NSImage {
         if let image = cache[path] { return image }
-        let image = NSWorkspace.shared.icon(forFile: path)
+        let image =
+            IconCache.shared.image(forPath: path).map { NSImage(cgImage: $0, size: .zero) }
+            ?? NSWorkspace.shared.icon(forFile: path)
         cache[path] = image
         return image
     }

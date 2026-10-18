@@ -32,6 +32,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Faster and lighter: app and System Settings icons are drawn in the background once, rather than on screen the first time each appears; the panel is set up right after launch, so the first open doesn't wait for it; moving through results no longer asks the system about every running app for each row; and the running apps are read off the main thread when the panel opens.
 - The menu bar icon first appears beside the system's icons, where it can be seen, instead of at the far left, where Common Bar, the notch or an app's menus would hide it.
 - Settings is laid out like the other Common Tools apps’ and sized to the screen it opens on, instead of a fixed 720 pt window. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, footnotes, and Open at login switch, with Open at login first under General. In the panel, a calculation, a link, or a web search gets an icon like the other rows instead of a bare symbol.

@@ -83,7 +83,7 @@ final class PanelController: NSObject, NSWindowDelegate {
         library.refreshIfStale()
         buildContentIfNeeded()
         panel.appearance = preferences.theme.appearance
-        library.refreshRunningApps()
+        Task { await library.refreshRunningApps() }
         model.scope = .all
         model.pointerMoved = false
         model.update()
@@ -166,14 +166,11 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     // MARK: Commands
 
-    /// What the action menu offers for the result at `index`.
+    /// What the action menu offers for `item`. SwiftUI builds every row's context menu each time the list
+    /// draws, so this runs per row on every keystroke and arrow press; it answers from what was read when
+    /// the panel opened rather than asking the system about a hundred processes each time.
     func commands(for item: Item) -> [ItemCommand] {
-        let isRunning =
-            item.kind == .application
-            && NSWorkspace.shared.runningApplications.contains {
-                $0.bundleURL?.standardizedFileURL == item.fileURL?.standardizedFileURL
-            }
-        return ItemCommand.commands(for: item, isRunning: isRunning)
+        ItemCommand.commands(for: item, isRunning: library.running.contains(item))
     }
 
     func run(_ command: ItemCommand, on index: Int) {
@@ -258,7 +255,20 @@ final class PanelController: NSObject, NSWindowDelegate {
 
     /// What `show()` reads fresh, without showing anything.
     func prepareForSnapshot() {
-        library.refreshRunningApps()
+        Task { await library.refreshRunningApps() }
+    }
+
+    /// Builds the panel and draws it once, offscreen, right after launch. The first drawing in a process
+    /// sets up SwiftUI, text, and fonts, 50 to 100 ms that would otherwise delay the first open.
+    func prewarm() {
+        buildContentIfNeeded()
+        guard let content else { return }
+        // The panel isn't on screen; `show()` positions it before it is.
+        let size = preferences.size
+        panel.setContentSize(NSSize(width: size.width, height: size.height(rows: 1, headers: 1, visible: 1)))
+        content.layoutSubtreeIfNeeded()
+        guard let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds) else { return }
+        content.cacheDisplay(in: content.bounds, to: rep)
     }
 
     func toggle(_ scope: Scope) {

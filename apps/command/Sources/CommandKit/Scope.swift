@@ -68,7 +68,7 @@ public enum Actions {
         }
     }
 
-    public struct RunningApp: Sendable {
+    public struct RunningApp: Sendable, Equatable {
         public var name: String
         public var bundleIdentifier: String
         public var url: URL
