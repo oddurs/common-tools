@@ -49,6 +49,24 @@ public struct KeyCombo: Codable, Equatable, Sendable {
         return text + (Self.specialKeys[keyCode] ?? keyName(keyCode)?.uppercased() ?? "Key \(keyCode)")
     }
 
+    /// What `NSMenuItem.keyEquivalent` takes for this key, so a menu shows the shortcut where macOS shows
+    /// every other: the lowercased character for a character key, a control character or one of
+    /// AppKit's function-key code points otherwise. Nil for a key a menu can't show.
+    public func keyEquivalent(keyName: (UInt16) -> String?) -> String? {
+        if let scalar = Self.equivalentScalars[keyCode] { return String(Character(UnicodeScalar(scalar)!)) }
+        guard Self.specialKeys[keyCode] == nil, let name = keyName(keyCode), name.count == 1 else { return nil }
+        return name.lowercased()
+    }
+
+    /// AppKit's NSF1FunctionKey and its neighbours, by value, so the model needs no AppKit.
+    static let equivalentScalars: [UInt16: UInt32] = [
+        122: 0xF704, 120: 0xF705, 99: 0xF706, 118: 0xF707, 96: 0xF708, 97: 0xF709, 98: 0xF70A, 100: 0xF70B,
+        101: 0xF70C, 109: 0xF70D, 103: 0xF70E, 111: 0xF70F, 105: 0xF710, 107: 0xF711, 113: 0xF712, 106: 0xF713,
+        64: 0xF714, 79: 0xF715, 80: 0xF716, 90: 0xF717,
+        123: 0xF702, 124: 0xF703, 125: 0xF701, 126: 0xF700, 115: 0xF729, 119: 0xF72B, 116: 0xF72C, 121: 0xF72D,
+        117: 0xF728, 49: 0x20, 36: 0x0D, 76: 0x03, 48: 0x09, 51: 0x08, 53: 0x1B,
+    ]
+
     static let functionKeys: [UInt16: String] = [
         122: "F1", 120: "F2", 99: "F3", 118: "F4", 96: "F5", 97: "F6", 98: "F7", 100: "F8", 101: "F9",
         109: "F10", 103: "F11", 111: "F12", 105: "F13", 107: "F14", 113: "F15", 106: "F16", 64: "F17",

@@ -48,8 +48,8 @@ Text recognition runs on your Mac with Vision. It reads code well but not perfec
 ## Settings
 
 - **Shortcut**: click and press a new one. Escape cancels; Delete restores ⇧⌘2.
-- **Access**: whether Screen Recording is allowed, with a button to the right pane of System Settings.
-- **Image**: for prompts (long edge at most 1568 px) or full resolution, whether to show the preview, and whether to play the screenshot sound (it also follows System Settings › Sound › Play user interface sound effects).
+- **Access**, only while Screen Recording is missing: a button to the right pane of System Settings, and the ways out of a stale switch.
+- **Shots**: for prompts (long edge at most 1568 px) or full resolution, whether to show the preview, and whether to play the screenshot sound (it also follows System Settings › Sound › Play user interface sound effects).
 - **History**: keep none, or the last 5 to 100 shots (the newest 6 in the menu, the rest under Older Shots), in `~/Library/Application Support/Common Shot/History`. Show it in Finder or clear it.
 - **General**: show in the menu bar, and open at login. With the menu bar item hidden, open Common Shot from Finder to get back to Settings.
 
@@ -80,7 +80,7 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent st
 
 [docs/design.md](docs/design.md) is the design spec: each moment of the flow, benchmarked against macOS and the best third-party tools, and what Shot decides.
 
-To see how a change looks without pressing the shortcut or covering a screen, `.build/debug/CommonShot --render <folder>` draws every state of the overlay (idle, a window hovered, mid-drag with the size and the loupe, ⌥ for text, a drag into a corner, a drag on a 1× display beside a 2× one) and the preview, in light and dark, over a made-up desktop, and writes them as PNGs. It needs no permission and shows nothing on screen.
+To see how a change looks without pressing the shortcut or covering a screen, `.build/debug/CommonShot --render <folder>` draws every state of the overlay (idle, a window hovered, mid-drag with the size and the loupe, ⌥ for text, a drag into a corner, a drag on a 1× display beside a 2× one) and the preview, in light and dark, over a made-up desktop, and writes them as PNGs; run the binary inside `build/shot/Common Shot.app` (`scripts/task build shot`) and it draws Settings too. It needs no permission and shows nothing on screen.
 
 Shot logs how long each shortcut and copy takes, as times only: `log stream --level info --predicate 'subsystem == "com.oddurs.commonshot"'`.
 

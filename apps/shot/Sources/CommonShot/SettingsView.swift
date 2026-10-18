@@ -27,29 +27,24 @@ struct SettingsView: View {
                         SettingsFootnote(problem, tone: .danger)
                     }
                     SettingsFootnote(
-                        "Drag for an area, click for a window, Return for the whole screen, Escape to cancel.")
+                        "Drag for an area, click for a window, or press Return for the whole screen. Hold Option to copy the text instead. Arrow keys move by a pixel; Space moves a selection while you drag."
+                    )
                 }
             }
 
-            Section {
-                LabeledRow("Screen Recording") {
-                    if hasAccess {
-                        Label("Allowed", systemImage: "checkmark.circle.fill")
-                            .foregroundStyle(Tokens.Color.success.color)
-                    } else {
+            // Only while it's missing: once allowed there's nothing to do here.
+            if !hasAccess {
+                Section {
+                    LabeledRow("Screen Recording") {
                         Button("Open System Settings") { controller.openScreenRecordingSettings() }
                     }
-                }
-                if !hasAccess {
                     HStack {
                         Button("Reset and Ask Again") { controller.resetScreenRecording() }
                         Button("Quit and Reopen") { controller.reopen() }
                     }
-                }
-            } header: {
-                Text("Access")
-            } footer: {
-                if !hasAccess {
+                } header: {
+                    Text("Access")
+                } footer: {
                     SettingsFootnote(
                         "Turn on Common Shot under Screen & System Audio Recording. "
                             + [
@@ -61,7 +56,7 @@ struct SettingsView: View {
             }
 
             Section {
-                Picker("Size", selection: $preferences.imageSize) {
+                Picker("Size on the clipboard", selection: $preferences.imageSize) {
                     Text("For prompts").tag(ImageSize.prompt)
                     Text("Full resolution").tag(ImageSize.full)
                 }
@@ -69,12 +64,12 @@ struct SettingsView: View {
                 Toggle("Show a preview", isOn: $preferences.showsPreview)
                 Toggle("Play the screenshot sound", isOn: $preferences.playsSound)
             } header: {
-                Text("Image")
+                Text("Shots")
             } footer: {
                 SettingsFootnote(
                     preferences.imageSize == .prompt
-                        ? "Every shot is copied as PNG with its long edge at most \(ImageSize.promptLongEdge) px. A full screen costs Claude about 2,100 tokens instead of 4,800, and smaller crops are untouched."
-                        : "Every shot is copied as PNG at the display's full resolution."
+                        ? "A PNG with its long edge at most \(ImageSize.promptLongEdge) px: a full screen costs Claude about 2,100 tokens instead of 4,800, and smaller crops are untouched. The sound also follows System Settings › Sound."
+                        : "A PNG at the display's full resolution. The sound also follows System Settings › Sound."
                 )
             }
 
@@ -95,7 +90,7 @@ struct SettingsView: View {
             } header: {
                 Text("History")
             } footer: {
-                SettingsFootnote("Recent shots appear in the menu bar menu. Click one to copy it again.")
+                SettingsFootnote("Kept on this Mac, in the menu bar menu. Click one to copy it again.")
             }
 
             Section {
