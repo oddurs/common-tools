@@ -78,6 +78,9 @@ quit_app() {
     wait_exit "$pid" 10
 }
 
+# Where a running app was launched from: its executable's path.
+running_path() { ps -o comm= -p "$1" 2>/dev/null; }
+
 report() { printf '%-9s %-16s %s\n' "$1" "$2" "$3"; }
 
 install_app() {
@@ -95,21 +98,37 @@ install_app() {
         old_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$dest/Contents/Info.plist" 2>/dev/null)" || old_id=""
         if [ -n "$old_id" ] && [ "$old_id" != "$bundle_id" ]; then ids="$ids $old_id"; fi
     fi
+    # A copy running from anywhere but the installed bundle is a development build someone is
+    # testing (a worktree's build/): it is left running, and the installed copy is only replaced.
     running=0
+    quit_ids=""
+    dev_copy=""
     for id in $ids; do
-        if [ -n "$(running_pid "$id")" ]; then running=1; fi
+        pid="$(running_pid "$id")"
+        [ -n "$pid" ] || continue
+        path="$(running_path "$pid")"
+        case "$path" in
+            "$dest"/*)
+                running=1
+                quit_ids="$quit_ids $id"
+                ;;
+            *) dev_copy="${path%%.app/*}.app" ;;
+        esac
     done
     reopen=0
-    if [ "$running" -eq 1 ] || [ "$installed" -eq 0 ]; then reopen=1; fi
+    if [ -z "$dev_copy" ] && { [ "$running" -eq 1 ] || [ "$installed" -eq 0 ]; }; then reopen=1; fi
 
     if [ "$dry_run" -eq 1 ]; then
         what="would build and replace $dest"
         [ "$installed" -eq 1 ] || what="would build and install $dest"
-        if [ "$running" -eq 1 ]; then
-            what="$what, quit $ids, reopen"
+        if [ "$running" -eq 1 ] && [ "$reopen" -eq 1 ]; then
+            what="$what, quit$quit_ids, reopen"
+        elif [ "$running" -eq 1 ]; then
+            what="$what, quit$quit_ids"
         elif [ "$reopen" -eq 1 ]; then
             what="$what, open"
         fi
+        [ -z "$dev_copy" ] || what="$what; leave $dev_copy running"
         report "$slug" "$name" "$what"
         return 0
     fi
@@ -129,7 +148,7 @@ install_app() {
         return 1
     fi
 
-    for id in $ids; do
+    for id in $quit_ids; do
         if ! quit_app "$id"; then
             report "$slug" "$name" "$id would not quit; skipped"
             return 1
@@ -148,6 +167,7 @@ install_app() {
             result="$result, but it didn't open"
         fi
     fi
+    [ -z "$dev_copy" ] || result="$result; left $dev_copy running"
     report "$slug" "$name" "$result"
 }
 
