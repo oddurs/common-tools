@@ -219,6 +219,8 @@ done)
     fi
     # Installs the merged apps into /Applications in the background, on a Mac that opted in
     # (scripts/install). This worktree is gone by now, so it's the primary checkout's copy.
+    # From the primary checkout: this worktree is gone, and a shell started in it complains.
+    cd "$main"
     if [ -x "$main/scripts/install" ]; then
         "$main/scripts/install" --after-merge "$old" || echo "==> the install was not queued; see above"
     fi

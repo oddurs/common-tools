@@ -59,13 +59,26 @@ scripts/task test bar --filter=X    # just the tests whose name matches
 
 A branch must pass this before it becomes a pull request. A bug fix comes with the test that would have caught it. Each app's `CLAUDE.md` says what else its changes need: accuracy arguments, `common-keys eval` numbers, snapshots.
 
-## Installing on your Mac
+## Developing on a Mac
+
+`scripts/dev` is the front door:
+
+```sh
+scripts/dev setup                 # once, and safe to repeat: tools, hooks, signing identity, install on merge
+scripts/dev status                # each app: installed build vs origin/main, running, permissions, PRs, last install
+scripts/dev watch bar             # rebuild and relaunch Common Bar whenever its sources or CommonKit change
+scripts/dev logs bar --since 10m  # its log (live without --since; --all adds every framework's chatter)
+```
+
+`setup` runs `scripts/agent doctor`, checks for the "Common Tools Development" signing identity (and prints the `scripts/dev-cert` command when it's missing, rather than running it), and turns on install on merge; `--dry-run` only reports. `status` compares the commit each installed app was built from, which `scripts/task build` writes into a development build's `Info.plist` as `CommonToolsCommit` and Settings shows beside the version; a release build carries neither. Permissions read the privacy database only when the terminal has Full Disk Access, and say "unknown" otherwise. `watch` polls every half second, waits for half a second of quiet so a save of several files is one build, and prints one line per build; `--build-only` skips the relaunch.
+
+### Installing into /Applications
 
 ```sh
 scripts/install bar                        # build, quit the running copy, replace /Applications/Common Bar.app, reopen
 scripts/install --changed-since HEAD~3     # only the apps that changed (CommonKit or shared/ means all of them)
 scripts/install --dry-run                  # say what it would do, touch nothing
-git config commontools.autoinstall true    # once: install what every merge changes, by itself
+git config commontools.autoinstall true    # once (scripts/dev setup does it): install what every merge changes
 ```
 
 `scripts/install` builds with `scripts/task build`, so the copy is signed with the development identity and keeps its permission grants; it refuses an ad-hoc signed build. A running copy is quit and opened again, and an app that wasn't installed is opened. A failed build is skipped, the rest still install, and the exit status says so.

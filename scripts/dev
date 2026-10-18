@@ -1,0 +1,332 @@
+#!/bin/sh
+set -eu
+
+# The front door for working on the family on this Mac.
+#
+#   scripts/dev setup [--dry-run]            once: tools, hooks, signing identity, install on merge
+#   scripts/dev status                       each app's installed build, permissions, PRs; worktrees
+#   scripts/dev watch <app> [--build-only]   rebuild and relaunch the app whenever its sources change
+#   scripts/dev logs <app> [--since 10m] [--all]  the app's log, live or for the last while
+#   scripts/dev install [...]                scripts/install
+
+cd "$(dirname "$0")/.."
+root="$(pwd)"
+identity="Common Tools Development"
+log_file="$HOME/Library/Logs/Common Tools/install.log"
+
+die() {
+    echo "dev: $*" >&2
+    exit 1
+}
+
+# As in scripts/task and scripts/install: apps are what apps/ holds and apps.json names.
+app_field() { plutil -extract "$1.$2" raw -o - "$root/apps.json"; }
+all_apps() {
+    for dir in "$root"/apps/*/; do
+        slug="$(basename "$dir")"
+        if app_field "$slug" BUNDLE >/dev/null 2>&1; then echo "$slug"; fi
+    done
+}
+need_app() {
+    [ -n "${1:-}" ] || die "name an app: $(all_apps | tr '\n' ' ')"
+    app_field "$1" BUNDLE >/dev/null 2>&1 && [ -d "$root/apps/$1" ] || die "no app '$1' in apps.json"
+}
+
+has_identity() { security find-identity -v -p codesigning | grep -q "\"$identity\""; }
+running_pid() { lsappinfo info -only pid -app "$1" | sed -n 's/.*"pid"=\([0-9][0-9]*\).*/\1/p'; }
+default_ref() { git symbolic-ref --quiet refs/remotes/origin/HEAD || die "origin/HEAD is not set; run 'git remote set-head origin --auto'"; }
+
+setup() {
+    dry_run=0
+    [ "${1:-}" != "--dry-run" ] || dry_run=1
+    doctor=1
+    echo "==> scripts/agent doctor"
+    if "$root/scripts/agent" doctor; then doctor=0; fi
+    echo "==> signing identity"
+    signing=1
+    if has_identity; then
+        signing=0
+        echo "  ✓ '$identity'"
+    else
+        echo "  ✗ no '$identity'; it keeps permission grants across rebuilds. Make it with:"
+        echo "      $root/scripts/dev-cert"
+    fi
+    echo "==> install on merge"
+    if [ "$(git config --type=bool --default=false commontools.autoinstall)" = true ]; then
+        echo "  ✓ commontools.autoinstall is on"
+    elif [ "$dry_run" -eq 1 ]; then
+        echo "  … would run: git config commontools.autoinstall true"
+    else
+        git config commontools.autoinstall true
+        echo "  ✓ turned commontools.autoinstall on"
+    fi
+    autoinstall="$(git config --type=bool --default=false commontools.autoinstall)"
+    mark() { if [ "$1" -eq 0 ]; then echo "✓"; else echo "✗"; fi; }
+    echo
+    echo "$(mark "$doctor") toolchain, gh and git hooks (scripts/agent doctor)"
+    echo "$(mark "$signing") signing identity, so builds keep their permission grants"
+    if [ "$autoinstall" = true ]; then
+        echo "✓ each merge installs the apps it changed into /Applications ($log_file)"
+    else
+        echo "✗ merges don't install apps yet (git config commontools.autoinstall true)"
+    fi
+    if [ "$signing" -ne 0 ] && [ "$autoinstall" = true ]; then
+        echo "  installs start once the signing identity exists"
+    fi
+    echo "  scripts/dev status · scripts/dev watch <app> · scripts/dev logs <app>"
+    [ "$doctor" -eq 0 ] && [ "$signing" -eq 0 ]
+}
+
+# How a pull request's checks stand, in a word, from gh's statusCheckRollup.
+# shellcheck disable=SC2016 # jq, not the shell, expands these
+ci_jq='.[] | (.statusCheckRollup // []) as $c
+    | (if ($c | length) == 0 then "no checks"
+       elif any($c[]; (.conclusion // .state // "") | test("FAILURE|ERROR|CANCELLED|TIMED_OUT|ACTION_REQUIRED")) then "failing"
+       elif any($c[]; ((.status // "COMPLETED") != "COMPLETED") or ((.state // "") | test("PENDING|EXPECTED"))) then "pending"
+       else "passing" end) as $ci
+    | "\(.number)\t\(.headRefName)\t\($ci)\t\([.files[]?.path] | join(" "))"'
+
+# Runs gh into a file, stopped after five seconds so a slow network can't hold the screen.
+gh_into() {
+    out="$1"
+    shift
+    gh "$@" >"$out" 2>"$out.err" &
+    pid=$!
+    (
+        tries=0
+        while kill -0 "$pid" 2>/dev/null && [ "$tries" -lt 50 ]; do
+            sleep 0.1
+            tries=$((tries + 1))
+        done
+        if kill "$pid" 2>/dev/null; then echo "gh took more than 5 seconds" >>"$out.err"; fi
+    ) &
+}
+
+# Apps a list of paths touches: apps/<slug>/ names one, CommonKit or shared/ all of them.
+apps_touched() {
+    printf '%s\n' "$@" | awk -v apps="$apps_list" '
+        /^packages\/CommonKit\// || /^shared\// { every = 1 }
+        /^apps\/[^\/]+\// { split($0, p, "/"); app[p[2]] = 1 }
+        END { n = split(apps, list, " "); for (i = 1; i <= n; i++) if (every || app[list[i]]) printf "%s ", list[i] }'
+}
+
+status() {
+    tmp="$(mktemp -d -t common-tools-status)"
+    trap 'command rm -rf "$tmp"' EXIT
+    gh_into "$tmp/open" pr list --state open --limit 100 --json number,headRefName,files,statusCheckRollup --jq "$ci_jq"
+    gh_into "$tmp/recent" pr list --state all --limit 100 --json number,headRefName,state --jq '.[] | "\(.headRefName)\t\(.number)\t\(.state)"'
+
+    apps_list="$(all_apps | tr '\n' ' ')"
+    ref="$(default_ref)"
+    main="$(git rev-parse "$ref")"
+    fetched="never"
+    fetch_head="$(git rev-parse --path-format=absolute --git-common-dir)/FETCH_HEAD"
+    if [ -f "$fetch_head" ]; then
+        minutes=$((($(date +%s) - $(stat -f %m "$fetch_head")) / 60))
+        fetched="$minutes min ago"
+    fi
+    # Local readings first, while gh is out on the network.
+    for slug in $apps_list; do
+        name="$(app_field "$slug" NAME)"
+        bundle_id="$(app_field "$slug" BUNDLE)"
+        permissions="$(app_field "$slug" PERMISSIONS)"
+        dest="/Applications/$name.app"
+        plist="$dest/Contents/Info.plist"
+        if [ ! -d "$dest" ]; then
+            installed="not installed"
+        else
+            version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$plist" 2>/dev/null)" || version="?"
+            stamp="$(/usr/libexec/PlistBuddy -c 'Print :CommonToolsCommit' "$plist" 2>/dev/null)" || stamp=""
+            installed_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$plist" 2>/dev/null)" || installed_id=""
+            sha="${stamp%-dirty}"
+            dirty=""
+            [ "$sha" = "$stamp" ] || dirty=" with uncommitted changes"
+            if [ -z "$stamp" ]; then
+                installed="$version, a release or unstamped build"
+            elif ! git cat-file -e "$sha^{commit}" 2>/dev/null; then
+                installed="$version at ${sha%"${sha#???????}"}$dirty, a commit this clone doesn't have"
+            else
+                behind="$(git rev-list --count "$sha..$main" -- "apps/$slug" packages/CommonKit shared)"
+                case "$behind" in
+                0) where="current" ;;
+                1) where="1 change behind" ;;
+                *) where="$behind changes behind" ;;
+                esac
+                installed="$version at $(git rev-parse --short "$sha")$dirty, $where"
+            fi
+            if [ -n "$installed_id" ] && [ "$installed_id" != "$bundle_id" ]; then
+                installed="$installed (installed as $installed_id)"
+            fi
+        fi
+        running="not running"
+        if [ -n "$(running_pid "$bundle_id")" ] || { [ -n "${installed_id:-}" ] && [ -n "$(running_pid "$installed_id")" ]; }; then
+            running="running"
+        fi
+        grants=""
+        for service in $permissions; do
+            grants="$grants$service $(grant "$service" "$bundle_id"), "
+        done
+        last="$(last_install "$slug" "$name")"
+        # A separator that isn't white space, so an empty field (no permissions) stays a field.
+        printf '%s|%s|%s|%s|%s|%s\n' "$slug" "$name" "$running" "$installed" "${grants%, }" "$last" >>"$tmp/apps"
+        installed_id=""
+    done
+    wait
+    gh_failed=0
+    [ ! -s "$tmp/open.err" ] || gh_failed=1
+    : >"$tmp/prs"
+    if [ "$gh_failed" -eq 0 ]; then
+        while IFS="$(printf '\t')" read -r number _branch ci files; do
+            # shellcheck disable=SC2086
+            printf '#%s %s\t %s\n' "$number" "$ci" "$(apps_touched $files)" >>"$tmp/prs"
+        done <"$tmp/open"
+    fi
+
+    echo "${ref#refs/remotes/} at $(git rev-parse --short "$main"), fetched $fetched"
+    echo
+    while IFS='|' read -r slug name running installed grants last; do
+        echo "$name ($slug): $running; $installed"
+        detail="${grants:+$grants · }last auto-install: ${last:-none}"
+        if [ "$gh_failed" -eq 0 ]; then
+            prs="$(awk -F '\t' -v s=" $slug " 'index($2, s) { printf "%s%s", sep, $1; sep = ", " }' "$tmp/prs")"
+            detail="$detail · PRs: ${prs:-none}"
+        fi
+        echo "    $detail"
+    done <"$tmp/apps"
+    if [ "$gh_failed" -ne 0 ]; then
+        echo
+        echo "pull requests: unavailable ($(head -1 "$tmp/open.err"))"
+    fi
+
+    echo
+    echo "worktrees:"
+    primary="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
+    git worktree list --porcelain | awk '/^worktree /{ sub(/^worktree /, ""); path = $0 } /^branch /{ sub(/^branch refs\/heads\//, ""); print path "\t" $0 } /^detached/{ print path "\t" }' |
+        while IFS="$(printf '\t')" read -r path branch; do
+            pr=""
+            if [ "$path" = "$primary" ]; then
+                pr="primary checkout"
+            elif [ -z "$branch" ]; then
+                pr="detached"
+            elif [ "$gh_failed" -eq 0 ]; then
+                pr="$(awk -F '\t' -v b="$branch" '$2 == b { print "#" $1 " open, " $3; exit }' "$tmp/open")"
+                [ -n "$pr" ] || pr="$(awk -F '\t' -v b="$branch" '$1 == b { print "#" $2 " " tolower($3); exit }' "$tmp/recent")"
+                [ -n "$pr" ] || pr="no pull request"
+            fi
+            printf '  %-34s %-26s %s\n' "${branch:-(detached)}" "$pr" "$(echo "$path" | sed "s|^$HOME|~|")"
+        done
+}
+
+# A permission grant as the privacy database records it, when this process may read it. Reading
+# it takes Full Disk Access, which a terminal usually lacks; then it's honestly unknown.
+grant() {
+    for db in "/Library/Application Support/com.apple.TCC/TCC.db" "$HOME/Library/Application Support/com.apple.TCC/TCC.db"; do
+        value="$(sqlite3 -readonly "$db" "select auth_value from access where service = 'kTCCService$1' and client = '$2' limit 1" 2>/dev/null)" || continue
+        case "$value" in
+        2) echo "on" && return ;;
+        "") ;;
+        *) echo "off" && return ;;
+        esac
+    done
+    if sqlite3 -readonly "/Library/Application Support/com.apple.TCC/TCC.db" "select 1" >/dev/null 2>&1; then
+        echo "off"
+    else
+        echo "unknown"
+    fi
+}
+
+# The last result the background install logged for an app, with when it ran.
+last_install() {
+    [ -f "$log_file" ] || return 0
+    awk -v slug="$1" -v name="$2" '
+        /^==> [0-9-]+ [0-9:]+ installing / { when = substr($2, 6) " " substr($3, 1, 5) }
+        $1 == slug && index($0, name) {
+            result = substr($0, index($0, name) + length(name))
+            sub(/^ +/, "", result)
+            last = when " " result
+        }
+        END { if (last != "") print last }' "$log_file"
+}
+
+watch() {
+    need_app "${1:-}"
+    slug="$1"
+    verb=run
+    [ "${2:-}" != "--build-only" ] || verb=build
+    name="$(app_field "$slug" NAME)"
+    tmp="$(mktemp -d -t common-tools-watch)"
+    trap 'command rm -rf "$tmp"' EXIT
+    trap 'exit 130' INT TERM
+    # What the app is built from. Build products are pruned so a build never triggers the next.
+    changed_since() {
+        find "$root/apps/$slug" "$root/packages/CommonKit" "$root/shared" \
+            \( -name .build -o -name .swiftpm -o -name build \) -prune -o \
+            -type f -newer "$1" ! -name '*.swp' ! -name '*~' ! -name '.DS_Store' -print | head -1
+    }
+    echo "==> watching $name; scripts/task $verb $slug on each change (^C stops)"
+    while :; do
+        : >"$tmp/built"
+        start="$(date +%s)"
+        if "$root/scripts/task" "$verb" "$slug" >"$tmp/out" 2>&1; then
+            result="ok"
+        else
+            result="failed"
+            # The compiler's errors, not the whole build; the end of it when there are none.
+            errors="$(grep -E '^/.*: error:' "$tmp/out" | head -10)" || errors=""
+            [ -n "$errors" ] || errors="$(tail -5 "$tmp/out")"
+            echo "$errors" | sed 's/^/    /'
+        fi
+        printf '%s  %s %s in %ss: %s\n' "$(date +%H:%M:%S)" "$name" "$verb" "$(($(date +%s) - start))" "$result"
+        # Wait for a change, then for half a second of quiet, so a save of several files is one build.
+        until [ -n "$(changed_since "$tmp/built")" ]; do sleep 0.5; done
+        : >"$tmp/quiet"
+        sleep 0.5
+        while [ -n "$(changed_since "$tmp/quiet")" ]; do
+            : >"$tmp/quiet"
+            sleep 0.5
+        done
+    done
+}
+
+logs() {
+    need_app "${1:-}"
+    slug="$1"
+    shift
+    since=""
+    everything=0
+    while [ $# -gt 0 ]; do
+        case "$1" in
+        --all) everything=1 ;;
+        --since)
+            [ $# -ge 2 ] || die "--since needs a duration, like 10m or 2h"
+            since="$2"
+            shift
+            ;;
+        --since=*) since="${1#--since=}" ;;
+        *) die "usage: scripts/dev logs <app> [--since 10m] [--all]" ;;
+        esac
+        shift
+    done
+    # The app's own messages, and the frameworks' only when they're errors: the rest is AppKit chatter.
+    process="process == \"$(app_field "$slug" TARGET)\""
+    predicate="subsystem == \"$(app_field "$slug" BUNDLE)\" OR ($process AND messageType >= error)"
+    [ "$everything" -eq 0 ] || predicate="$process"
+    if [ -n "$since" ]; then
+        exec log show --style compact --info --debug --last "$since" --predicate "$predicate"
+    fi
+    exec log stream --style compact --level debug --predicate "$predicate"
+}
+
+cmd="${1:-}"
+[ $# -gt 0 ] && shift
+case "$cmd" in
+setup) setup "$@" ;;
+status) status ;;
+watch) watch "$@" ;;
+logs) logs "$@" ;;
+install) exec "$root/scripts/install" "$@" ;;
+*)
+    echo "usage: scripts/dev {setup [--dry-run]|status|watch <app> [--build-only]|logs <app> [--since 10m] [--all]|install [...]}" >&2
+    exit 2
+    ;;
+esac

@@ -31,6 +31,7 @@ Verbs: `fmt`, `fmt:check`, `lint` (format, then a build with warnings as errors)
 - User-facing changes to an app go under `## [Unreleased]` in `apps/<slug>/CHANGELOG.md` in the same pull request. The site shows each release's section as "What's new".
 - Release one app with `scripts/release <slug> <version>`; it tags `<slug>-v<version>` from the merged version bump. Never tag by hand. The Release workflow publishes the zip and disk image (`scripts/dmg`), notarizes when the secrets exist (`scripts/notarize`, `docs/signing.md`), and writes the Homebrew cask (`scripts/cask`, `docs/install.md`).
 - On the owner's Mac (`git config commontools.autoinstall true`), each merge rebuilds the apps it changed and installs them into `/Applications` in the background, quitting and reopening a running copy (`scripts/install`, log in `~/Library/Logs/Common Tools/install.log`). Don't install or quit apps by hand to try a change; `scripts/task run` builds and opens the copy in `build/`.
+- `scripts/dev status` shows, in one screen, which build of each app is installed and running, its permissions, the open pull requests touching it, and every worktree; `scripts/dev logs <app> [--since 10m]` reads an app's log. Use them before guessing at what's on this Mac.
 - Several agents work here at once, one per app, each in its own worktree. Stay inside your area unless the change is shared; a change to `packages/CommonKit` or `shared/` affects every app, so say so in the pull request.
 
 ## Commits
