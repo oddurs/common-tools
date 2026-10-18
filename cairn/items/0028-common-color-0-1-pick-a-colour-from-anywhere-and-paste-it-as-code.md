@@ -6,7 +6,7 @@ title: 'Common Color 0.1: pick a colour from anywhere and paste it as code'
 type: milestone
 status: backlog
 created: 2026-10-17
-updated: 2026-10-17
+updated: 2026-10-18
 priority: p2
 area: color
 ---
@@ -48,3 +48,7 @@ None. Nothing leaves the Mac.
 
 - Every item is done.
 - Picks of a known P3 swatch on the owner's display match its published values in every format, within rounding.
+
+## 2026-10-18
+
+Status after feat/color-picking: 29, 31, 32 closed. 30 is built and blocked on a hands-on check nobody but the owner can do here (clicking the loupe; synthetic events were off limits): pick with no permission, and Escape leaving the clipboard alone. Release gate still open: (1) close 30 after that check; (2) the owner picks a known Display P3 swatch on their display and compares every format with its published values. Expect the P3 numbers to the 4th place, hex after CSS gamut mapping if the swatch is outside sRGB, and up to ~0.0004 of ColorSync profile rounding. Left open on purpose.
