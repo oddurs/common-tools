@@ -142,9 +142,12 @@ enum Render {
 
         let wallpaper = NSGradient(colors: [.systemIndigo, .systemTeal, .systemMint])
         wallpaper?.draw(in: display, angle: 60)
-        NSColor.windowBackgroundColor.withAlphaComponent(0.8).setFill()
-        CGRect(x: display.minX, y: display.minY, width: display.width, height: 24).fill()
-        menuBar(in: display)
+        // The menu bar along the top of the panel, wherever this piece of the desktop is.
+        if display.intersects(CGRect(x: panel.minX, y: panel.minY, width: panel.width, height: 24)) {
+            NSColor.windowBackgroundColor.withAlphaComponent(0.8).setFill()
+            CGRect(x: panel.minX, y: panel.minY, width: panel.width, height: 24).fill()
+            menuBar(in: panel)
+        }
 
         // Back to front, so the terminal ends up on top.
         for window in [browser, editor, terminal] where display.intersects(window.frame) {

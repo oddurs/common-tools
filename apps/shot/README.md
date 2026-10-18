@@ -11,7 +11,7 @@ Screenshots straight to the clipboard, for macOS. Press ⇧⌘2, drag over what 
 - **Sized for prompts.** Claude reads an image at about one token per 750 pixels, so by default a shot's long edge is capped at 1568 px: a full Retina screen costs about 2,100 tokens instead of 4,800, and a crop of an error or a few lines of code is left alone. Full resolution is one switch away.
 - **PNG on the clipboard, and the file it was saved to.** Claude Code pastes the image with **Ctrl+V**, and a shot taken from a terminal says so. In Ghostty ⌘V pastes the file's path instead, which Claude Code attaches as the image too. Chats, issues, and documents, the Claude app among them, take it with ⌘V. Or drag the preview into the terminal, which drops in the same path.
 - **Recent shots in the menu.** The menu bar menu shows the last few as thumbnails with their size and token cost; click one to copy it again. Settings decides how many are kept.
-- **A preview in the corner** shows what was copied and roughly what it costs in tokens. It fades on its own; hover to keep it, drag the thumbnail out as a file, or click to dismiss it.
+- **A preview in the corner** shows what was copied and roughly what it costs in tokens. The shot shrinks into it from where you picked it, with the sound macOS makes for its own screenshots. It slides away on its own; hover to keep it, drag the thumbnail out as a file, swipe it to the right, or click to dismiss it.
 
 Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, and one permission: Screen Recording, which every screenshot tool needs.
 
@@ -49,7 +49,7 @@ Text recognition runs on your Mac with Vision. It reads code well but not perfec
 
 - **Shortcut**: click and press a new one. Escape cancels; Delete restores ⇧⌘2.
 - **Access**: whether Screen Recording is allowed, with a button to the right pane of System Settings.
-- **Image**: for prompts (long edge at most 1568 px) or full resolution, and whether to show the preview.
+- **Image**: for prompts (long edge at most 1568 px) or full resolution, whether to show the preview, and whether to play the screenshot sound (it also follows System Settings › Sound › Play user interface sound effects).
 - **History**: keep none, or the last 5 to 100 shots (the newest 6 in the menu, the rest under Older Shots), in `~/Library/Application Support/Common Shot/History`. Show it in Finder or clear it.
 - **General**: show in the menu bar, and open at login. With the menu bar item hidden, open Common Shot from Finder to get back to Settings.
 

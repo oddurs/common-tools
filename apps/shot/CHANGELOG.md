@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- The screenshot sound, the one macOS plays for its own, as you let go. It follows "Play user interface sound effects", the alert volume and the sound-effects device in System Settings, and Settings › Image can turn it off.
+- The shot shrinks from where you picked it into the preview in the corner, a quarter of a second; with Reduce Motion the preview just appears. VoiceOver announces what was copied.
 - Precision while you aim: the arrow keys move the pointer by one device pixel (ten with ⇧), and during a drag they move the corner you're dragging; hold Space during a drag to move the whole selection, as in macOS; and a dragged corner settles on the edge of a window, or of the screen, when it comes within 5 points of one. An edge hidden behind another window doesn't count, and the arrow keys never snap.
 - A Welcome window on first launch: what Common Shot does, the Screen Recording permission it needs with a live check and a button to System Settings, Open at login, and the Common Tools family.
 - An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
@@ -19,6 +21,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The preview behaves like the system's thumbnail: it slides in from the screen's right edge and back out when its time is up, and a two-finger swipe or a drag to the right sends it away early. It appears as you let go, before the PNG is even encoded, and its thumbnail can be dragged out as soon as the file is written.
 - Faster from the shortcut to the overlay and from letting go to the clipboard. ScreenCaptureKit and the overlay are warmed up at launch, every display is captured at once, and a window is captured while you hover it, so a click copies it at once. On an M-series MacBook Pro the overlay is up about 25 ms after the shortcut, a dragged area is on the clipboard about 15 ms after you let go, and a whole Retina screen about 65 ms.
 - Shots are converted to sRGB. A capture comes in the display's own colour space, and prompts and most of the web read a PNG's colours as sRGB whatever its profile says, so colours pasted from a wide-gamut display could look shifted.
 - A window that closes between the click and its capture is copied from the frozen screen, as it was when you picked it, instead of failing with an error.

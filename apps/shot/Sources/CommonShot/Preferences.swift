@@ -10,6 +10,7 @@ final class Preferences {
     var imageSize: ImageSize { didSet { defaults.set(imageSize.rawValue, forKey: "imageSize") } }
     var historyLimit: Int { didSet { defaults.set(historyLimit, forKey: "historyLimit") } }
     var showsPreview: Bool { didSet { defaults.set(showsPreview, forKey: "showsPreview") } }
+    var playsSound: Bool { didSet { defaults.set(playsSound, forKey: "playsSound") } }
     var showsMenuBarItem: Bool { didSet { defaults.set(showsMenuBarItem, forKey: "showsMenuBarItem") } }
 
     /// How many shots the menu can offer again. Zero keeps none.
@@ -17,12 +18,15 @@ final class Preferences {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        defaults.register(defaults: ["historyLimit": 10, "showsPreview": true, "showsMenuBarItem": true])
+        defaults.register(defaults: [
+            "historyLimit": 10, "showsPreview": true, "playsSound": true, "showsMenuBarItem": true,
+        ])
         hotKey =
             defaults.data(forKey: "hotKey").flatMap { try? JSONDecoder().decode(KeyCombo.self, from: $0) } ?? .standard
         imageSize = defaults.string(forKey: "imageSize").flatMap(ImageSize.init) ?? .prompt
         historyLimit = max(0, defaults.integer(forKey: "historyLimit"))
         showsPreview = defaults.bool(forKey: "showsPreview")
+        playsSound = defaults.bool(forKey: "playsSound")
         showsMenuBarItem = defaults.bool(forKey: "showsMenuBarItem")
     }
 }
