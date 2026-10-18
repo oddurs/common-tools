@@ -26,5 +26,6 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- A shot pasted with ⌘V in Ghostty, and so in Claude Code or herdr running there, pasted nothing: the clipboard held only the image, and a terminal pastes text. It now also holds the saved PNG as a file, which Ghostty pastes as its path and Claude Code attaches as the image. Ctrl+V still pastes the image, and the Claude app and browsers take the file.
 - Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 - Settings no longer opens by itself on first launch. When Screen Recording is missing, Welcome, the shortcut's alert, and Settings offer **Reset and Ask Again**, which clears a switch left by an earlier copy (on in System Settings, but not for this one), and **Quit and Reopen**, since macOS applies the switch only after the app reopens.

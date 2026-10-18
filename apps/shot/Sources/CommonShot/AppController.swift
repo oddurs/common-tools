@@ -140,11 +140,12 @@ final class AppController: NSObject {
             let density = max(1, scale * CGFloat(sized.width) / CGFloat(image.width))
             return (sized, density, try Output.png(sized, scale: density))
         }.value
-        Output.copy(png)
         let date = Date()
+        // Saved first, so the clipboard can point at the file.
         let file =
             try history.add(png, width: sized.width, height: sized.height, at: date, keeping: preferences.historyLimit)
             ?? Output.temporaryFile(png, at: date)
+        Output.copy(png, file: file)
         if preferences.showsPreview, let screen {
             toast.show(sized, scale: density, on: screen, caption: Self.caption(sized), detail: detail, file: file)
         }
@@ -176,7 +177,7 @@ final class AppController: NSObject {
         guard let url = item.representedObject as? URL else { return }
         do {
             let png = try Data(contentsOf: url)
-            Output.copy(png)
+            Output.copy(png, file: url)
             if preferences.showsPreview, let screen = NSScreen.main,
                 let source = CGImageSourceCreateWithData(png as CFData, nil),
                 let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
