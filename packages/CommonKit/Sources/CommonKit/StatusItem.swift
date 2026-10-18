@@ -14,7 +14,8 @@ extension NSStatusBar {
     /// of at the far left, where macOS puts a new item and where Common Bar, the notch or the
     /// app's menus would hide it. After that, macOS keeps it wherever the user moves it.
     ///
-    /// - Parameter autosaveName: the name macOS saves the position under; never change it.
+    /// - Parameter autosaveName: the name macOS saves the position under. A new name loses the
+    ///   position unless `LegacyIdentity` renames the saved keys.
     @MainActor
     public func commonItem(autosaveName: String, length: CGFloat) -> NSStatusItem {
         if let tool = CommonTool.thisApp {

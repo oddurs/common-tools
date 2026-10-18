@@ -14,7 +14,7 @@ let package = Package(
             ]
         ),
         .executableTarget(
-            name: "StatBar",
+            name: "CommonStats",
             dependencies: [
                 "StatKit",
                 .product(name: "CommonKit", package: "CommonKit"),

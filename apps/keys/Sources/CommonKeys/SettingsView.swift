@@ -1,0 +1,171 @@
+import CommonKit
+import CommonUI
+import KeysKit
+import SwiftUI
+import UniformTypeIdentifiers
+
+/// The whole of Settings, laid out the Common Tools way: the app's own sections, then General, then
+/// the family. Common Keys works out the rest by watching how you type.
+struct SettingsView: View {
+    @Environment(Engine.self) private var engine
+    let updates: UpdateCheck
+    @State private var loginProblem: LoginItem.Problem?
+    @State private var confirmingReset = false
+    private static let paused = "paused"
+
+    var body: some View {
+        @Bindable var prefs = engine.prefs
+        Form {
+            Section("Shortcuts") {
+                LabeledContent("Next layout") {
+                    ShortcutRecorder(shortcut: prefs.toggleShortcut) { new in
+                        prefs.toggleShortcut = new
+                        engine.applyShortcuts()
+                    }
+                }
+                Picker("Convert last word", selection: $prefs.convertTrigger) {
+                    ForEach(ConvertTrigger.allCases) { Text($0.title).tag($0) }
+                }
+            }
+
+            Section {
+                ForEach(apps, id: \.self) { bundleID in
+                    LabeledRow(AppLabel.name(of: bundleID), leadingSize: 20) {
+                        AppLabel(bundleID: bundleID)
+                    } trailing: {
+                        Picker("Layout", selection: choice(bundleID)) {
+                            Text(automaticTitle(bundleID)).tag("")
+                            Divider()
+                            ForEach(engine.layouts, id: \.id) { Text("\($0.flag)  \($0.name)").tag($0.id) }
+                            Divider()
+                            Text("Paused").tag(Self.paused)
+                        }
+                        .labelsHidden()
+                        .fixedSize()
+                    }
+                }
+                Button("Add App…", action: pickApps)
+            } header: {
+                Text("Exceptions")
+            } footer: {
+                SettingsFootnote(
+                    "Pin an app to one layout, or pause Common Keys in it. Terminals and code editors start paused.")
+            }
+
+            Section {
+                LabeledRow("What it has learned", subtitle: learnedSummary) {
+                    Button("Forget Everything…", role: .destructive) { confirmingReset = true }
+                        .disabled(engine.memory.isEmpty && engine.stats.days.isEmpty)
+                }
+            } header: {
+                Text("Learning")
+            } footer: {
+                SettingsFootnote("Kept on this Mac only, in ~/Library/Application Support/Common Keys.")
+            }
+
+            Section {
+                OpenAtLoginToggle(problem: $loginProblem)
+                UpdateCheckToggle(updates: updates)
+            } header: {
+                Text("General")
+            } footer: {
+                VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
+                    OpenAtLoginFootnote(loginProblem)
+                    UpdateCheckFootnote(updates: updates)
+                }
+            }
+
+            CommonToolsSection()
+        }
+        .settingsForm()
+        .confirmationDialog("Forget everything Common Keys has learned?", isPresented: $confirmingReset) {
+            Button("Forget Everything", role: .destructive) { engine.forgetEverything() }
+        } message: {
+            Text(
+                "Learned words, mixed-up keys, each app's usual layout, the words you keep, what your corrections taught, and the stats in the menu."
+            )
+        }
+    }
+
+    private var learnedSummary: String {
+        let memory = engine.memory
+        let apps = memory.apps.keys.filter { memory.usualLayout(app: $0) != nil }.count
+        return [
+            count(memory.words.count, "word"), count(memory.confusions.count, "mixed-up key"),
+            count(apps, "app"),
+        ].joined(separator: " · ")
+    }
+
+    private func count(_ n: Int, _ noun: String) -> String {
+        "\(n) \(noun)\(n == 1 ? "" : "s")"
+    }
+
+    /// Apps with a rule of the user's: pinned or paused. Learned ones need no rule, so they stay out,
+    /// and so do apps not installed here: the defaults pause editors this Mac may not have, and a
+    /// row of bare bundle identifiers tells nobody anything. Their rule still applies if they arrive.
+    private var apps: [String] {
+        Set(engine.prefs.appLayouts.keys).union(engine.prefs.excludedApps).filter {
+            NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil
+        }.sorted {
+            AppLabel.name(of: $0).localizedCaseInsensitiveCompare(AppLabel.name(of: $1)) == .orderedAscending
+        }
+    }
+
+    private func automaticTitle(_ bundleID: String) -> String {
+        guard let usual = engine.memory.usualLayout(app: bundleID), let layout = engine.layout(usual.id)
+        else {
+            return "Automatic"
+        }
+        return "Automatic · \(layout.flag)"
+    }
+
+    private func choice(_ bundleID: String) -> Binding<String> {
+        Binding(
+            get: {
+                if engine.prefs.excludedApps.contains(bundleID) { return Self.paused }
+                return engine.prefs.appLayouts[bundleID] ?? ""
+            },
+            set: { value in
+                engine.prefs.excludedApps.removeAll { $0 == bundleID }
+                engine.prefs.appLayouts[bundleID] = nil
+                switch value {
+                case Self.paused: engine.prefs.excludedApps.append(bundleID)
+                case "": break
+                default: engine.prefs.appLayouts[bundleID] = value
+                }
+            })
+    }
+
+    private func pickApps() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [.application]
+        panel.allowsMultipleSelection = true
+        panel.directoryURL = URL(filePath: "/Applications")
+        guard panel.runModal() == .OK else { return }
+        for url in panel.urls {
+            guard let id = Bundle(url: url)?.bundleIdentifier, !apps.contains(id) else { continue }
+            // Paused to start with, the usual reason to add an app; the picker changes it.
+            engine.prefs.excludedApps.append(id)
+        }
+    }
+}
+
+/// An app's icon for its row in Exceptions; the row's title is `name(of:)`.
+private struct AppLabel: View {
+    let bundleID: String
+
+    static func name(of bundleID: String) -> String {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else {
+            return bundleID
+        }
+        return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+    }
+
+    var body: some View {
+        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable()
+        } else {
+            Image(systemName: "app.dashed").foregroundStyle(.tertiary)
+        }
+    }
+}

@@ -96,12 +96,12 @@ scripts/task test stats --filter=X  # only the tests whose name matches
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the workflow: `scripts/agent start`, `scripts/agent ship`, and `scripts/release stats <version>`.
 
-`swift build && .build/debug/StatBar --snapshot out.png [seconds]` samples for a few seconds, then renders several bar layouts to `out.png` and every dropdown section to `out-menu.png`, each in light and dark. The images above were made this way. Use it to review design changes without screen-recording permission.
+`swift build && .build/debug/CommonStats --snapshot out.png [seconds]` samples for a few seconds, then renders several bar layouts to `out.png` and every dropdown section to `out-menu.png`, each in light and dark. The images above were made this way. Use it to review design changes without screen-recording permission.
 
 Layout:
 
 - `Sources/StatKit`: samplers, history, layout model, and the menu bar renderer. Contains no UI state, so it can be tested on its own.
-- `Sources/StatBar`: the status item, menu, and Settings window. The executable target keeps its original name, `StatBar`.
+- `Sources/CommonStats`: the status item, menu, and Settings window.
 - `Tests/StatKitTests`: unit, accuracy, and performance tests.
 
 ## Licence

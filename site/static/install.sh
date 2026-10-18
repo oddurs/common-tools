@@ -105,6 +105,11 @@ EOF
     # nothing to remove; a browser download opened the same way would have one.
     xattr -dr com.apple.quarantine "$app" 2>/dev/null || :
     target="$dir/$(basename "$app")"
+    # The copy being replaced may carry an identity the app had before a rename; quit it by its own.
+    if [ -e "$target/Contents/Info.plist" ]; then
+        quit "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$target/Contents/Info.plist")" \
+            "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$target/Contents/Info.plist")"
+    fi
     quit "$bundle_id" "$executable"
     if [ -e "$target" ]; then
         echo "    replacing $target"

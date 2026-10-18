@@ -6,12 +6,13 @@ This is one app of the Common Tools monorepo. The workflow, the `scripts/task` s
 
 ## Code
 
-- `Sources/StatKit` holds samplers, history, the layout model, and the menu bar renderer, and contains no UI state. `Sources/StatBar` holds the app shell: status item, menu, and Settings.
+- `Sources/StatKit` holds samplers, history, the layout model, and the menu bar renderer, and contains no UI state. `Sources/CommonStats` holds the app shell: status item, menu, and Settings.
 - Accuracy comes first. Every reading comes from a public, unprivileged kernel or IOKit source. If a value can't be read, show `Format.missing`; never show a made-up zero. Don't add private APIs.
 - A bug fix comes with the test that would have caught it. Sampler changes need an accuracy test against a system tool where one exists (`vm_stat`, `netstat`).
 - Performance budgets are enforced in `PerformanceTests`. Don't loosen a budget to make a change pass.
+- The app had an earlier name. `main.swift` carries its settings and menu bar position over with CommonKit's `LegacyIdentity`; the status item saves its position under `stats` now. Keep that call while installs from before the rename may be updated.
 - The menu bar image must stay a template image so macOS tints it. Widths come from the layout pass and never from values.
-- For visual review, use `scripts/task build stats && apps/stats/.build/debug/StatBar --snapshot out.png` and inspect `out.png` and `out-menu.png`. It renders offscreen, so no windows open.
+- For visual review, use `scripts/task build stats && apps/stats/.build/debug/CommonStats --snapshot out.png` and inspect `out.png` and `out-menu.png`. It renders offscreen, so no windows open.
 
 
 ## Checks
@@ -22,4 +23,4 @@ Changes to a sampler need an accuracy argument: explain what the kernel reports 
 
 Besides the shared checklist:
 
-- [ ] UI changes include before/after snapshots (`.build/debug/StatBar --snapshot`)
+- [ ] UI changes include before/after snapshots (`.build/debug/CommonStats --snapshot`)

@@ -19,12 +19,12 @@ import Testing
     @Test func resetClearsOnlyThisAppsRecordOfThisService() throws {
         let recorder = Recorder()
         try Permission.screenRecording(reason: "").reset(bundleID: "com.oddurs.commonshot", run: recorder.runner)
-        try Permission.accessibility(reason: "").reset(bundleID: "com.oddurs.langsmart", run: recorder.runner)
+        try Permission.accessibility(reason: "").reset(bundleID: "com.oddurs.commonkeys", run: recorder.runner)
         #expect(recorder.calls.map(\.0) == ["/usr/bin/tccutil", "/usr/bin/tccutil"])
         #expect(
             recorder.calls.map(\.1) == [
                 ["reset", "ScreenCapture", "com.oddurs.commonshot"],
-                ["reset", "Accessibility", "com.oddurs.langsmart"],
+                ["reset", "Accessibility", "com.oddurs.commonkeys"],
             ])
     }
 

@@ -4,7 +4,7 @@ import SystemConfiguration
 /// Measures the primary interface: the one the default route uses. Summing
 /// every interface would count VPN traffic twice (tunnel and carrier).
 final class NetworkSampler {
-    private let store = SCDynamicStoreCreate(nil, "StatBar" as CFString, nil, nil)
+    private let store = SCDynamicStoreCreate(nil, "CommonStats" as CFString, nil, nil)
     private var meter = RateMeter<String>()
     private var primary: String?
     private var primaryCheckedAt: UInt64 = 0

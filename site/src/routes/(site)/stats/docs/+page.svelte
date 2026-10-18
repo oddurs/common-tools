@@ -21,9 +21,9 @@
 	<h2 id="install">Install</h2>
 	<Install tool={stats} />
 	<p class="callout">
-		Upgrading from StatBar 0.1? Quit it and move <b>StatBar</b> from Applications to the Trash first. Common
-		Stats is the same app under a new name and keeps your settings, but the two can't run side by side. If Open
-		at login stops working, turn it off and on again.
+		Upgrading from a copy with the app's earlier name? Common Stats quits it when it first opens and keeps
+		your settings; move the old app from Applications to the Trash. If Open at login stops working, turn
+		it off and on again.
 	</p>
 
 	<h2 id="bar">The menu bar item</h2>

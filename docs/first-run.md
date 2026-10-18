@@ -1,6 +1,6 @@
-# First run and update checks
+# First run, update checks and renames
 
-Two pieces of CommonKit every app adopts; the lines below are all an app adds.
+Three pieces of CommonKit every app adopts; the lines below are all an app adds.
 
 ## The Welcome window
 
@@ -56,5 +56,28 @@ UpdateCheckFootnote(updates: updates)   // "Version x.y.z is available" as a lin
 ```
 
 Both views are CommonKit's, so every app's row reads the same. The toggle keeps its state in `@State` and writes `isEnabled` from there: `isEnabled` is a preference, not an observed property, so a `Binding` straight to it would draw a switch that never moves. `available` and `lastError` are observed, so the footnote updates on its own; a failed check (offline, rate-limited) is tried again at the next launch. `check()` runs one now, for a **Check Now** button.
+
+## A new name
+
+A bundle identifier is where macOS keeps an app's defaults, its login item and its permission grants, so an app that changes it starts with none of them. A rename keeps to the Common naming (root `CLAUDE.md`) and ships with `LegacyIdentity`, which takes the old identifiers as data and carries over what can be carried:
+
+```swift
+import CommonKit
+
+// main.swift, before anything reads the defaults or makes a status item:
+LegacyIdentity.migrate(
+    from: LegacyIdentity(
+        bundleIdentifier: "<the old bundle identifier>", statusItems: ["<old autosave name>": "<new one>"],
+        supportFolder: .init(old: "<old folder>", new: "<new folder>")))
+
+// applicationDidFinishLaunching:
+LegacyIdentity.followLoginItem()
+```
+
+- **A running old copy** is asked to quit, and `migrate` waits up to two seconds for it, so it has saved its settings and two copies never share the menu bar.
+- **Defaults** are copied once, when the new domain is empty: the old domain is read with `persistentDomain(forName:)`, which is the old plist in `~/Library/Preferences` and nothing else (a suite's `dictionaryRepresentation()` would bring every global default along). `NSStatusItem Preferred Position`, `Visible` and `VisibleCC` keys under an old autosave name move to the new name, so icons stay where the user put them. `droppedKeys` leaves behind what described the old identity's grants, such as Common Bar's "already asked for Accessibility". The old plist stays, so going back to the old version still finds it.
+- **The Application Support folder** moves when the old one exists and the new one doesn't.
+- **The login item** can't be read for another bundle identifier with any public API. The old entry stays in System Settings › General › Login Items and opens the app at the same path, so after a migration the first launch at login (`keyAELaunchedAsLogInItem`) that finds this identity unregistered registers it. The old entry stays listed until the user removes it.
+- **Permission grants** can't move: TCC keys them by bundle identifier. Welcome, or the app's own prompt, asks again, and the app's CHANGELOG says so in plain words: "macOS asks for Accessibility once more after this update." The old switch stays on in the pane and no longer applies; it can be removed with −.
 
 Keep the rule in the root `CLAUDE.md` in mind: this is the one place an app touches the network, and only after the user asks.

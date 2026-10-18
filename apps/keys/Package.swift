@@ -5,23 +5,23 @@ let package = Package(
     name: "CommonKeys",
     platforms: [.macOS("14.4")],
     products: [
-        .library(name: "WorldKey", targets: ["WorldKey"]),
-        .executable(name: "worldkey", targets: ["WorldKeyCLI"]),
-        .executable(name: "LangSmart", targets: ["LangSmart"]),
+        .library(name: "KeysKit", targets: ["KeysKit"]),
+        .executable(name: "common-keys", targets: ["KeysCLI"]),
+        .executable(name: "CommonKeys", targets: ["CommonKeys"]),
     ],
     dependencies: [.package(path: "../../packages/CommonKit")],
     targets: [
-        .target(name: "WorldKey"),
+        .target(name: "KeysKit"),
         .executableTarget(
-            name: "LangSmart",
+            name: "CommonKeys",
             dependencies: [
-                "WorldKey", .product(name: "CommonKit", package: "CommonKit"),
+                "KeysKit", .product(name: "CommonKit", package: "CommonKit"),
                 .product(name: "CommonUI", package: "CommonKit"),
             ]),
-        .executableTarget(name: "WorldKeyCLI", dependencies: ["WorldKey"]),
-        .testTarget(name: "WorldKeyTests", dependencies: ["WorldKey"]),
+        .executableTarget(name: "KeysCLI", dependencies: ["KeysKit"]),
+        .testTarget(name: "KeysKitTests", dependencies: ["KeysKit"]),
         .testTarget(
-            name: "LangSmartTests",
-            dependencies: ["LangSmart", .product(name: "CommonTesting", package: "CommonKit")]),
+            name: "CommonKeysTests",
+            dependencies: ["CommonKeys", .product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )

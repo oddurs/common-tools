@@ -6,9 +6,9 @@
 	import { asset } from '$app/paths';
 
 	const keys = tool('keys');
-	const worldkey = $derived(
+	const cli = $derived(
 		page.data.releases?.keys
-			? page.data.releases.keys.download.replace(/CommonKeys\.zip$/, 'worldkey.zip')
+			? page.data.releases.keys.download.replace(/CommonKeys\.zip$/, 'common-keys.zip')
 			: releasesOf(keys)
 	);
 	const sections: [string, string][] = [
@@ -20,7 +20,7 @@
 		['menu', 'The menu'],
 		['settings', 'Settings'],
 		['limits', 'Limits'],
-		['worldkey', 'WorldKey CLI'],
+		['cli', 'The common-keys command'],
 		['source', 'Build from source']
 	];
 </script>
@@ -88,9 +88,8 @@
 		remembers the word and the keys you mixed up. It also learns which language you write in each app.
 	</p>
 	<p>
-		Everything stays on your Mac, in <code>~/Library/Application Support/LangSmart/memory.json</code> (the
-		folder keeps its original name so nothing is lost). <b>Settings › Learning › Forget Everything…</b> clears
-		it. No network, no telemetry, no account.
+		Everything stays on your Mac, in <code>~/Library/Application Support/Common Keys/memory.json</code>.
+		<b>Settings › Learning › Forget Everything…</b> clears it. No network, no telemetry, no account.
 	</p>
 
 	<h2 id="menu">The menu</h2>
@@ -138,17 +137,17 @@
 		</li>
 	</ul>
 
-	<h2 id="worldkey">WorldKey CLI</h2>
+	<h2 id="cli">The common-keys command</h2>
 	<p>
-		The engine is a Swift library, <code>WorldKey</code>, and a command-line tool. Download
-		<a href={worldkey}><code>worldkey.zip</code></a> from the same release, or build it from source.
+		The engine is a Swift library, <code>KeysKit</code>, and a command-line tool. Download
+		<a href={cli}><code>common-keys.zip</code></a> from the same release, or build it from source.
 	</p>
 	<pre><code
-			>worldkey sources [--all]
-worldkey convert ghbdtn --from US --to Russian    # привет
-worldkey convert 안녕하세요 --from 2SetKorean --to US  # dkssudgktpdy
-worldkey detect /etta --from US                   # þetta  com.apple.keylayout.Icelandic
-worldkey eval --keyboards US,Russian --words 150</code
+			>common-keys sources [--all]
+common-keys convert ghbdtn --from US --to Russian    # привет
+common-keys convert 안녕하세요 --from 2SetKorean --to US  # dkssudgktpdy
+common-keys detect /etta --from US                   # þetta  com.apple.keylayout.Icelandic
+common-keys eval --keyboards US,Russian --words 150</code
 		></pre>
 	<p>Add <code>--json</code> for output another program can parse.</p>
 
@@ -157,6 +156,6 @@ worldkey eval --keyboards US,Russian --words 150</code
 			>git clone https://github.com/oddurs/common-tools
 cd common-tools
 scripts/dev-cert keys        # once: a stable signing identity, so Accessibility survives rebuilds
-scripts/task build keys      # → build/keys/Common Keys.app and build/keys/worldkey</code
+scripts/task build keys      # → build/keys/Common Keys.app and build/keys/common-keys</code
 		></pre>
 </Docs>

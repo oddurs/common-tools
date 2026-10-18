@@ -38,7 +38,7 @@ Conventional Commits: `type(scope): subject`. Write the subject in the imperativ
 
 ## Code
 
-- Every app keeps its bundle identifier, executable name, status-item autosave names, and preference keys forever, so existing installs keep their settings, positions, and permission grants. Only user-visible names change.
+- Identifiers follow the Common naming: bundle identifier `com.oddurs.common<slug>`, executable target `Common<Name>`, a library target ending in `Kit`, a folder in Application Support named after the app. A rename always ships with a migration: CommonKit's `LegacyIdentity`, called first in the app's `main.swift` with the old identifiers, carries the defaults, status item positions, Application Support folder and login item over (`docs/first-run.md`). Permission grants can't move, so the app's CHANGELOG says macOS asks again.
 - Every reading an app shows comes from a public, unprivileged API. Nothing leaves the Mac: no network, no analytics, no account. The one exception is CommonKit's `UpdateCheck`: off until the user turns it on in Settings, then a plain GET of the public release list with nothing about the Mac in it (`docs/first-run.md`).
 - First run is CommonKit's `Welcome` window, driven by data the app passes (`docs/first-run.md`); nothing app-specific goes into CommonKit.
 - Settings follow one layout: the app's own sections first, then **General** starting with "Open at login", then `CommonToolsSection()` from CommonKit last. Labels are sentence case, section headers Title Case. CommonKit's `CommonUI` product has the pieces (`import CommonUI`): `SettingsWindowHost`, `.settingsForm()`, `OpenAtLoginToggle`, `SettingsFootnote`, `LabeledRow`, `Card`, `IconBadge`.

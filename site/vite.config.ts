@@ -11,7 +11,7 @@ export default defineConfig({
 			},
 			// GitHub Pages serves plain files, so every page is rendered at build time.
 			adapter: adapter(),
-			// Pages serves the site under /langsmart; set BASE_PATH there, leave it empty locally.
+			// Pages serves the site under /common-tools; set BASE_PATH there, leave it empty locally.
 			paths: { base: (process.env.BASE_PATH ?? '') as '' | `/${string}` }
 		})
 	]

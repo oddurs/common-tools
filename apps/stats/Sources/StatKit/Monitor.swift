@@ -4,7 +4,7 @@ import Foundation
 /// Samples every metric on a private serial queue and hands snapshots to the
 /// main actor. All sampler state is confined to `queue`.
 public final class Monitor: @unchecked Sendable {
-    private let queue = DispatchQueue(label: "statbar.monitor", qos: .utility)
+    private let queue = DispatchQueue(label: "com.oddurs.commonstats.monitor", qos: .utility)
     private var timer: DispatchSourceTimer?
     private let handler: @MainActor (Snapshot) -> Void
 
