@@ -4,12 +4,17 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+
+- Folders of your own. Add, rename, choose a symbol for, reorder, and delete folders in Settings › Folders, and choose the folder for each icon under **Icons in Folders**. More keeps every icon no other folder holds. Each folder is its own item in the menu bar.
+- An icon chosen in a folder opens its menu under that folder. One near the divider is ⌘-dragged in beside the folder, the pointer hidden and put back where it was, and dragged back to its place afterwards. One further along has its menu read through Accessibility and shown from the folder, and the item you choose is pressed in the real menu. An icon that shows a panel or popover instead opens wherever it comes on screen. **Open icons beside their folder** in Settings turns this off.
+
 ### Changed
 
 - More opens at once. It is the status item's own menu now, opened by macOS on the press like any other, and its rows are worked out ahead of time in the background instead of asking every app on each click.
 - More's rows come in groups with a line between: other apps' icons, then Common Tools', then macOS's own, each app's icons together.
-- More shows its name beside its symbol. Turn that off with **Show folder names in the menu bar** in Settings.
-- Common Bar is now a folder. The chevron became **More**, and every icon left of it stays off-screen all the time instead of sliding into the menu bar on request, so nothing lands under the notch or behind the app's menus and nothing reshuffles. Click More to see those icons, each with its app's icon and name, and choose one to open it: Common Bar brings it on screen just long enough for its menu, then puts it back. Icons you had hidden, always-hidden ones included, are all in More now; icons right of the chevron stay in the menu bar.
+- Folders show their names beside their symbols. Turn that off with **Show folder names in the menu bar** in Settings.
+- Common Bar is now folders. The chevron became **More**, and every icon left of your folders stays off-screen all the time instead of sliding into the menu bar on request, so nothing lands under the notch or behind the app's menus and nothing reshuffles. Click a folder to see its icons, each with its app's icon and name, and choose one to open its menu under that folder. Icons you had hidden, always-hidden ones included, are all in More now; icons right of the chevron stay in the menu bar.
 - Common Bar needs Accessibility to list and open the icons in More, and asks the first time you open it, never at launch. Until then More says why and how many icons it holds. Tidying the menu bar still needs no permission.
 - Settings never grows taller than the screen it opens on; a long one scrolls. Under **Open at login** the General section now says “Starts when you log in.”, or what stands in the way, and the Common Tools section carries the family promise: free and open source, forever; nothing leaves your Mac.
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
