@@ -37,7 +37,10 @@
 
 	<h2 id="open">Open an icon</h2>
 	<ol>
-		<li>Click More. It lists the icons in it, in menu bar order, each with its app's icon and name.</li>
+		<li>
+			Click More. It lists the icons in it, each with its app's icon and name: other apps first, then
+			Common Tools, then macOS's own, with a line between them and each app's icons together.
+		</li>
 		<li>
 			Choose one. Common Bar brings that icon on screen and opens it, as clicking it would: its menu or
 			panel drops from the menu bar.
@@ -74,7 +77,12 @@
 		Open <b>Settings…</b> from the menu, or open Common Bar again from Finder or Spotlight while it's running.
 	</p>
 	<h3>Folders</h3>
-	<p>Whether Accessibility is allowed, with a button to System Settings when it isn't.</p>
+	<ul>
+		<li>
+			<b>Show folder names in the menu bar</b> puts More's name beside its symbol. It's on to start with.
+		</li>
+		<li>Whether Accessibility is allowed, with a button to System Settings when it isn't.</li>
+	</ul>
 	<h3>General</h3>
 	<ul>
 		<li><b>Open at login</b> starts Common Bar when you log in.</li>

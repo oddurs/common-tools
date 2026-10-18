@@ -111,6 +111,54 @@ import Testing
         #expect(Set(model.folderEntries(doubled, ownPID: Self.bar).map(\.owner.pid)).isDisjoint(with: [5]))
     }
 
+    // MARK: Groups
+
+    static let family: Set<String> = [
+        "io.github.oddurs.StatBar", "com.oddurs.langsmart", "com.oddurs.reasonal", "com.oddurs.commonglyph",
+        "com.oddurs.commoncommand", "com.oddurs.commonshot", "com.oddurs.commonbattery",
+    ]
+
+    @Test func rowsAreGroupedAppsThenCommonToolsThenMacOS() {
+        let groups = FolderEntry.grouped(entries, family: Self.family).map { $0.map(\.name) }
+        #expect(
+            groups == [
+                ["OrbStack", "Granola", "Creative Cloud", "Telegram", "Dropbox", "Presentify", "1Password"],
+                ["Common Command", "Common Shot", "Common Glyph", "Common Keys"],
+                ["Search", "Siri", "U.S.", "Wi‑Fi", "Now Playing", "Battery"],
+            ])
+    }
+
+    @Test func anAppsIconsStayTogetherWhereItsFirstIconIs() {
+        let a1 = Self.ax(1, "com.example.a", "A", 0, 20, label: "One")
+        let b = Self.ax(2, "com.example.b", "B", 20, 40)
+        let a2 = Self.ax(1, "com.example.a", "A", 40, 60, label: "Two")
+        let windows = [Self.w(1, 0, 20), Self.w(2, 20, 40), Self.w(3, 40, 60)]
+        let own = OwnItems(divider: CGRect(x: 60, y: 0, width: 1, height: 33))
+        let model = MenuBarModel(windows: windows, geometry: Self.geometry, own: own)
+        let rows = FolderEntry.grouped(model.folderEntries([a1, b, a2], ownPID: 0), family: [])
+        #expect(rows.map { $0.map(\.name) } == [["A: One", "A: Two", "B"]])
+    }
+
+    @Test func emptyGroupsAreLeftOut() {
+        let onlyApple = entries.filter { $0.owner.bundleID?.hasPrefix("com.apple.") == true }
+        #expect(FolderEntry.grouped(onlyApple, family: Self.family).count == 1)
+        #expect(FolderEntry.grouped([], family: Self.family).isEmpty)
+    }
+
+    @Test func anyOddursGitHubAppCountsAsCommonTools() {
+        #expect(FolderGroup(bundleID: "io.github.oddurs.Something", family: []) == .commonTools)
+        #expect(FolderGroup(bundleID: "com.apple.controlcenter", family: []) == .system)
+        #expect(FolderGroup(bundleID: nil, family: []) == .apps)
+    }
+
+    @Test func aRefreshThatMovesIconsButRenamesNothingLeavesTheRowsAlone() {
+        var moved = entries
+        moved[0].item.window.frame.origin.x += 500
+        #expect(moved.map(\.signature) == entries.map(\.signature))
+        moved[0].name = "Renamed"
+        #expect(moved.map(\.signature) != entries.map(\.signature))
+    }
+
     // MARK: Opening
 
     func hidden(_ id: UInt32) -> MenuBarItem { model.items.first { $0.id == id }! }

@@ -5,12 +5,14 @@ import SwiftUI
 /// Laid out by the Common Tools Settings standard: the app's own sections, then General, then
 /// `CommonToolsSection`, so the apps' Settings windows read the same.
 struct SettingsView: View {
+    @AppStorage(MenuBarController.showsFolderNamesKey) private var showsFolderNames = true
     @State private var loginProblem: LoginItem.Problem?
     let updates: UpdateCheck
 
     var body: some View {
         Form {
             Section {
+                Toggle("Show folder names in the menu bar", isOn: $showsFolderNames)
                 // Read each second: the switch is flipped in System Settings, not here.
                 TimelineView(.periodic(from: .now, by: 1)) { _ in
                     let permission = MenuBarController.accessibility

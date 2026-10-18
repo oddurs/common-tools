@@ -9,8 +9,12 @@ enum MenuBar {
     /// are listed whether or not the window server calls them on screen: on macOS 26 it calls
     /// none of them on screen.
     static func model(of screen: NSScreen, own: OwnItems) -> MenuBarModel {
-        let windows = windows(onScreenOnly: false).filter { $0.layer == statusLayer }.map(\.item)
-        return MenuBarModel(windows: windows, geometry: geometry(of: screen), own: own)
+        MenuBarModel(windows: statusItemWindows(), geometry: geometry(of: screen), own: own)
+    }
+
+    /// Every window on the status item layer, on any screen. Safe off the main thread.
+    nonisolated static func statusItemWindows() -> [StatusItemWindow] {
+        windows(onScreenOnly: false).filter { $0.layer == statusLayer }.map(\.item)
     }
 
     static func geometry(of screen: NSScreen) -> MenuBarGeometry {

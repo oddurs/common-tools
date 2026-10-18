@@ -6,9 +6,9 @@
 Keep the menu bar tidy: the icons you rarely use wait in a folder. **[oddurs.github.io/common-tools/bar](https://oddurs.github.io/common-tools/bar/)**
 
 - **One folder, More.** Every icon left of it stays off-screen until you open it from More. Hidden icons never pile up under the notch or behind the app's menus, so nothing reshuffles.
-- **Each icon by its app.** Click More for a list of the icons in it, each with its app's icon and name.
+- **Each icon by its app.** Click More for a list of the icons in it, each with its app's icon and name: other apps first, then Common Tools, then macOS's own, with a line between them.
 - **Opened from there.** Choose one, and Common Bar brings it on screen just long enough to open its menu, then puts it back.
-- **A small Settings window.** Accessibility, Open at login, and an optional update check.
+- **A small Settings window.** Folder names, Accessibility, Open at login, and an optional update check.
 
 Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access unless you turn on the update check.
 
@@ -36,7 +36,7 @@ Requires macOS 14 or later.
 
 **Settings** opens from that menu (⌘,) or by opening Common Bar again while it runs:
 
-- **Folders:** whether Accessibility is allowed, with a button to System Settings when it isn't.
+- **Folders:** **Show folder names in the menu bar** (on to start with: More shows its name beside its symbol), and whether Accessibility is allowed, with a button to System Settings when it isn't.
 - **General:** **Open at login**, and the update check.
 - **Common Tools:** the other Common Tools apps, with a button to open or get each one, and the installed version of Common Bar.
 
