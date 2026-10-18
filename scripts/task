@@ -206,6 +206,13 @@ app() {
         # shellcheck disable=SC2086
         lipo -create $(for dir in $dirs; do echo "$dir/$executable"; done) -output "$bundle/Contents/MacOS/$executable"
         cp Resources/Info.plist "$bundle/Contents/"
+        # A development build names the commit it was built from, for scripts/dev status and the
+        # Settings footer. CI's builds, releases among them, stay exactly as they were.
+        if [ -z "${CI:-}" ]; then
+            commit="$(git rev-parse HEAD)"
+            [ -z "$(git status --porcelain -- . "$root/packages" "$root/shared")" ] || commit="$commit-dirty"
+            plutil -insert CommonToolsCommit -string "$commit" "$bundle/Contents/Info.plist"
+        fi
         cp Resources/AppIcon.icns "$bundle/Contents/Resources/"
         # The Common Tools section of Settings shows every app's icon from here.
         cp -R "$root/shared/CommonTools" "$bundle/Contents/Resources/"
