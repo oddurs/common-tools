@@ -21,6 +21,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The menu shows the shortcut beside Take Screenshot, where macOS shows every menu's, instead of on a line of its own; that line now appears only when the shortcut couldn't be registered.
+- Settings is shorter and plainer: Access appears only while Screen Recording is missing, "Image" is now "Shots" (size on the clipboard, the preview, the sound), and the footnotes name the keys, Option for text included.
 - The preview behaves like the system's thumbnail: it slides in from the screen's right edge and back out when its time is up, and a two-finger swipe or a drag to the right sends it away early. It appears as you let go, before the PNG is even encoded, and its thumbnail can be dragged out as soon as the file is written.
 - Faster from the shortcut to the overlay and from letting go to the clipboard. ScreenCaptureKit and the overlay are warmed up at launch, every display is captured at once, and a window is captured while you hover it, so a click copies it at once. On an M-series MacBook Pro the overlay is up about 25 ms after the shortcut, a dragged area is on the clipboard about 15 ms after you let go, and a whole Retina screen about 65 ms.
 - Shots are converted to sRGB. A capture comes in the display's own colour space, and prompts and most of the web read a PNG's colours as sRGB whatever its profile says, so colours pasted from a wide-gamut display could look shifted.

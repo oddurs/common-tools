@@ -1,6 +1,9 @@
 import AppKit
+import CommonKit
+import CommonUI
 import ImageIO
 import ShotKit
+import SwiftUI
 import UniformTypeIdentifiers
 
 /// `CommonShot --render <folder>` pictures the overlay in each of its states, and the preview, in light
@@ -109,6 +112,28 @@ enum Render {
         card.appearance = appearance
         try write(
             try onDesktop(card, scale: 2, corner: panel.size), to: folder.appending(path: "preview-\(suffix).png"))
+        // Settings needs the bundle identifier, which only the binary inside the built app has.
+        if CommonTool.thisApp != nil {
+            try write(try settings(appearance: appearance), to: folder.appending(path: "settings-\(suffix).png"))
+        } else if suffix == "light" {
+            print("Settings not drawn: run the binary in build/shot/Common Shot.app for it")
+        }
+    }
+
+    /// Settings as it opens, with this app's defaults rather than yours.
+    private static func settings(appearance: NSAppearance) throws -> CGImage {
+        let preferences = Preferences(defaults: UserDefaults(suiteName: "review")!)
+        let controller = AppController(preferences: preferences, interactive: false)
+        let host = NSHostingView(rootView: SettingsView(controller: controller, preferences: preferences))
+        host.appearance = appearance
+        host.frame.size = CGSize(width: Tokens.Layout.settingsWidth, height: 1000)
+        host.layoutSubtreeIfNeeded()
+        host.frame.size = host.fittingSize
+        host.layoutSubtreeIfNeeded()
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw PNG.Failure.encoding }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        guard let image = rep.cgImage else { throw PNG.Failure.encoding }
+        return image
     }
 
     // MARK: The made-up desktop

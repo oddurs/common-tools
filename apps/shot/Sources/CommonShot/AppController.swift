@@ -404,13 +404,19 @@ extension AppController: NSMenuDelegate {
     /// Built as it opens, so the recent shots are always current.
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
-        let capture = NSMenuItem(title: "Take Screenshot", action: #selector(capture), keyEquivalent: "")
+        // The shortcut on the right, where macOS shows every menu's; a line of its own only when it failed.
+        let combo = preferences.hotKey
+        let capture = NSMenuItem(
+            title: "Take Screenshot", action: #selector(capture),
+            keyEquivalent: hotKeyProblem == nil ? combo.keyEquivalent(keyName: keyName) ?? "" : "")
+        capture.keyEquivalentModifierMask = NSEvent.ModifierFlags(rawValue: combo.modifiers.rawValue)
         capture.target = self
         menu.addItem(capture)
-        let shortcut = NSMenuItem(
-            title: hotKeyProblem ?? "Shortcut: \(preferences.hotKey.displayName)", action: nil, keyEquivalent: "")
-        shortcut.isEnabled = false
-        menu.addItem(shortcut)
+        if let hotKeyProblem {
+            let problem = NSMenuItem(title: hotKeyProblem, action: nil, keyEquivalent: "")
+            problem.isEnabled = false
+            menu.addItem(problem)
+        }
 
         if preferences.historyLimit > 0 {
             menu.addItem(.separator())
