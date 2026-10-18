@@ -93,19 +93,27 @@ const cubic = ([a, b, c, d]) => `cubic-bezier(${a}, ${b}, ${c}, ${d})`;
 
 export function renderCSS({ tokens, hash }) {
 	const light = [];
+	// What changes with the appearance, in each one; `light` holds every token besides.
+	const lightOnly = [];
 	const dark = [];
 	const still = [];
 	const declare = (name, value) => light.push(`\t${name}: ${value};`);
+	const appearance = (name, lightValue, darkValue) => {
+		declare(name, lightValue);
+		lightOnly.push(`\t${name}: ${lightValue};`);
+		dark.push(`\t${name}: ${darkValue};`);
+	};
 	for (const [groupName, group] of groupsFor(tokens, 'site')) {
 		switch (groupName) {
 			case 'text':
 			case 'surface':
 			case 'color':
-				for (const [name, token] of entries(group)) {
-					const v = cssName(groupName, name);
-					declare(v, resolveColor(tokens, token.light));
-					dark.push(`\t${v}: ${resolveColor(tokens, token.dark)};`);
-				}
+				for (const [name, token] of entries(group))
+					appearance(
+						cssName(groupName, name),
+						resolveColor(tokens, token.light),
+						resolveColor(tokens, token.dark)
+					);
 				break;
 			case 'font':
 				for (const [name, token] of entries(group)) declare(cssName('font', name), token.web);
@@ -128,10 +136,8 @@ export function renderCSS({ tokens, hash }) {
 				for (const [name, value] of entries(group)) declare(cssName(groupName, name), `${value}px`);
 				break;
 			case 'elevation':
-				for (const [name, token] of entries(group)) {
-					declare(cssName('shadow', name), token.light);
-					dark.push(`\t${cssName('shadow', name)}: ${token.dark};`);
-				}
+				for (const [name, token] of entries(group))
+					appearance(cssName('shadow', name), token.light, token.dark);
 				break;
 			case 'motion':
 				for (const [name, ms] of entries(group.duration)) {
@@ -159,10 +165,20 @@ export function renderCSS({ tokens, hash }) {
 		'\tcolor-scheme: light dark;',
 		...light,
 		'}',
+		// The system's appearance, unless an element says otherwise with data-theme: the root, to
+		// override it for the page, or any element, to show its subtree in one appearance.
+		"[data-theme='light'] {",
+		'\tcolor-scheme: light;',
+		...lightOnly,
+		'}',
 		'@media (prefers-color-scheme: dark) {',
-		'\t:root {',
+		"\t:root:not([data-theme='light']) {",
 		...dark.map((line) => `\t${line}`),
 		'\t}',
+		'}',
+		"[data-theme='dark'] {",
+		'\tcolor-scheme: dark;',
+		...dark,
 		'}',
 		'@media (prefers-reduced-motion: reduce) {',
 		'\t:root {',

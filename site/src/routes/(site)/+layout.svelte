@@ -31,7 +31,10 @@
 
 <footer>
 	<span>© 2026 Oddur Sigurdsson · MIT License · {promise.short}</span>
-	<a href="https://github.com/oddurs/common-tools">Source for this site</a>
+	<span class="links">
+		<a href={resolve('design/')}>Design system</a>
+		<a href="https://github.com/oddurs/common-tools">Source for this site</a>
+	</span>
 </footer>
 
 <style>
@@ -81,6 +84,10 @@
 		display: flex;
 		justify-content: space-between;
 		gap: var(--space-sm);
+	}
+	.links {
+		display: flex;
+		gap: var(--space-md);
 	}
 	@media (max-width: 760px) {
 		.inner {

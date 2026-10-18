@@ -1,0 +1,31 @@
+{
+  "command" : "swift run --package-path packages/CommonKit DesignRender",
+  "renders" : [
+    {
+      "height" : 112,
+      "name" : "card",
+      "width" : 368
+    },
+    {
+      "height" : 112,
+      "name" : "icon-badge",
+      "width" : 256
+    },
+    {
+      "height" : 180,
+      "name" : "labeled-row",
+      "width" : 460
+    },
+    {
+      "height" : 152,
+      "name" : "settings-footnote",
+      "width" : 460
+    },
+    {
+      "height" : 837,
+      "name" : "settings",
+      "width" : 460
+    }
+  ],
+  "sourceHash" : "4c534c8294eed2a94a9833dbef674b3c98e47b091326f079c415b290563362fa"
+}

@@ -3,6 +3,8 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
+	// The design page shows the apps' own docs images, which live outside the site.
+	server: { fs: { allow: ['.', '../apps'] } },
 	plugins: [
 		sveltekit({
 			compilerOptions: {
