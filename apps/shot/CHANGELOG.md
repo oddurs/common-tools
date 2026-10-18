@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Precision while you aim: the arrow keys move the pointer by one device pixel (ten with ⇧), and during a drag they move the corner you're dragging; hold Space during a drag to move the whole selection, as in macOS; and a dragged corner settles on the edge of a window, or of the screen, when it comes within 5 points of one. An edge hidden behind another window doesn't count, and the arrow keys never snap.
 - A Welcome window on first launch: what Common Shot does, the Screen Recording permission it needs with a live check and a button to System Settings, Open at login, and the Common Tools family.
 - An optional update check in Settings › General, off by default. When on, it asks GitHub for the latest release once a day and sends nothing about you or your Mac; a newer version shows as a link under the toggle.
 - A global shortcut (⇧⌘2 by default, recordable in Settings) that freezes every display and shows an overlay over them.

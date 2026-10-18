@@ -25,7 +25,11 @@ final class Overlay {
 
     init(freeze: Freeze, imageSize: ImageSize) {
         self.freeze = freeze
-        views = freeze.stills.map { OverlayView(still: $0, imageSize: imageSize) }
+        views = freeze.stills.map { still in
+            OverlayView(
+                still: still, imageSize: imageSize,
+                windows: freeze.windows.map { Geometry.local($0.frame, displayBounds: still.displayBounds) })
+        }
         for view in views { view.overlay = self }
     }
 
@@ -151,7 +155,13 @@ final class OverlayView: NSView {
     weak var overlay: Overlay?
     private let imageSize: ImageSize
     private(set) var hovered: WindowFrame?
+    /// The windows on this display, front to back, in its points: the edges a drag settles on.
+    private let windows: [CGRect]
+    /// A drag's anchor and its moving corner, settled on edges and moved by the keys.
     private var start: CGPoint?
+    private var end: CGPoint?
+    /// Where the pointer was when Space went down, while it's held: the selection moves, not resizes.
+    private var moving: CGPoint?
     private var selection: CGRect?
     /// Where the pointer is, in this view's points, or nil when it's on another display.
     private var pointer: CGPoint?
@@ -187,9 +197,10 @@ final class OverlayView: NSView {
     /// Device pixels per point: the display's backing scale.
     private var scale: CGFloat { still.screen?.backingScaleFactor ?? still.scale }
 
-    init(still: Still, imageSize: ImageSize) {
+    init(still: Still, imageSize: ImageSize, windows: [CGRect] = []) {
         self.still = still
         self.imageSize = imageSize
+        self.windows = windows
         super.init(frame: NSRect(origin: .zero, size: still.frame.size))
         wantsLayer = true
         picture.contents = still.image
@@ -349,24 +360,34 @@ final class OverlayView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        start = convert(event.locationInWindow, from: nil)
+        start = settled(convert(event.locationInWindow, from: nil))
+        end = start
     }
 
     override func mouseDragged(with event: NSEvent) {
-        guard let start else { return overlay?.pointerMoved(to: NSEvent.mouseLocation) ?? () }
-        let rect = Geometry.selection(from: start, to: convert(event.locationInWindow, from: nil), within: bounds)
-        if !Geometry.isClick(rect) {
-            overlay?.dragBegan(in: self)
-            selection = Geometry.snapped(rect, scale: scale)
+        let location = convert(event.locationInWindow, from: nil)
+        guard let start, let end else { return overlay?.pointerMoved(to: NSEvent.mouseLocation) ?? () }
+        if let moving {
+            let moved = Precision.moved(
+                start: start, end: end, by: CGVector(dx: location.x - moving.x, dy: location.y - moving.y),
+                within: bounds)
+            self.start = moved.start
+            self.end = moved.end
+            self.moving = location
+        } else {
+            self.end = settled(location)
         }
-        overlay?.pointerMoved(to: NSEvent.mouseLocation)
+        dragChanged()
     }
 
     override func mouseUp(with event: NSEvent) {
         guard let start else { return }
+        let end = end ?? convert(event.locationInWindow, from: nil)
         self.start = nil
+        self.end = nil
+        moving = nil
         selection = nil
-        let rect = Geometry.selection(from: start, to: convert(event.locationInWindow, from: nil), within: bounds)
+        let rect = Geometry.selection(from: start, to: end, within: bounds)
         overlay?.dragEnded(
             in: self, selection: Geometry.snapped(rect, scale: scale), asText: event.modifierFlags.contains(.option))
     }
@@ -376,7 +397,54 @@ final class OverlayView: NSView {
     }
 
     override func keyDown(with event: NSEvent) {
-        overlay?.keyDown(event)
+        let arrows: [UInt16: Precision.Arrow] = [123: .left, 124: .right, 125: .down, 126: .up]
+        if let arrow = arrows[event.keyCode] {
+            nudge(arrow, large: event.modifierFlags.contains(.shift))
+        } else if event.keyCode == 49 {  // Space
+            // Held during a drag, it moves the selection, as with the system's ⇧⌘4; otherwise it does nothing.
+            if start != nil, !event.isARepeat {
+                moving = convert(window?.mouseLocationOutsideOfEventStream ?? .zero, from: nil)
+            }
+        } else {
+            overlay?.keyDown(event)
+        }
+    }
+
+    override func keyUp(with event: NSEvent) {
+        if event.keyCode == 49 { moving = nil }
+    }
+
+    /// The selection follows `start` and `end`, and the loupe follows the corner being dragged.
+    private func dragChanged() {
+        guard let start, let end else { return }
+        let rect = Geometry.selection(from: start, to: end, within: bounds)
+        if !Geometry.isClick(rect) {
+            overlay?.dragBegan(in: self)
+            selection = Geometry.snapped(rect, scale: scale)
+        }
+        overlay?.pointerMoved(to: NSPoint(x: still.frame.minX + end.x, y: still.frame.minY + end.y))
+    }
+
+    /// A drag's corner, settled on a window's or the display's edge when it comes near one.
+    private func settled(_ point: CGPoint) -> CGPoint {
+        Precision.snapped(point, toEdgesOf: windows, within: bounds)
+    }
+
+    /// Moves the pointer one device pixel, or ten with ⇧: the drag's corner while the button is down, the
+    /// crosshair otherwise. The system pointer moves with it, so the next nudge of the mouse carries on
+    /// from there. Never snapped: the keys are for the exact pixel.
+    private func nudge(_ arrow: Precision.Arrow, large: Bool) {
+        guard let from = end ?? pointer else { return }
+        let to = Precision.nudge(from, arrow, large: large, scale: scale, within: bounds)
+        CGWarpMouseCursorPosition(Geometry.global(to, displayBounds: still.displayBounds))
+        // Without this, a warp holds the pointer still for a quarter of a second.
+        CGAssociateMouseAndMouseCursorPosition(1)
+        if start != nil {
+            end = to
+            dragChanged()
+        } else {
+            overlay?.pointerMoved(to: NSPoint(x: still.frame.minX + to.x, y: still.frame.minY + to.y))
+        }
     }
 }
 
