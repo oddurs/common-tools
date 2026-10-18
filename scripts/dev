@@ -167,7 +167,8 @@ status() {
             grants="$grants$service $(grant "$service" "$bundle_id"), "
         done
         last="$(last_install "$slug" "$name")"
-        printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$slug" "$name" "$running" "$installed" "${grants%, }" "$last" >>"$tmp/apps"
+        # A separator that isn't white space, so an empty field (no permissions) stays a field.
+        printf '%s|%s|%s|%s|%s|%s\n' "$slug" "$name" "$running" "$installed" "${grants%, }" "$last" >>"$tmp/apps"
         installed_id=""
     done
     wait
@@ -183,7 +184,7 @@ status() {
 
     echo "${ref#refs/remotes/} at $(git rev-parse --short "$main"), fetched $fetched"
     echo
-    while IFS="$(printf '\t')" read -r slug name running installed grants last; do
+    while IFS='|' read -r slug name running installed grants last; do
         echo "$name ($slug): $running; $installed"
         detail="${grants:+$grants · }last auto-install: ${last:-none}"
         if [ "$gh_failed" -eq 0 ]; then
@@ -199,10 +200,13 @@ status() {
 
     echo
     echo "worktrees:"
+    primary="$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")"
     git worktree list --porcelain | awk '/^worktree /{ sub(/^worktree /, ""); path = $0 } /^branch /{ sub(/^branch refs\/heads\//, ""); print path "\t" $0 } /^detached/{ print path "\t" }' |
         while IFS="$(printf '\t')" read -r path branch; do
             pr=""
-            if [ -z "$branch" ]; then
+            if [ "$path" = "$primary" ]; then
+                pr="primary checkout"
+            elif [ -z "$branch" ]; then
                 pr="detached"
             elif [ "$gh_failed" -eq 0 ]; then
                 pr="$(awk -F '\t' -v b="$branch" '$2 == b { print "#" $1 " open, " $3; exit }' "$tmp/open")"
