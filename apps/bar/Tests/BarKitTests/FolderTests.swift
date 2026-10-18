@@ -237,3 +237,75 @@ import Testing
         #expect(watch.update(somethingOpen: false, now: at(2.5)) == .done)
     }
 }
+
+@Suite struct MoveTests {
+    let model = MenuBarModel(windows: FolderTests.windows, geometry: FolderTests.geometry, own: FolderTests.own)
+    func item(_ id: UInt32) -> MenuBarItem { model.items.first { $0.id == id }! }
+
+    @Test func theDropIsLeftOfTheNeighboursMiddle() {
+        // Common Keys, 30 pt wide at 926–956, dropped beside the More folder at 1084–1110.
+        let more = CGRect(x: 1084, y: 0, width: 26, height: 33)
+        let drag = Move.drag(CGRect(x: 926, y: 0, width: 30, height: 33), toJustLeftOf: more, barMidY: 16.5)
+        #expect(drag.from == CGPoint(x: 941, y: 16.5))
+        #expect(drag.to == CGPoint(x: 1090.5, y: 16.5))
+        #expect(drag.to.x < more.midX)
+    }
+
+    @Test func thePathEndsWhereItLetsGoAndNeverJumps() {
+        let path = Move.path(from: CGPoint(x: 100, y: 10), to: CGPoint(x: 400, y: 10))
+        #expect(path.count == Move.steps)
+        #expect(path.last == CGPoint(x: 400, y: 10))
+        let gaps = zip([CGPoint(x: 100, y: 10)] + path, path).map { $1.x - $0.x }
+        #expect(gaps.allSatisfy { abs($0 - 25) < 0.001 })
+    }
+
+    @Test func aMoveLandedWhenItsRightEdgeMeetsTheNeighbour() {
+        let folder = CGRect(x: 1084, y: 0, width: 26, height: 33)
+        #expect(Move.landed(CGRect(x: 1054, y: 0, width: 30, height: 33), justLeftOf: folder))
+        #expect(Move.landed(CGRect(x: 1055, y: 0, width: 30, height: 33), justLeftOf: folder))
+        #expect(!Move.landed(CGRect(x: 926, y: 0, width: 30, height: 33), justLeftOf: folder))
+        // Dropped right of the folder instead: not where it was meant to go.
+        #expect(!Move.landed(CGRect(x: 1110, y: 0, width: 30, height: 33), justLeftOf: folder))
+    }
+
+    @Test func aMenuUnderItsIconCountsAsOpenedThere() {
+        let icon = CGRect(x: 350, y: 0, width: 56, height: 33)
+        // Recorded: the second press opened Probe's menu at 346.
+        #expect(
+            Move.opened(CGRect(x: 346, y: 34, width: 105, height: 34), under: icon, screenMinX: 0, screenMaxX: 1728))
+    }
+
+    @Test func aMenuPlacedFromAStaleFrameDoesNot() {
+        let icon = CGRect(x: 350, y: 0, width: 56, height: 33)
+        // Recorded: the first press opened it where the app last thought the icon was.
+        #expect(
+            !Move.opened(CGRect(x: -4654, y: 34, width: 105, height: 34), under: icon, screenMinX: 0, screenMaxX: 1728))
+        // A popover pinned to the screen's left edge, far from an icon beside a folder.
+        let beside = CGRect(x: 1040, y: 0, width: 30, height: 33)
+        #expect(
+            !Move.opened(CGRect(x: 0, y: 28, width: 226, height: 106), under: beside, screenMinX: 0, screenMaxX: 1728))
+    }
+
+    @Test func aDragStartsOnlyUnderTheNotchOrRightOfIt() {
+        let notched = FolderTests.geometry
+        #expect(Move.reachable(CGRect(x: 880, y: 0, width: 30, height: 33), in: notched))
+        #expect(Move.reachable(CGRect(x: 980, y: 0, width: 30, height: 33), in: notched))
+        // Behind the app's menus, where a press would open one of them.
+        #expect(!Move.reachable(CGRect(x: 350, y: 0, width: 56, height: 33), in: notched))
+        #expect(!Move.reachable(CGRect(x: 760, y: 0, width: 30, height: 33), in: notched))
+        let plain = MenuBarGeometry(minX: 0, maxX: 1728, height: 24)
+        #expect(!Move.reachable(CGRect(x: 600, y: 0, width: 30, height: 24), in: plain))
+        #expect(Move.reachable(CGRect(x: 1000, y: 0, width: 30, height: 24), in: plain))
+    }
+
+    @Test func anIconsSlotIsTheIconRightOfIt() {
+        // Wi‑Fi (#19) sits left of Now Playing (#8088).
+        #expect(model.slot(of: item(19))?.id == 8088)
+        // Common Keys is nearest the divider: it goes back left of the divider itself.
+        #expect(model.slot(of: item(55742)) == nil)
+    }
+
+    @Test func aShownIconHasNoSlot() {
+        #expect(model.slot(of: item(55478)) == nil)
+    }
+}

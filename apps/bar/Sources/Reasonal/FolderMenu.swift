@@ -4,10 +4,11 @@ import CommonKit
 import CommonUI
 import os
 
-/// The More folder's menu. It is the status item's own menu, so AppKit opens it on the press with
-/// the item highlighted, as every menu bar extra does, and it is filled from rows worked out ahead
-/// of time, off the main thread: opening it asks no app anything. Only the very first open, before
-/// any rows exist, works them out on the spot.
+/// Every folder's menu. Each is its folder's status item's own menu, so AppKit opens it on the
+/// press with the item highlighted, as every menu bar extra does, and each is filled from rows
+/// worked out ahead of time, off the main thread: opening one asks no app anything. Only the very
+/// first open, before any rows exist, works them out on the spot. `FolderStore` says which folder
+/// each icon is in.
 @MainActor
 final class FolderMenu: NSObject, NSMenuDelegate {
     /// What a folder knows about the icons left of the divider.
@@ -35,38 +36,52 @@ final class FolderMenu: NSObject, NSMenuDelegate {
     private static let askedForAccessKey = "askedForAccessibility"
     private static let family = Set(CommonTool.all.map(\.bundleIdentifier))
 
-    let menu = NSMenu()
+    private let store: FolderStore
     private let inputs: () -> Inputs?
-    private let choose: (UInt32) -> Void
+    private let choose: (FolderEntry, String) -> Void
     private let fillAppMenu: (NSMenu) -> Void
     private var snapshot: Snapshot?
-    private var shown: [FolderEntry.Signature]?
+    /// What each folder's open menu shows, by folder id.
+    private var shown: [String: [FolderEntry.Signature]] = [:]
+    private var open: [String: NSMenu] = [:]
     private var icons: [Int32: NSImage] = [:]
-    private var isOpen = false
     private var refreshing = false
     private var refreshAgain = false
     private var timers: [Timer] = []
 
-    /// `inputs` reads where things are; `choose` opens the icon with that window id; `fillAppMenu`
-    /// fills the menu a right-click opens.
+    /// `inputs` reads where things are; `choose` opens an icon from a folder; `fillAppMenu` fills
+    /// the menu a right-click opens.
     init(
-        inputs: @escaping () -> Inputs?, choose: @escaping (UInt32) -> Void,
+        store: FolderStore, inputs: @escaping () -> Inputs?, choose: @escaping (FolderEntry, String) -> Void,
         fillAppMenu: @escaping (NSMenu) -> Void
     ) {
+        self.store = store
         self.inputs = inputs
         self.choose = choose
         self.fillAppMenu = fillAppMenu
         super.init()
+    }
+
+    /// A new menu for the folder with this id, to be its status item's own.
+    func makeMenu(for folderID: String) -> NSMenu {
+        let menu = NSMenu()
+        menu.identifier = NSUserInterfaceItemIdentifier(folderID)
         menu.delegate = self
         menu.autoenablesItems = false
+        return menu
     }
+
+    private func folderID(of menu: NSMenu) -> String { menu.identifier?.rawValue ?? FolderConfig.moreID }
+
+    /// The rows the last refresh found for each folder.
+    var entries: [FolderEntry] { snapshot?.entries ?? [] }
 
     // MARK: Menu
 
     func menuNeedsUpdate(_ menu: NSMenu) {
         let event = NSApp.currentEvent
         menu.removeAllItems()
-        shown = nil
+        shown[folderID(of: menu)] = nil
         if event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true {
             fillAppMenu(menu)
             return
@@ -76,40 +91,62 @@ final class FolderMenu: NSObject, NSMenuDelegate {
         if snapshot == nil || (granted && snapshot?.granted == false), let inputs = inputs() {
             let start = Date()
             snapshot = Self.snapshot(inputs, granted: granted)
+            store.entries = snapshot?.entries ?? []
             Self.log.notice("first open worked out its rows in \(Self.ms(since: start), privacy: .public) ms")
         }
         let start = Date()
-        fill()
+        fill(menu)
         Self.log.notice("filled the menu in \(Self.ms(since: start), privacy: .public) ms")
         refresh()
     }
 
-    func menuWillOpen(_ menu: NSMenu) { isOpen = true }
-    func menuDidClose(_ menu: NSMenu) { isOpen = false }
+    func menuWillOpen(_ menu: NSMenu) { open[folderID(of: menu)] = menu }
+    func menuDidClose(_ menu: NSMenu) { open[folderID(of: menu)] = nil }
 
-    private func fill() {
+    private func fill(_ menu: NSMenu) {
+        let id = folderID(of: menu)
         menu.removeAllItems()
         guard let snapshot else { return }
         guard MenuBarController.accessibility.isGranted else {
-            addPermissionItems(hiddenCount: snapshot.hiddenCount)
-            shown = nil
+            addPermissionItems(to: menu, hiddenCount: snapshot.hiddenCount)
+            shown[id] = nil
             return
         }
-        if snapshot.entries.isEmpty {
-            menu.addItem(
-                note(snapshot.hiddenCount == 0 ? "Every icon is in the menu bar." : "No app answered for its icons."))
+        let rows = store.config.contents(of: snapshot.entries)[id] ?? []
+        if rows.isEmpty {
+            let empty =
+                id != FolderConfig.moreID
+                ? "Nothing in this folder yet. Choose its icons in Settings."
+                : snapshot.hiddenCount == 0
+                    ? "Every icon is in the menu bar."
+                    : snapshot.entries.isEmpty ? "No app answered for its icons." : "Every icon is in another folder."
+            menu.addItem(note(empty))
         }
-        for (index, group) in FolderEntry.grouped(snapshot.entries, family: Self.family).enumerated() {
+        for (index, group) in FolderEntry.grouped(rows, family: Self.family).enumerated() {
             if index > 0 { menu.addItem(.separator()) }
             for entry in group {
                 let row = NSMenuItem(title: entry.name, action: #selector(chosen(_:)), keyEquivalent: "")
                 row.target = self
-                row.representedObject = entry.id
+                row.representedObject = Chosen(entry: entry, folderID: id)
                 row.image = icon(for: entry.owner.pid)
                 menu.addItem(row)
             }
         }
-        shown = snapshot.entries.map(\.signature)
+        shown[id] = rows.map(\.signature)
+    }
+
+    /// Fills every open menu again, as a change of folders needs.
+    func refill() {
+        for menu in open.values { fill(menu) }
+    }
+
+    private final class Chosen: NSObject {
+        let entry: FolderEntry
+        let folderID: String
+        init(entry: FolderEntry, folderID: String) {
+            self.entry = entry
+            self.folderID = folderID
+        }
     }
 
     private func icon(for pid: Int32) -> NSImage? {
@@ -121,9 +158,9 @@ final class FolderMenu: NSObject, NSMenuDelegate {
     }
 
     @objc private func chosen(_ sender: NSMenuItem) {
-        guard let id = sender.representedObject as? UInt32 else { return }
+        guard let chosen = sender.representedObject as? Chosen else { return }
         // After the menu has closed, so it isn't taken for the icon's.
-        DispatchQueue.main.async { [choose] in choose(id) }
+        DispatchQueue.main.async { [choose] in choose(chosen.entry, chosen.folderID) }
     }
 
     // MARK: Refreshing
@@ -151,12 +188,14 @@ final class FolderMenu: NSObject, NSMenuDelegate {
         Self.log.notice(
             "refreshed \(next.entries.count, privacy: .public) rows in \(Self.ms(since: started), privacy: .public) ms")
         snapshot = next
+        store.entries = next.entries
         let pids = Set(next.entries.map(\.owner.pid))
         icons = icons.filter { pids.contains($0.key) }
         // Loaded now, so opening the menu never waits for an app's icon.
         for pid in pids { _ = icon(for: pid) }
-        if isOpen, let shown, shown != next.entries.map(\.signature) {
-            fill()
+        let contents = store.config.contents(of: next.entries)
+        for (id, menu) in open where shown[id] != nil && shown[id] != (contents[id] ?? []).map(\.signature) {
+            fill(menu)
         }
         if refreshAgain {
             refreshAgain = false
@@ -195,7 +234,7 @@ final class FolderMenu: NSObject, NSMenuDelegate {
 
     /// Until Accessibility is allowed, the folder says why it's needed and how, instead of an
     /// empty list. It is asked here, the first time a folder opens, and never at launch.
-    private func addPermissionItems(hiddenCount: Int) {
+    private func addPermissionItems(to menu: NSMenu, hiddenCount: Int) {
         let permission = MenuBarController.accessibility
         menu.addItem(note("Common Bar needs \(permission.name) access \(permission.reason)."))
         let asked = UserDefaults.standard.bool(forKey: Self.askedForAccessKey)
@@ -214,7 +253,7 @@ final class FolderMenu: NSObject, NSMenuDelegate {
         if hiddenCount > 0 {
             menu.addItem(.separator())
             menu.addItem(
-                note(hiddenCount == 1 ? "1 icon is in this folder." : "\(hiddenCount) icons are in this folder."))
+                note(hiddenCount == 1 ? "1 icon waits in your folders." : "\(hiddenCount) icons wait in your folders."))
         }
     }
 

@@ -69,9 +69,9 @@ export const tools: Tool[] = [
 	{
 		slug: 'bar',
 		name: 'Common Bar',
-		tagline: 'A tidy menu bar. The icons you rarely use wait in one folder.',
+		tagline: 'A tidy menu bar. The icons you rarely use wait in folders.',
 		summary:
-			'Keeps the menu bar icons you rarely use in one folder, off the menu bar and clear of the notch. Click the folder and choose one to open it.',
+			'Keeps the menu bar icons you rarely use in folders, off the menu bar and clear of the notch. Click a folder and choose one, and it opens right there.',
 		repo: `${github}/tree/main/apps/bar`,
 		legacyRepo: `${legacy}/common-bar`,
 		asset: 'CommonBar.zip',

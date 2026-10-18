@@ -43,9 +43,34 @@ enum MenuBar {
         }
     }
 
+    /// The window server's id for the status item AppKit has at `frame` (Cocoa coordinates), once
+    /// the two agree on where it is. AppKit's frame lags behind a length change; the id doesn't.
+    static func statusItemID(at frame: NSRect, on screen: NSScreen) -> UInt32? {
+        let top = topInWindowServer(of: screen)
+        return windows(onScreenOnly: false).first {
+            $0.layer == statusLayer && abs($0.frame.minY - top) < 1
+                && abs($0.frame.minX - frame.minX) < 1 && abs($0.frame.width - frame.width) < 1
+        }?.id
+    }
+
+    /// Where the window server has each of these windows now.
+    nonisolated static func frames(of ids: Set<UInt32>) -> [UInt32: CGRect] {
+        var frames: [UInt32: CGRect] = [:]
+        for window in windows(onScreenOnly: false) where ids.contains(window.id) { frames[window.id] = window.frame }
+        return frames
+    }
+
     /// The windows on screen now, to tell later which ones a press opened.
     static func onScreenWindowIDs() -> Set<UInt32> {
         Set(windows(onScreenOnly: true).map(\.id))
+    }
+
+    /// Windows `pid` has open now that weren't there `before`, above the normal level. "Open" is
+    /// ordered in, wherever it is: a menu placed from a stale frame sits off-screen and still
+    /// counts, while a popover that has closed keeps its window but not ordered in.
+    nonisolated static func opened(since before: Set<UInt32>, by pid: Int32) -> [CGRect] {
+        windows(onScreenOnly: true).filter { !before.contains($0.id) && $0.ownerPID == pid && $0.layer > 0 }
+            .map(\.frame)
     }
 
     /// Whether a window that wasn't on screen `before` hangs from `screen`'s menu bar: a menu,
@@ -117,20 +142,34 @@ enum MenuBarExtras {
         return results.all
     }
 
-    /// Presses the item of `pid`'s at `frame` (window-server coordinates), as clicking it would.
-    /// Returns false when the app has no item there or doesn't answer.
-    nonisolated static func press(pid: Int32, at frame: CGRect) -> Bool {
+    /// One app's status item, as Accessibility holds it: the same element wherever the item moves.
+    struct Element: @unchecked Sendable {
+        let element: AXUIElement
+    }
+
+    /// `pid`'s item at `frame` (window-server coordinates). Asked while the item is at rest:
+    /// Accessibility's frames lag behind a move, but the element it hands back stays the item's.
+    static func element(pid: Int32, at frame: CGRect) -> Element? {
         let app = AXUIElementCreateApplication(pid)
         AXUIElementSetMessagingTimeout(app, timeout)
-        guard
-            let element = children(of: app).first(where: { child in
-                let f = Self.frame(of: child)
-                return f.width > 0 && f.midX >= frame.minX && f.midX <= frame.maxX
-            })
-        else { return false }
-        let result = AXUIElementPerformAction(element, kAXPressAction as CFString)
-        // An app that opens a menu may answer only once the menu closes; the press still happened.
-        return result == .success || result == .cannotComplete
+        return children(of: app).first { child in
+            let f = Self.frame(of: child)
+            return f.width > 0 && f.midX >= frame.minX && f.midX <= frame.maxX
+        }.map(Element.init)
+    }
+
+    /// Presses the item, as clicking it would. Returns the error, or nil. An app that opens a menu
+    /// may answer only once the menu closes; the press still happened, so that counts as done.
+    /// Closes a menu the item has open, as Escape would.
+    nonisolated static func cancelMenu(of item: Element) {
+        guard let menu = (value(item.element, kAXChildrenAttribute) as? [AXUIElement])?.first else { return }
+        AXUIElementPerformAction(menu, kAXCancelAction as CFString)
+    }
+
+    nonisolated static func press(_ item: Element) -> AXError? {
+        AXUIElementSetMessagingTimeout(item.element, timeout)
+        let result = AXUIElementPerformAction(item.element, kAXPressAction as CFString)
+        return result == .success || result == .cannotComplete ? nil : result
     }
 
     private nonisolated static func items(of app: App) -> [AccessibleItem] {
@@ -162,11 +201,11 @@ enum MenuBarExtras {
         return CGRect(origin: origin, size: size)
     }
 
-    private nonisolated static func string(_ element: AXUIElement, _ attribute: String) -> String? {
+    nonisolated static func string(_ element: AXUIElement, _ attribute: String) -> String? {
         value(element, attribute) as? String
     }
 
-    private nonisolated static func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
+    nonisolated static func value(_ element: AXUIElement, _ attribute: String) -> CFTypeRef? {
         var value: CFTypeRef?
         return AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success ? value : nil
     }

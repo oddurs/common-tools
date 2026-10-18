@@ -7,6 +7,29 @@ public enum ItemName {
     /// chevron was.
     public static let toggle = "toggle"
     public static let divider = "divider"
+
+    /// A folder's status item. More keeps the chevron's name, and with it the chevron's place.
+    public static func folder(_ id: String) -> String {
+        id == FolderConfig.moreID ? toggle : "folder-\(id)"
+    }
+}
+
+/// Where each folder sits in the menu bar, as saved positions written before its item is made.
+public enum FolderPositions {
+    /// Between neighbouring folders: far smaller than any icon, so no other app's icon is likely
+    /// to have a saved position in between.
+    static let step = 0.01
+
+    /// Positions for `ids`, left to right, around More's: More stays where it is, folders left of
+    /// it count up from it, folders right of it count down. Larger is further left.
+    public static func positions(_ ids: [String], more: Double) -> [String: Double] {
+        guard let m = ids.firstIndex(of: FolderConfig.moreID) else { return [:] }
+        var result: [String: Double] = [:]
+        for (i, id) in ids.enumerated() {
+            result[id] = more + Double(m - i) * step
+        }
+        return result
+    }
 }
 
 /// Each status item's saved distance from the right edge of the menu bar; larger is
@@ -31,6 +54,9 @@ public struct ItemPositions: Equatable, Sendable {
     /// Everything left of the divider is kept off-screen, so it must sit left of the folder:
     /// stretched right of it, it would push the folder and the pinned icons off-screen too.
     public var dividerHides: Bool { divider > toggle }
+
+    /// The same, for every folder's saved position.
+    public func dividerHides(folders: [Double]) -> Bool { folders.allSatisfy { divider > $0 } }
 }
 
 /// How far the divider stretches to keep every icon left of it off-screen.

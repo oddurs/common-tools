@@ -16,7 +16,7 @@
 
 <Meta
 	title="Common Bar — a tidy menu bar for macOS"
-	description="A tiny macOS menu bar app that keeps the icons you rarely use in one folder, off the crowded menu bar and clear of the notch. Click the folder to open any of them. Free and open source."
+	description="A tiny macOS menu bar app that keeps the icons you rarely use in folders, off the crowded menu bar and clear of the notch. Click a folder to open any of them right there. Free and open source."
 	path="bar/"
 	image="bar/poster.jpg"
 />
@@ -27,17 +27,17 @@
 
 	<section class="features ruled">
 		<div>
-			<h2>One folder.</h2>
+			<h2>Folders.</h2>
 			<p>
-				Every icon left of the More folder stays off the menu bar. The ones you use stay right of it,
-				with the system's own.
+				Every icon left of your folders stays off the menu bar. More holds whatever no other folder
+				does; add your own, name them, and give each a symbol.
 			</p>
 		</div>
 		<div>
 			<h2>Every icon, by its app.</h2>
 			<p>
-				Click More for a list of the icons in it, each with its app's icon and name. Choose one and it
-				opens right there.
+				Click a folder for a list of its icons, each with its app's icon and name. Choose one and its
+				menu opens right there.
 			</p>
 		</div>
 		<div>
@@ -50,8 +50,9 @@
 		<div>
 			<h2>One permission, when you need it.</h2>
 			<p>
-				Tidying needs none. The first time you open More, Common Bar asks for Accessibility, to see
-				which app each icon belongs to and open it. No network unless you turn on the update check.
+				Tidying needs none. The first time you open a folder, Common Bar asks for Accessibility, to
+				see which app each icon belongs to and open it. No network unless you turn on the update
+				check.
 			</p>
 		</div>
 	</section>
@@ -59,9 +60,11 @@
 	<section class="steps ruled">
 		<h2>How it works.</h2>
 		<ol>
-			<li><b>Tidy.</b> Open Common Bar. Icons left of the More folder move off the menu bar.</li>
-			<li><b>Find.</b> Click More to see them, each with its app.</li>
-			<li><b>Open.</b> Choose one. Its menu opens, and the icon goes back when you're done.</li>
+			<li><b>Tidy.</b> Open Common Bar. Icons left of its folders move off the menu bar.</li>
+			<li><b>Find.</b> Click a folder to see its icons, each with its app.</li>
+			<li>
+				<b>Open.</b> Choose one. Its menu opens under the folder, and the icon goes back when you're done.
+			</li>
 		</ol>
 	</section>
 

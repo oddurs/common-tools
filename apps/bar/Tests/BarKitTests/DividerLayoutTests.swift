@@ -54,6 +54,26 @@ import Testing
         #expect(ItemPositions.seeded(toggle: 40, divider: nil) == ItemPositions(toggle: 40, divider: 41))
     }
 
+    @Test func moreKeepsTheChevronsNameAndOtherFoldersGetTheirOwn() {
+        #expect(ItemName.folder(FolderConfig.moreID) == "toggle")
+        #expect(ItemName.folder("work") == "folder-work")
+    }
+
+    @Test func foldersSitAroundMoreWithoutMovingIt() {
+        let positions = FolderPositions.positions(["a", "more", "b", "c"], more: 582)
+        #expect(positions["more"] == 582)
+        #expect(positions["a"]! > 582)
+        #expect(positions["b"]! < 582 && positions["c"]! < positions["b"]!)
+        // Within a point of More, so they stay together and right of the divider.
+        #expect(positions.values.allSatisfy { abs($0 - 582) < 1 })
+    }
+
+    @Test func theDividerHidesOnlyLeftOfEveryFolder() {
+        let positions = ItemPositions(toggle: 582, divider: 583)
+        #expect(positions.dividerHides(folders: [582, 582.01, 581.99]))
+        #expect(!positions.dividerHides(folders: [582, 583.5]))
+    }
+
     @Test func autosaveNamesStayPut() {
         // Renaming either would lose every user's arrangement.
         #expect(ItemName.toggle == "toggle")

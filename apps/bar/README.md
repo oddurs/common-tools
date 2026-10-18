@@ -3,16 +3,16 @@
 [![CI](https://github.com/oddurs/common-tools/actions/workflows/ci.yml/badge.svg)](https://github.com/oddurs/common-tools/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Keep the menu bar tidy: the icons you rarely use wait in a folder. **[oddurs.github.io/common-tools/bar](https://oddurs.github.io/common-tools/bar/)**
+Keep the menu bar tidy: the icons you rarely use wait in folders. **[oddurs.github.io/common-tools/bar](https://oddurs.github.io/common-tools/bar/)**
 
-- **One folder, More.** Every icon left of it stays off-screen until you open it from More. Hidden icons never pile up under the notch or behind the app's menus, so nothing reshuffles.
-- **Each icon by its app.** Click More for a list of the icons in it, each with its app's icon and name: other apps first, then Common Tools, then macOS's own, with a line between them.
-- **Opened from there.** Choose one, and Common Bar brings it on screen just long enough to open its menu, then puts it back.
-- **A small Settings window.** Folder names, Accessibility, Open at login, and an optional update check.
+- **Folders.** Every icon left of your folders stays off-screen until you open it from one. Hidden icons never pile up under the notch or behind the app's menus, so nothing reshuffles. More holds whatever no other folder does; add your own in Settings.
+- **Each icon by its app.** Click a folder for a list of its icons, each with its app's icon and name: other apps first, then Common Tools, then macOS's own, with a line between them.
+- **Opened right there.** Choose one, and its menu opens where the folder's was: the icon itself, moved in beside the folder, or a copy of its menu.
+- **A small Settings window.** Your folders and their icons, folder names, Accessibility, Open at login, and an optional update check.
 
 Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access unless you turn on the update check.
 
-**Permissions.** None to tidy the menu bar. The first time you open More, Common Bar asks for Accessibility, to see which app each icon belongs to and open it; until then More says so, and how many icons are in it.
+**Permissions.** None to tidy the menu bar. The first time you open a folder, Common Bar asks for Accessibility, to see which app each icon belongs to and open it; until then the folder says so, and how many icons wait in your folders.
 
 ## Install
 
@@ -29,18 +29,26 @@ Requires macOS 14 or later.
 
 ## Usage
 
-- **Tidy:** open Common Bar. Every icon left of the More folder moves off-screen and stays there. Icons right of it, and the system's own, stay in the menu bar.
-- **Reach a hidden icon:** click More and choose it. The icon comes on screen, its menu or panel opens, and once that closes the icon goes back. The icon nearest More opens right beside it; one further along opens where it lands, under the notch or behind the app's menus, with the icons between it and More kept out of sight.
-- **What stays in the menu bar:** the icons right of More, and the system's own. Each is where this version found it: icons you had showing stay, icons you had hidden are in More. macOS's own ⌘-drag still moves the icons in the menu bar among themselves.
-- **Menu:** right-click (or Control-click) More for **Settings…** and **Quit Common Bar**.
+- **Tidy:** open Common Bar. Every icon left of your folders moves off-screen and stays there. Icons right of the divider, and the system's own, stay in the menu bar.
+- **Reach a hidden icon:** click its folder and choose it. Its menu opens where the folder's was, one of three ways, depending on how far down the folder the icon is:
+  - **Near the divider:** Common Bar brings the icon on screen, ⌘-drags it in beside the folder (the pointer hidden for a moment and put back where it was), and opens it. Once its menu or panel closes, the icon is dragged back to its place.
+  - **Further along:** a drag can't start there, behind the app's menus, so Common Bar reads the icon's menu through Accessibility without showing it and opens a copy from the folder, headed by the icon's name. The item you choose is pressed in the real menu.
+  - **Shows a panel or popover, not a menu** (Wi‑Fi, Battery): it opens wherever it comes on screen, which on a crowded notched display is under the notch or behind the app's menus.
+
+  With **Open icons beside their folder** off, every icon opens wherever it comes on screen.
+- **Organise:** in Settings › Folders, add folders, rename them, pick a symbol, move them left or right, and delete them; under **Icons in Folders**, pick each icon's folder. An icon is remembered by its app and its label, or its place among that app's icons, so it stays in its folder across launches.
+- **What stays in the menu bar:** the icons right of the divider, and the system's own. Each is where this version found it: icons you had showing stay, icons you had hidden are in More. macOS's own ⌘-drag still moves the icons in the menu bar among themselves.
+- **Menu:** right-click (or Control-click) a folder for **Settings…** and **Quit Common Bar**.
 
 **Settings** opens from that menu (⌘,) or by opening Common Bar again while it runs:
 
-- **Folders:** **Show folder names in the menu bar** (on to start with: More shows its name beside its symbol), and whether Accessibility is allowed, with a button to System Settings when it isn't.
+- **Folders:** each folder's symbol and name, buttons to move it left or right or delete it (not More), **Add Folder**, and **Show folder names in the menu bar** (on to start with).
+- **Icons in Folders:** every icon left of your folders, with the folder it's in.
+- **Opening Icons:** **Open icons beside their folder** (on to start with), and whether Accessibility is allowed, with a button to System Settings when it isn't.
 - **General:** **Open at login**, and the update check.
 - **Common Tools:** the other Common Tools apps, with a button to open or get each one, and the installed version of Common Bar.
 
-Without Accessibility, More can't tell which app an icon belongs to: on macOS 26 every menu bar icon's window belongs to Control Center, whichever app made it. Accessibility names each one's app, and opens it.
+Without Accessibility, a folder can't tell which app an icon belongs to: on macOS 26 every menu bar icon's window belongs to Control Center, whichever app made it. Accessibility names each one's app, and opens it.
 
 More in the [documentation](https://oddurs.github.io/common-tools/bar/docs/).
 

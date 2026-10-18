@@ -1,0 +1,146 @@
+import AppKit
+import BarKit
+
+/// Reading an icon's menu through Accessibility, and choosing an item in it, without the menu ever
+/// being seen: pressed where the icon is, off-screen, the menu opens off-screen too. Used for an
+/// icon too far down a folder to be moved beside it.
+extension MenuBarExtras {
+    private static let menuWait: TimeInterval = 0.8
+    private static let menuPoll: useconds_t = 20_000
+
+    /// Opens the icon's menu where the icon is, reads it, and closes it. Nil when no menu opened
+    /// in time: the icon shows a panel or popover instead, or nothing.
+    nonisolated static func readMenu(_ item: Element) async -> [MenuNode]? {
+        // The app may answer the press only once its menu closes, so it isn't waited for.
+        Task.detached { _ = press(item) }
+        guard let menu = await waitForMenu(of: item) else { return nil }
+        let nodes = self.nodes(of: menu.element)
+        AXUIElementPerformAction(menu.element, kAXCancelAction as CFString)
+        return nodes
+    }
+
+    /// Opens the icon's menu unseen again and presses the item at `path` in it. Returns whether it
+    /// found the item.
+    nonisolated static func choose(_ path: MenuPath, in item: Element) async -> Bool {
+        Task.detached { _ = press(item) }
+        guard var menu = await waitForMenu(of: item)?.element else { return false }
+        for (depth, step) in path.steps.enumerated() {
+            let rows = value(menu, kAXChildrenAttribute) as? [AXUIElement] ?? []
+            guard let i = MenuPath.find(step, in: rows.map { string($0, kAXTitleAttribute) ?? "" }) else {
+                AXUIElementPerformAction(menu, kAXCancelAction as CFString)
+                return false
+            }
+            let row = rows[i]
+            if depth == path.steps.count - 1 {
+                AXUIElementPerformAction(row, kAXPressAction as CFString)
+                return true
+            }
+            // A submenu's items can be read without opening it, but pressed only once it is open.
+            AXUIElementPerformAction(row, kAXPressAction as CFString)
+            guard let sub = (value(row, kAXChildrenAttribute) as? [AXUIElement])?.first else {
+                AXUIElementPerformAction(menu, kAXCancelAction as CFString)
+                return false
+            }
+            menu = sub
+        }
+        return false
+    }
+
+    /// Closes whatever the icon has open: a menu, a Control Center panel, or a popover, which only
+    /// a second press closes.
+    nonisolated static func close(_ item: Element, stillOpen: @Sendable () -> Bool) async {
+        if let menu = (value(item.element, kAXChildrenAttribute) as? [AXUIElement])?.first {
+            AXUIElementPerformAction(menu, kAXCancelAction as CFString)
+        }
+        AXUIElementPerformAction(item.element, kAXCancelAction as CFString)
+        usleep(menuPoll * 5)
+        if stillOpen() { _ = press(item) }
+    }
+
+    private nonisolated static func waitForMenu(of item: Element) async -> Element? {
+        let end = Date().addingTimeInterval(menuWait)
+        while Date() < end {
+            if let menu = (value(item.element, kAXChildrenAttribute) as? [AXUIElement])?.first,
+                string(menu, kAXRoleAttribute) == kAXMenuRole as String
+            {
+                return Element(element: menu)
+            }
+            usleep(menuPoll)
+        }
+        return nil
+    }
+
+    private nonisolated static func nodes(of menu: AXUIElement) -> [MenuNode] {
+        (value(menu, kAXChildrenAttribute) as? [AXUIElement] ?? []).map { row in
+            let title = string(row, kAXTitleAttribute) ?? ""
+            let children = value(row, kAXChildrenAttribute) as? [AXUIElement] ?? []
+            let submenu = children.first { string($0, kAXRoleAttribute) == kAXMenuRole as String }
+            return MenuNode(
+                title: title, enabled: value(row, kAXEnabledAttribute) as? Bool ?? true,
+                checked: !(string(row, kAXMenuItemMarkCharAttribute) ?? "").isEmpty,
+                key: string(row, kAXMenuItemCmdCharAttribute) ?? "",
+                children: submenu.map(nodes(of:)) ?? [],
+                // A separator has no title and nothing inside; an untitled item with views inside is
+                // a custom view.
+                isSeparator: title.isEmpty && children.isEmpty)
+        }
+    }
+}
+
+/// Shows a copied menu from a folder and says which item was chosen.
+@MainActor
+final class MenuCopyPresenter: NSObject {
+    private var chosen: MenuPath?
+
+    /// Opens the copy as the folder's own menu, for this once, so it drops from the folder exactly
+    /// where the folder's menu did, and returns the chosen item's path once it closes, or nil.
+    func show(_ nodes: [MenuNode], titled name: String, icon: NSImage?, on folder: NSStatusItem) -> MenuPath? {
+        chosen = nil
+        let menu = NSMenu()
+        menu.autoenablesItems = false
+        let header = NSMenuItem(title: name, action: nil, keyEquivalent: "")
+        header.image = icon
+        header.isEnabled = false
+        menu.addItem(header)
+        menu.addItem(.separator())
+        add(nodes, to: menu, path: [])
+        let own = folder.menu
+        folder.menu = menu
+        folder.button?.performClick(nil)
+        folder.menu = own
+        return chosen
+    }
+
+    private func add(_ nodes: [MenuNode], to menu: NSMenu, path: [(index: Int, title: String)]) {
+        for (node, index) in MenuCopy.tidy(nodes.enumerated().map { ($0.element, $0.offset) }) {
+            if node.isSeparator {
+                menu.addItem(.separator())
+                continue
+            }
+            let item = NSMenuItem(
+                title: node.title, action: #selector(choose(_:)), keyEquivalent: node.key.lowercased())
+            item.target = self
+            item.isEnabled = node.enabled
+            item.state = node.checked ? .on : .off
+            let here = path + [(index, node.title)]
+            item.representedObject = Box(MenuPath(here))
+            if !node.children.isEmpty {
+                let sub = NSMenu()
+                sub.autoenablesItems = false
+                add(node.children, to: sub, path: here)
+                item.submenu = sub
+                item.action = nil
+            }
+            menu.addItem(item)
+        }
+    }
+
+    @objc private func choose(_ sender: NSMenuItem) {
+        chosen = (sender.representedObject as? Box)?.path
+    }
+
+    private final class Box: NSObject {
+        let path: MenuPath
+        init(_ path: MenuPath) { self.path = path }
+    }
+}
