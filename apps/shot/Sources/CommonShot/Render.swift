@@ -40,9 +40,18 @@ enum Render {
         // Points in AppKit's global coordinates, up from the panel's bottom-left corner.
         func appKit(_ point: CGPoint) -> CGPoint { CGPoint(x: point.x, y: panel.maxY - point.y) }
 
-        func states(_ name: String, crop: CGRect? = nil, display: Int = 0, _ stage: (Overlay) -> Void) throws {
-            let overlay = Overlay(freeze: freeze)
-            for view in overlay.views { view.appearance = appearance }
+        func states(
+            _ name: String, crop: CGRect? = nil, display: Int = 0, accessible: Bool = false,
+            _ stage: (Overlay) -> Void
+        ) throws {
+            let overlay = Overlay(freeze: freeze, imageSize: .prompt)
+            overlay.prepareBackdrops()
+            for view in overlay.views {
+                view.appearance = appearance
+                // Increase Contrast and Reduce Transparency, as System Settings › Accessibility › Display sets them.
+                view.increaseContrast = accessible
+                view.reduceTransparency = accessible
+            }
             stage(overlay)
             let view = overlay.views[display]
             let image = try picture(of: view)
@@ -86,6 +95,14 @@ enum Render {
             $0.pointerMoved(to: CGPoint(x: monitor.minX + edge.minX + 1, y: edge.minY))
         }
 
+        // The drag again, with Increase Contrast and Reduce Transparency on.
+        try states(
+            "contrast", crop: CGRect(x: drag.maxX - 260, y: drag.minY - 180, width: 460, height: 260), accessible: true
+        ) {
+            $0.select(drag)
+            $0.pointerMoved(to: CGPoint(x: drag.maxX, y: drag.minY))
+        }
+
         // The preview, over the corner of the desktop it appears in.
         let shot = try crop(desktop(panel, scale: 2), CGRect(x: 360, y: 640, width: 1040, height: 520))
         let card = Toast.card(shot, scale: 2, caption: "Copied · 1040 × 520 · ≈ 721 tokens", detail: nil, file: nil) {}
@@ -100,7 +117,12 @@ enum Render {
         let main = panel
         let frame = CGRect(
             x: display.minX, y: main.maxY - display.maxY, width: display.width, height: display.height)
-        return Still(frame: frame, displayBounds: display, image: desktop(display, scale: scale), screen: nil)
+        // The panel is a 14-inch MacBook Pro's, notch and all.
+        let notch =
+            display == panel
+            ? CGRect(x: (display.width - 186) / 2, y: display.height - 32, width: 186, height: 32) : nil
+        return Still(
+            frame: frame, displayBounds: display, image: desktop(display, scale: scale), screen: nil, notch: notch)
     }
 
     /// A wallpaper, a menu bar, and the windows on this display, drawn with the system's colours in the

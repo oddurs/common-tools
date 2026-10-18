@@ -69,7 +69,7 @@ final class AppController: NSObject {
         previousApp = NSWorkspace.shared.frontmostApplication
         Task {
             do {
-                let overlay = Overlay(freeze: try await Capture.freeze())
+                let overlay = Overlay(freeze: try await Capture.freeze(), imageSize: preferences.imageSize)
                 overlay.onPick = { [weak self] in self?.finish($0) }
                 self.overlay = overlay
                 // Active, so the crosshair cursor shows and Escape and Return reach the overlay.
