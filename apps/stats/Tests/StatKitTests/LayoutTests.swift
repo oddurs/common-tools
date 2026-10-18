@@ -188,6 +188,50 @@ struct ReorderAndColorTests {
         #expect(Set(Metric.allCases.map { Palette.green.color(for: $0) }).count == 1)
     }
 
+    /// The menu's three steps of a palette colour, in each appearance the menu can be drawn in.
+    @Test func shadesStepDownInEveryAppearanceAndHoldUpUnderIncreaseContrast() {
+        func alphas(dark: Bool, high: Bool) -> [CGFloat] {
+            Shade.allCases.map { $0.alpha(dark: dark, highContrast: high) }
+        }
+        let (light, dark) = (alphas(dark: false, high: false), alphas(dark: true, high: false))
+        let (lightHigh, darkHigh) = (alphas(dark: false, high: true), alphas(dark: true, high: true))
+        for steps in [light, dark, lightHigh, darkHigh] {
+            #expect(steps[0] == 1)
+            #expect(steps[0] > steps[1] && steps[1] > steps[2] && steps[2] > 0)
+        }
+        // Translucency darkens over a dark menu, and Increase Contrast must never make a step fainter.
+        #expect(dark[2] > light[2])
+        #expect(zip(lightHigh, light).allSatisfy { $0 >= $1 } && lightHigh[2] > light[2])
+        #expect(zip(darkHigh, dark).allSatisfy { $0 >= $1 } && darkHigh[2] > dark[2])
+    }
+
+    /// The colours resolve against the appearance they are drawn in. AppKit can't make a
+    /// high-contrast appearance by name, so this covers light and dark; the step table covers the rest.
+    @Test func shadesFollowTheAppearanceTheyAreDrawnIn() throws {
+        for (name, dark) in [(NSAppearance.Name.aqua, false), (.darkAqua, true)] {
+            let appearance = try #require(NSAppearance(named: name))
+            appearance.performAsCurrentDrawingAppearance {
+                for shade in Shade.allCases {
+                    let alpha = Palette.blue.color(for: .cpu, shade).usingColorSpace(.sRGB)?.alphaComponent
+                    #expect(alpha == shade.alpha(dark: dark, highContrast: false), "\(name.rawValue) \(shade)")
+                }
+            }
+        }
+    }
+
+    @Test func shadesAreThePaletteColorItself() throws {
+        let appearance = try #require(NSAppearance(named: .aqua))
+        appearance.performAsCurrentDrawingAppearance {
+            for palette in Palette.allCases {
+                for metric in Metric.allCases {
+                    let base = palette.color(for: metric).usingColorSpace(.sRGB)
+                    let soft = palette.color(for: metric, .soft).usingColorSpace(.sRGB)
+                    #expect(base?.withAlphaComponent(1) == soft?.withAlphaComponent(1), "\(palette) \(metric)")
+                }
+            }
+        }
+    }
+
     @Test func colorBarIsNotATemplateImageAndKeepsItsWidth() throws {
         var l = BarLayout.standard
         let mono = try #require(BarRenderer(layout: l, height: 22).image(Readout()))

@@ -31,7 +31,7 @@ The apps must look like macOS, so a token maps to a system colour wherever one e
 | `surface.base` | `windowBackgroundColor` | `#fbfbfd` / `#000` |
 | `color.accent`, `color.focus` | `controlAccentColor`, `keyboardFocusIndicatorColor` (the user's choice) | `#0066cc` / `#2997ff` |
 | `color.accent-fill` | `controlAccentColor` | `#0071e3` in both, so white text keeps 4.5:1 |
-| `color.border`, `color.danger`, `color.success` | `separatorColor`, `systemRed`, `systemGreen` | ours |
+| `color.border`, `color.danger`, `color.warning`, `color.success` | `separatorColor`, `systemRed`, `systemOrange`, `systemGreen` | ours |
 | `surface.card`, `color.border-card` | ours: a 4.7% tint of the text colour, inside a 6% hairline, over the menu's own material | `#f2f2f5` / `#1c1c1e` |
 | `surface.chrome` | not a colour: `NSVisualEffectView` | a translucent, blurred bar |
 | type | the system text styles (`.body`, `.footnote`), so Dynamic Type and the user's settings apply | sizes, named after the text style each stands in for |

@@ -1,6 +1,6 @@
 // Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
 // change the source and run `node packages/common-ui/build.mjs`.
-// source sha256: 9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c
+// source sha256: fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9
 
 import AppKit
 import SwiftUI
@@ -9,7 +9,7 @@ import SwiftUI
 /// motion, and the layout widths. Type comes from the system text styles, not from here.
 public enum Tokens {
     /// SHA-256 of tokens.json when this file was generated. A test compares it to the file.
-    public static let sourceHash = "9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c"
+    public static let sourceHash = "fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9"
 
     public enum Text {
         /// Body text and headings. macOS: `labelColor`. Site: #1d1d1f / #f5f5f7.
@@ -64,6 +64,10 @@ public enum Tokens {
 
         /// An error, or a destructive action. macOS: `systemRed`. Site: #d70015 / #ff453a.
         public static let danger = SemanticColor(system: .systemRed)
+
+        /// Something that needs attention soon but is not yet wrong: memory pressure rising, a disk nearly full.
+        /// macOS: `systemOrange`. Site: #c93400 / #ff9f0a.
+        public static let warning = SemanticColor(system: .systemOrange)
 
         /// Something that is going well: charging, allowed, done. macOS: `systemGreen`. Site: #1e7a35 / #30d158.
         public static let success = SemanticColor(system: .systemGreen)

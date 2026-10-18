@@ -1,7 +1,7 @@
 /*
  * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
  * change the source and run `node packages/common-ui/build.mjs`.
- * source sha256: 9c6e7151cf9a0f0dcf0b24416fb92c7bd9197987c6e06fffd25b8122ab99701c
+ * source sha256: fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9
  */
 :root {
 	color-scheme: light dark;
@@ -19,6 +19,7 @@
 	--color-border-card: #0000000f;
 	--color-focus: #0066cc;
 	--color-danger: #d70015;
+	--color-warning: #c93400;
 	--color-success: #1e7a35;
 	--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
 	--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
@@ -97,6 +98,7 @@
 		--color-border-card: #ffffff0f;
 		--color-focus: #2997ff;
 		--color-danger: #ff453a;
+		--color-warning: #ff9f0a;
 		--color-success: #30d158;
 		--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 		--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
