@@ -22,16 +22,16 @@ struct Still {
 struct Freeze {
     let stills: [Still]
     let windows: [WindowFrame]
+    /// ScreenCaptureKit's view of the same moment, so a window can be captured without asking again.
+    var content: SCShareableContent?
 }
 
 enum CaptureError: LocalizedError {
     case noDisplays
-    case windowGone
 
     var errorDescription: String? {
         switch self {
         case .noDisplays: "None of the displays could be captured."
-        case .windowGone: "That window closed before it could be captured."
         }
     }
 }
@@ -42,36 +42,57 @@ enum CaptureError: LocalizedError {
 enum Capture {
     static var hasAccess: Bool { CGPreflightScreenCaptureAccess() }
 
-    /// Captures every display before the overlay covers them, so the selection is drawn over a still
-    /// picture and what's copied is exactly what was on screen when the shortcut was pressed.
+    /// The first request in a process costs several times a later one (about 35 ms against 5 for the
+    /// shareable content on an M-series Mac), so it's made at launch rather than on the first shortcut.
+    static func warmUp() async throws {
+        guard hasAccess else { return }
+        _ = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+    }
+
+    /// Captures every display before the overlay covers them, all at once, so the selection is drawn over
+    /// a still picture and what's copied is exactly what was on screen when the shortcut was pressed.
     static func freeze() async throws -> Freeze {
         let windows = onScreenWindows()
         let content = try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
         // This app's own windows, such as the last shot's preview, stay out of the next one.
         let ownApp = content.applications.filter { $0.processID == getpid() }
-        var stills: [Still] = []
-        for screen in NSScreen.screens {
+        let targets = NSScreen.screens.compactMap { screen -> (NSScreen, SCDisplay)? in
             guard let id = screen.displayID, let display = content.displays.first(where: { $0.displayID == id })
-            else { continue }
+            else { return nil }
+            return (screen, display)
+        }
+        let captures = targets.map { _, display in
             let filter = SCContentFilter(display: display, excludingApplications: ownApp, exceptingWindows: [])
-            let image = try await SCScreenshotManager.captureImage(
-                contentFilter: filter, configuration: configuration(for: filter))
-            stills.append(
-                Still(
-                    frame: screen.frame, displayBounds: CGDisplayBounds(id), image: image, screen: screen,
-                    notch: screen.notch))
+            return Shot(filter: filter, configuration: configuration(for: filter))
+        }
+        let images = try await withThrowingTaskGroup(of: (Int, CGImage).self) { group in
+            for (index, capture) in captures.enumerated() {
+                group.addTask { (index, try await capture.take()) }
+            }
+            var images: [Int: CGImage] = [:]
+            for try await (index, image) in group { images[index] = image }
+            return images
+        }
+        let stills = targets.enumerated().compactMap { index, target -> Still? in
+            let (screen, display) = target
+            guard let image = images[index] else { return nil }
+            return Still(
+                frame: screen.frame, displayBounds: CGDisplayBounds(display.displayID), image: image, screen: screen,
+                notch: screen.notch)
         }
         guard !stills.isEmpty else { throw CaptureError.noDisplays }
-        return Freeze(stills: stills, windows: windows)
+        return Freeze(stills: stills, windows: windows, content: content)
     }
 
-    /// One window on its own, without what overlaps it or its shadow.
-    static func image(ofWindow id: UInt32) async throws -> CGImage {
-        let content = try await SCShareableContent.excludingDesktopWindows(true, onScreenWindowsOnly: true)
-        guard let window = content.windows.first(where: { $0.windowID == id }) else { throw CaptureError.windowGone }
+    /// One window on its own, without what overlaps it or its shadow. Nil when it's no longer there.
+    static func image(ofWindow id: UInt32, in content: SCShareableContent?) async throws -> CGImage? {
+        let content =
+            if let content { content } else {
+                try await SCShareableContent.excludingDesktopWindows(false, onScreenWindowsOnly: true)
+            }
+        guard let window = content.windows.first(where: { $0.windowID == id }) else { return nil }
         let filter = SCContentFilter(desktopIndependentWindow: window)
-        return try await SCScreenshotManager.captureImage(
-            contentFilter: filter, configuration: configuration(for: filter))
+        return try await Shot(filter: filter, configuration: configuration(for: filter)).take()
     }
 
     /// At the display's full backing resolution, without the pointer.
@@ -103,6 +124,17 @@ enum Capture {
             else { return nil }
             return WindowFrame(id: id, frame: frame)
         }
+    }
+}
+
+/// One capture's filter and configuration, made on the main actor and handed whole to a task, which is
+/// all ScreenCaptureKit's objects need to cross; nothing else touches them.
+private struct Shot: @unchecked Sendable {
+    let filter: SCContentFilter
+    let configuration: SCStreamConfiguration
+
+    func take() async throws -> CGImage {
+        try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: configuration)
     }
 }
 

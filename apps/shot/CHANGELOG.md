@@ -19,6 +19,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Faster from the shortcut to the overlay and from letting go to the clipboard. ScreenCaptureKit and the overlay are warmed up at launch, every display is captured at once, and a window is captured while you hover it, so a click copies it at once. On an M-series MacBook Pro the overlay is up about 25 ms after the shortcut, a dragged area is on the clipboard about 15 ms after you let go, and a whole Retina screen about 65 ms.
+- Shots are converted to sRGB. A capture comes in the display's own colour space, and prompts and most of the web read a PNG's colours as sRGB whatever its profile says, so colours pasted from a wide-gamut display could look shifted.
+- A window that closes between the click and its capture is copied from the frozen screen, as it was when you picked it, instead of failing with an error.
 - The overlay is sharper and quieter. The selection's edge is one device pixel in your accent colour on any display, and what it outlines is exactly what is copied, down to the pixel. The size sits in a small capsule of material by the selection's corner with what the shot costs in tokens; near an edge or the notch it moves inside the selection or above it instead of off the screen. Hovering a window shows its size too.
 - The loupe magnifies whole device pixels on a faint grid, rings the one under the pointer in black and white so it shows on any colour, and steps around the size rather than covering it.
 - The hint along the bottom names the keys in the same material, shows only on the display with the pointer, and gets out of the way when the pointer comes near it.

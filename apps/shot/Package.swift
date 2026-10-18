@@ -18,7 +18,8 @@ let package = Package(
                 .linkedFramework("ServiceManagement"), .linkedFramework("Vision"),
             ]
         ),
-        .testTarget(name: "ShotKitTests", dependencies: ["ShotKit"]),
+        .testTarget(
+            name: "ShotKitTests", dependencies: ["ShotKit", .product(name: "CommonTesting", package: "CommonKit")]),
         .testTarget(name: "CommonShotTests", dependencies: [.product(name: "CommonTesting", package: "CommonKit")]),
     ]
 )
