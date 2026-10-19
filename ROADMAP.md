@@ -77,13 +77,14 @@ Keep the Mac awake while a build, a download or a long agent session runs, then 
 
 ## color-0.1 — Common Color 0.1: pick a colour from anywhere and paste it as code
 
-`########··` 75% · 3 of 4 done
+`######····` 60% · 3 of 5 done
 
 Press a shortcut, click any pixel on any screen, and the colour is on the clipboard in the format you write: hex, CSS, SwiftUI or AppKit, converted correctly from the display's colour space. Recent picks wait in the menu, and two picks show their contrast.
 
 ### blocked
 
 - [ ] [`0030`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0030-pick-a-pixel-with-the-system-sampler.md) Pick a pixel with the system sampler <sup>feature · p2</sup>
+- [ ] [`0043`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0043-a-ui-pass-on-common-color-to-the-bar-common-shot-set.md) A UI pass on Common Color, to the bar Common Shot set <sup>feature · p2</sup>
 
 ### done
 

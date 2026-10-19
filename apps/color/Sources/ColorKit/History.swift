@@ -25,6 +25,19 @@ public struct History: Equatable, Sendable {
         if colors.count > Self.limit { colors.removeLast(colors.count - Self.limit) }
     }
 
+    /// Takes one pick out, and says where it was, so Undo can put it back there.
+    @discardableResult
+    public mutating func remove(at index: Int) -> ColorValue {
+        colors.remove(at: index)
+    }
+
+    /// Puts back a pick that `remove(at:)` took out, where it was, unless it has been picked again since.
+    public mutating func restore(_ color: ColorValue, at index: Int) {
+        guard !colors.contains(where: { $0.matches(color) }) else { return }
+        colors.insert(color, at: min(index, colors.count))
+        if colors.count > Self.limit { colors.removeLast(colors.count - Self.limit) }
+    }
+
     public mutating func clear() {
         colors.removeAll()
     }
