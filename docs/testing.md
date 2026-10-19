@@ -12,7 +12,7 @@ Seven apps, one shared package and a website, checked by one seam: `scripts/task
 | Smoke (`scripts/task smoke <app>`) | CI, after `check` | The built app quitting within five seconds of launch | Five seconds |
 | Coverage (`scripts/task cover <area>`) | by hand | Code no test reaches | A test run |
 
-`scripts/task check` is lint, tests and build; CI runs it for each area a pull request touches, then `smoke` for each app. A change to `packages/CommonKit` or `shared/` runs every app.
+`scripts/task check` is lint, tests and build; CI runs it for each area a pull request touches, then `smoke` for each app. A change to `packages/CommonKit` or `shared/` runs every app, and one to `packages/` or an app's `docs/` the site too, since it reads them. A push to `main` runs the areas changed since `main`'s last green run, so a failure is checked again by every push after it until it is fixed; a change to `ci.yml`, the Monday run, and a run by hand check everything. Each app job restores the `.build` that `main` last saved for it, after `scripts/ci-cache-prepare` gives every file its last commit's time, so only what changed since compiles.
 
 ## Running
 

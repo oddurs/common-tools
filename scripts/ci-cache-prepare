@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+# CI: readies a checkout for the .build its cache restores, and names the toolchain for the key.
+#
+# SwiftPM decides what to recompile by each source file's modification time. A fresh checkout
+# stamps every file with the moment of the checkout, so a restored .build would be rebuilt whole.
+# Here each tracked file gets the time of the last commit that changed it instead, which is the
+# same in every checkout of an unchanged file, and newer for a file a later commit changed. It
+# needs the history: check out with fetch-depth 0.
+
+cd "$(dirname "$0")/.."
+
+[ "$(git rev-parse --is-shallow-repository)" = false ] || {
+    echo "ci-cache-prepare: a shallow clone has no file history; check out with fetch-depth: 0" >&2
+    exit 1
+}
+echo "==> giving each file its last commit's time"
+git log --format='T %ct' --name-only --no-renames HEAD |
+    awk '/^T / { t = $2; next } NF && !($0 in seen) { seen[$0] = t; print t "\t" $0 }' |
+    perl -ne 'chomp; my ($t, $f) = split /\t/, $_, 2; utime $t, $t, $f if -f $f'
+
+# The whole version text: a build from another compiler is no use to this one.
+echo "==> $(swift --version 2>&1 | head -1)"
+echo "toolchain=$(swift --version 2>&1 | shasum | cut -c1-12)" >>"${GITHUB_OUTPUT:-/dev/null}"
