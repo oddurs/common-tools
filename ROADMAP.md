@@ -124,3 +124,27 @@ A menu bar view of the coding-agent sessions running on this Mac, with what each
 
 - [ ] [`0039`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0039-make-common-agents-a-family-member.md) Make Common Agents a family member <sup>chore · p2</sup>
 
+## command-quantities — Common Command: quantities and facts in the search field
+
+`##········` 11% · 1 of 9 done
+
+Type a calculation with real-world units, a conversion, or a factual question into Common Command and the answer is the first row: `60 mph * 2h 15min` gives 135 mi, `mass of earth` gives 5.972 × 10²⁴ kg, `1/3 + 1/6` gives 1/2. Computed on the Mac, from cited data, in under a millisecond, by a Swift port of tungsten's core.
+
+### backlog
+
+- [ ] [`0048`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0048-parse-quantities-written-in-a-mix-of-english-and-math.md) Parse quantities written in a mix of English and math <sup>feature · p1</sup>
+- [ ] [`0049`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0049-evaluate-convert-and-explain-dimension-errors.md) Evaluate, convert and explain dimension errors <sup>feature · p1</sup>
+- [ ] [`0050`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0050-know-constants-elements-the-solar-system-and-everyday-items.md) Know constants, elements, the solar system and everyday items <sup>feature · p2</sup>
+- [ ] [`0051`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0051-show-the-answer-as-command-s-first-row-without-hijacking-searches.md) Show the answer as Command's first row, without hijacking searches <sup>feature · p1</sup>
+- [ ] [`0052`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0052-retire-calculator-and-converter-in-favour-of-quantitykit.md) Retire Calculator and Converter in favour of QuantityKit <sup>chore · p2</sup>
+- [ ] [`0053`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0053-interpret-loose-questions-with-the-on-device-language-model.md) Interpret loose questions with the on-device language model <sup>feature · p3</sup>
+
+### planned
+
+- [ ] [`0046`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0046-import-tungsten-s-query-corpus-as-a-conformance-suite.md) Import tungsten's query corpus as a conformance suite <sup>feature · p1</sup>
+- [ ] [`0047`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0047-a-quantitykit-package-with-dimensions-exact-rationals-and-the-unit-table.md) A QuantityKit package with dimensions, exact rationals and the unit table <sup>feature · p1</sup>
+
+### done
+
+- [x] [`0045`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0045-port-tungsten-s-core-to-swift-instead-of-linking-or-shelling-out.md) Port tungsten's core to Swift instead of linking or shelling out <sup>docs · p1</sup>
+
