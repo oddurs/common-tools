@@ -25,7 +25,7 @@ swift run --package-path packages/CommonKit DesignRender   # after changing a Co
 
 1. **Palette** (`palette`): the raw colours, named for what they are (`ink`, `snow`, `blue-deep`). Nothing uses these directly; they exist so a semantic token can say `"light": "ink"` and a future repaint is one edit here.
 2. **Semantic tokens**: named for what they are for. `text.primary`, `surface.card`, `color.accent`, `space.md`, `radius.lg`, `motion.duration.fast`, `layout.content`. These are the only names a component may use. Every colour has a light and a dark value.
-3. **Primitives**: the few reusable pieces built from tokens. In the `CommonUI` product of CommonKit (`import CommonUI`): `Card`, `IconBadge`, `LabeledRow`, `SettingsWindowHost`, `.settingsForm()`, `SettingsFootnote`, `OpenAtLoginToggle`, `OpenAtLoginFootnote`; in CommonKit, `CommonToolsSection`, which carries the family list and the promise every app makes. On the site: `.button`, `.link`, `.card`, `section.ruled`, `.callout`, `.badge`, and the `table` and `pre` styles in `site/src/app.css`.
+3. **Primitives**: the few reusable pieces built from tokens. In the `CommonUI` product of CommonKit (`import CommonUI`): `Card`, `IconBadge`, `LabeledRow`, `SettingsWindowHost`, `.settingsForm()`, `SettingsFootnote`, `OpenAtLoginToggle`, `OpenAtLoginFootnote`, and for a menu bar panel `MenuPanelHost`, `MenuPanelSurface`, `MenuRow`, `SectionHeader`, `ThumbnailTile`; in CommonKit, `CommonToolsSection`, which carries the family list and the promise every app makes. On the site: `.button`, `.link`, `.card`, `section.ruled`, `.callout`, `.badge`, and the `table` and `pre` styles in `site/src/app.css`.
 4. **Pages and views** compose primitives. They may lay things out, but take every colour, size, and duration from a token.
 
 ## What is the system's and what is ours
@@ -104,6 +104,17 @@ Card {
     Text("CPU").font(.headline)
 }
 .frame(width: Tokens.Layout.menuPanelWidth)
+
+// A menu bar panel, for when a menu can't hold the job (a grid, drag out, a context menu, the keyboard).
+// It floats under the item on the menu's material and closes on a click outside or Escape.
+let panel = MenuPanelHost()
+panel.toggle(below: statusItem.button!) {
+    MenuRow("Take Screenshot", symbol: "camera.viewfinder", shortcut: "⇧⌘2") { capture() }
+    Card {
+        SectionHeader("Today", detail: "3 shots")
+        ThumbnailTile(image: thumbnail, title: "2:30 PM", subtitle: "1280 × 800", isSelected: true) { appIcon }
+    }
+}
 
 // AppKit motion, on the tokens and off under Reduce Motion.
 Tokens.Motion.animate(Tokens.Motion.fast, changes: { panel.animator().alphaValue = 1 })

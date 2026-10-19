@@ -66,10 +66,13 @@ public struct WindowFrame: Equatable, Sendable {
     public let id: UInt32
     /// Global display coordinates: points down from the top-left corner of the main display.
     public let frame: CGRect
+    /// The process that owns it, which names the app a shot of it came from.
+    public let owner: Int32
 
-    public init(id: UInt32, frame: CGRect) {
+    public init(id: UInt32, frame: CGRect, owner: Int32 = 0) {
         self.id = id
         self.frame = frame
+        self.owner = owner
     }
 
     /// The frontmost window under `point`, both in global display coordinates. `windows` is front to back.

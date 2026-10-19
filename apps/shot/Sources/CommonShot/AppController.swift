@@ -20,6 +20,7 @@ final class AppController: NSObject {
     private let shutter = Shutter()
     let history = History()
     private let settings = SettingsWindowHost(title: "Common Shot Settings")
+    private let panel = MenuPanelHost()
     let updates = UpdateCheck(tool: CommonTool.thisApp!)
     private var statusItem: NSStatusItem?
     private(set) var hotKeyProblem: String?
@@ -31,6 +32,7 @@ final class AppController: NSObject {
     /// What ScreenCaptureKit saw when the overlay froze, and each hovered window's capture, already
     /// under way so a click copies at once.
     private var frozenContent: SCShareableContent?
+    private var frozenWindows: [WindowFrame] = []
     private var windowShots: [UInt32: Task<CGImage?, Error>] = [:]
     /// How long the shortcut and the copy take, for `log stream --level info --predicate
     /// 'subsystem == "com.oddurs.commonshot"'`. Times only; nothing about what was captured.
@@ -86,6 +88,7 @@ final class AppController: NSObject {
                 overlay.onPick = { [weak self] in self?.finish($0) }
                 overlay.onHover = { [weak self] in self?.prefetch($0) }
                 frozenContent = freeze.content
+                frozenWindows = freeze.windows
                 self.overlay = overlay
                 // Active, so the crosshair cursor shows and Escape and Return reach the overlay.
                 NSApp.activate()
@@ -109,6 +112,9 @@ final class AppController: NSObject {
         self.windowShots = [:]
         let content = frozenContent
         frozenContent = nil
+        let windows = frozenWindows
+        frozenWindows = []
+        let frontmost = previousApp?.bundleIdentifier
         let fromTerminal = previousApp?.bundleIdentifier.map(Self.terminals.contains) ?? false
         if let previousApp, previousApp != .current { previousApp.activate() }
         previousApp = nil
@@ -129,7 +135,8 @@ final class AppController: NSObject {
                 } else {
                     try await deliver(
                         image, scale: still.scale, screen: still.screen,
-                        detail: fromTerminal ? "Paste with Ctrl+V in Claude Code" : nil, from: source)
+                        detail: fromTerminal ? "Paste with Ctrl+V in Claude Code" : nil, from: source,
+                        app: Self.sourceApp(of: choice.pick, windows: windows, frontmost: frontmost))
                 }
                 Self.latency.info(
                     "\(choice.asText ? "text" : "image") on the clipboard \(Self.milliseconds(.now - picked)) ms after the pick"
@@ -172,6 +179,24 @@ final class AppController: NSObject {
         }
     }
 
+    /// The app a shot shows, for the history: a window's owner; for an area, the owner of the window on
+    /// top at its centre; for a whole screen, the app that was in front. All from the window list the
+    /// overlay already has, so it asks for nothing more.
+    private static func sourceApp(of pick: Pick, windows: [WindowFrame], frontmost: String?) -> String? {
+        let owner: Int32?
+        switch pick {
+        case .screen:
+            return frontmost
+        case .window(let window, _):
+            owner = window.owner
+        case .area(let still, let rect):
+            let centre = Geometry.global(CGPoint(x: rect.midX, y: rect.midY), displayBounds: still.displayBounds)
+            owner = WindowFrame.topmost(at: centre, in: windows)?.owner
+        }
+        guard let owner, owner > 0 else { return nil }
+        return NSRunningApplication(processIdentifier: owner)?.bundleIdentifier
+    }
+
     /// Where the pick was on screen, in AppKit's global coordinates, for the preview to fly from.
     private static func source(of pick: Pick) -> CGRect {
         switch pick {
@@ -201,7 +226,8 @@ final class AppController: NSObject {
     /// off the main thread; the clipboard follows within tens of milliseconds, and the preview becomes
     /// draggable once the file it would drag exists.
     func deliver(
-        _ image: CGImage, scale: CGFloat, screen: NSScreen?, detail: String? = nil, from source: CGRect? = nil
+        _ image: CGImage, scale: CGFloat, screen: NSScreen?, detail: String? = nil, from source: CGRect? = nil,
+        app: String? = nil
     ) async throws {
         let size = preferences.imageSize
         let fit = size.fit(width: image.width, height: image.height)
@@ -222,7 +248,8 @@ final class AppController: NSObject {
             // Saved first, so the clipboard can point at the file.
             let file =
                 try history.add(
-                    png, width: sized.width, height: sized.height, at: date, keeping: preferences.historyLimit)
+                    png, width: sized.width, height: sized.height, at: date, app: app,
+                    keeping: preferences.historyLimit)
                 ?? Output.temporaryFile(png, at: date)
             Output.copy(png, file: file)
             if showsPreview { toast.attach(file: file) }
@@ -270,8 +297,7 @@ final class AppController: NSObject {
     }
 
     /// A shot from the menu goes back on the clipboard exactly as it was first copied.
-    @objc private func copyFromHistory(_ item: NSMenuItem) {
-        guard let url = item.representedObject as? URL else { return }
+    private func copyAgain(_ url: URL) {
         do {
             let png = try Data(contentsOf: url)
             Output.copy(png, file: url)
@@ -306,8 +332,8 @@ final class AppController: NSObject {
 
     @objc func showHistoryInFinder() {
         do {
-            try FileManager.default.createDirectory(at: History.directory, withIntermediateDirectories: true)
-            NSWorkspace.shared.open(History.directory)
+            try FileManager.default.createDirectory(at: history.directory, withIntermediateDirectories: true)
+            NSWorkspace.shared.open(history.directory)
         } catch {
             Self.present(error)
         }
@@ -389,85 +415,69 @@ final class AppController: NSObject {
         statusItem = item
         item.button?.image = NSImage(systemSymbolName: "camera.viewfinder", accessibilityDescription: "Common Shot")
 
-        let menu = NSMenu()
-        menu.delegate = self
-        item.menu = menu
+        item.menu = nil
+        item.button?.target = self
+        item.button?.action = #selector(togglePanel)
+        // On the press, as a menu opens, not on the release.
+        item.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
+    }
+
+    // MARK: The panel
+
+    /// Opens under the menu bar item, or closes when it's open: Take Screenshot, the history, Settings.
+    @objc func togglePanel() {
+        guard let button = statusItem?.button else { return }
+        panel.toggle(below: button) {
+            ShotsPanel(
+                history: history, limit: preferences.historyLimit, shortcut: preferences.hotKey.displayName,
+                shortcutProblem: hotKeyProblem, actions: panelActions)
+        }
+    }
+
+    private var panelActions: ShotsPanel.Actions {
+        ShotsPanel.Actions(
+            capture: { [weak self] in
+                self?.panel.close()
+                self?.capture()
+            },
+            copy: { [weak self] shot in
+                self?.panel.close()
+                self?.copyAgain(shot.url)
+            },
+            reveal: { [weak self] shot in
+                self?.panel.close()
+                NSWorkspace.shared.activateFileViewerSelecting([shot.url])
+            },
+            trash: { [weak self] shot in
+                do {
+                    return try self?.history.trash(shot)
+                } catch {
+                    Self.present(error)
+                    return nil
+                }
+            },
+            restore: { [weak self] shot, url in
+                do {
+                    try self?.history.restore(shot, from: url)
+                } catch {
+                    Self.present(error)
+                }
+            },
+            openFolder: { [weak self] in
+                self?.panel.close()
+                self?.showHistoryInFinder()
+            },
+            settings: { [weak self] in
+                self?.panel.close()
+                self?.showSettings()
+            },
+            quit: { NSApp.terminate(nil) },
+            close: { [weak self] in self?.panel.close() })
     }
 
     static func present(_ error: Error) {
         NSApp.activate()
         NSAlert(error: error).runModal()
-    }
-}
-
-extension AppController: NSMenuDelegate {
-    /// Built as it opens, so the recent shots are always current.
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        menu.removeAllItems()
-        // The shortcut on the right, where macOS shows every menu's; a line of its own only when it failed.
-        let combo = preferences.hotKey
-        let capture = NSMenuItem(
-            title: "Take Screenshot", action: #selector(capture),
-            keyEquivalent: hotKeyProblem == nil ? combo.keyEquivalent(keyName: keyName) ?? "" : "")
-        capture.keyEquivalentModifierMask = NSEvent.ModifierFlags(rawValue: combo.modifiers.rawValue)
-        capture.target = self
-        menu.addItem(capture)
-        if let hotKeyProblem {
-            let problem = NSMenuItem(title: hotKeyProblem, action: nil, keyEquivalent: "")
-            problem.isEnabled = false
-            menu.addItem(problem)
-        }
-
-        if preferences.historyLimit > 0 {
-            menu.addItem(.separator())
-            menu.addItem(.sectionHeader(title: history.shots.isEmpty ? "No Recent Shots" : "Recent Shots"))
-            let recent = history.shots.prefix(Self.shotsInMenu)
-            for shot in recent { menu.addItem(historyItem(shot, side: Self.thumbnailSide)) }
-            if history.shots.count > recent.count {
-                let older = NSMenu()
-                for shot in history.shots.dropFirst(recent.count) { older.addItem(historyItem(shot, side: 80)) }
-                menu.addItem(withTitle: "Older Shots", action: nil, keyEquivalent: "").submenu = older
-            }
-            if !history.shots.isEmpty {
-                let show = NSMenuItem(
-                    title: "Show History in Finder", action: #selector(showHistoryInFinder), keyEquivalent: "")
-                show.target = self
-                menu.addItem(show)
-                let clear = NSMenuItem(title: "Clear History", action: #selector(clearHistory), keyEquivalent: "")
-                clear.target = self
-                menu.addItem(clear)
-            }
-        }
-
-        menu.addItem(.separator())
-        let settingsItem = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
-        settingsItem.target = self
-        menu.addItem(settingsItem)
-        menu.addItem(.separator())
-        menu.addItem(
-            NSMenuItem(title: "Quit Common Shot", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-    }
-
-    /// Big enough to tell one shot of code from another at a glance; the rest go in a submenu, so a long
-    /// history doesn't make a menu taller than the screen.
-    private static let thumbnailSide: CGFloat = 160
-    private static let shotsInMenu = 6
-
-    private func historyItem(_ shot: History.Shot, side: CGFloat) -> NSMenuItem {
-        let item = NSMenuItem(title: Self.caption(for: shot), action: #selector(copyFromHistory), keyEquivalent: "")
-        item.target = self
-        item.representedObject = shot.url
-        item.image = history.thumbnail(for: shot, fitting: side, scale: NSScreen.main?.backingScaleFactor ?? 2)
-        item.toolTip = "Copy this shot again"
-        return item
-    }
-
-    /// "2:03 PM · 1280 × 760 · ≈ 1.3k tokens", with the date too once it's not today's.
-    private static func caption(for shot: History.Shot) -> String {
-        let when = shot.date.formatted(
-            date: Calendar.current.isDateInToday(shot.date) ? .omitted : .abbreviated, time: .shortened)
-        let tokens = ImageSize.describe(tokens: ImageSize.estimatedTokens(width: shot.width, height: shot.height))
-        return "\(when) · \(shot.width) × \(shot.height) · \(tokens)"
     }
 }
 

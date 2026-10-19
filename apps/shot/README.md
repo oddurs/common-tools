@@ -10,7 +10,7 @@ Screenshots straight to the clipboard, for macOS. Press ⇧⌘2, drag over what 
 - **Hold ⌥ to copy the text instead.** The same gestures read the text in the shot on your Mac and copy that: an error message, a log, a stack trace. Code keeps its indentation. Text is exact and costs a fraction of the tokens an image does.
 - **Sized for prompts.** Claude reads an image at about one token per 750 pixels, so by default a shot's long edge is capped at 1568 px: a full Retina screen costs about 2,100 tokens instead of 4,800, and a crop of an error or a few lines of code is left alone. Full resolution is one switch away.
 - **PNG on the clipboard, and the file it was saved to.** Claude Code pastes the image with **Ctrl+V**, and a shot taken from a terminal says so. In Ghostty ⌘V pastes the file's path instead, which Claude Code attaches as the image too. Chats, issues, and documents, the Claude app among them, take it with ⌘V. Or drag the preview into the terminal, which drops in the same path.
-- **Recent shots in the menu.** The menu bar menu shows the last few as thumbnails with their size and token cost; click one to copy it again. Settings decides how many are kept.
+- **Recent shots, organised.** The menu bar item opens a panel with your recent shots grouped by day (Today, Yesterday, Earlier This Week, Older), each with when it was taken, the app it came from, its size and its token cost. Click one to copy it again, or drag it out as a file; right-click to show it in Finder or move it to the Trash. Arrows, Return, Delete (with Undo) and Escape work too. Settings decides how many are kept.
 - **A preview in the corner** shows what was copied and roughly what it costs in tokens. The shot shrinks into it from where you picked it, with the sound macOS makes for its own screenshots. It slides away on its own; hover to keep it, drag the thumbnail out as a file, swipe it to the right, or click to dismiss it.
 
 Free forever and open source under the MIT licence. Private: no analytics, no crash reports, no account; nothing you do is ever reported. No network access, and one permission: Screen Recording, which every screenshot tool needs.
@@ -50,7 +50,7 @@ Text recognition runs on your Mac with Vision. It reads code well but not perfec
 - **Shortcut**: click and press a new one. Escape cancels; Delete restores ⇧⌘2.
 - **Access**, only while Screen Recording is missing: a button to the right pane of System Settings, and the ways out of a stale switch.
 - **Shots**: for prompts (long edge at most 1568 px) or full resolution, whether to show the preview, and whether to play the screenshot sound (it also follows System Settings › Sound › Play user interface sound effects).
-- **History**: keep none, or the last 5 to 100 shots (the newest 6 in the menu, the rest under Older Shots), in `~/Library/Application Support/Common Shot/History`. Show it in Finder or clear it.
+- **History**: keep none, or the last 5 to 100 shots, all in the menu bar panel, in `~/Library/Application Support/Common Shot/History`. Which app each came from is kept beside them in a hidden `.apps.json`, never in the PNG, which goes on to the clipboard. Show it in Finder or clear it.
 - **General**: show in the menu bar, and open at login. With the menu bar item hidden, open Common Shot from Finder to get back to Settings.
 
 ## Build from source

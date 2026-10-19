@@ -122,7 +122,7 @@ enum Capture {
                 let frame = CGRect(dictionaryRepresentation: bounds),
                 frame.width > 1, frame.height > 1
             else { return nil }
-            return WindowFrame(id: id, frame: frame)
+            return WindowFrame(id: id, frame: frame, owner: info[kCGWindowOwnerPID as String] as? Int32 ?? 0)
         }
     }
 }

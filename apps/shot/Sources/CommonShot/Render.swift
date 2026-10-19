@@ -35,7 +35,39 @@ enum Render {
             }
             if let failure { throw failure }
         }
+        // The panel with many shots, light beside dark, as `docs/menu.png` shows it on the design page.
+        try write(
+            try sideBySide(
+                folder.appending(path: "panel-many-light.png"), folder.appending(path: "panel-many-dark.png")),
+            to: folder.appending(path: "menu.png"))
     }
+
+    /// Two renders of the same size beside each other, a gap between.
+    private static func sideBySide(_ left: URL, _ right: URL) throws -> CGImage {
+        guard
+            let a = CGImageSourceCreateWithURL(left as CFURL, nil).flatMap({
+                CGImageSourceCreateImageAtIndex($0, 0, nil)
+            }),
+            let b = CGImageSourceCreateWithURL(right as CFURL, nil).flatMap({
+                CGImageSourceCreateImageAtIndex($0, 0, nil)
+            }),
+            let context = CGContext(
+                data: nil, width: a.width + b.width + 32, height: max(a.height, b.height), bitsPerComponent: 8,
+                bytesPerRow: 0, space: CGColorSpace(name: CGColorSpace.sRGB)!,
+                bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { throw PNG.Failure.encoding }
+        context.draw(a, in: CGRect(x: 0, y: 0, width: a.width, height: a.height))
+        context.draw(b, in: CGRect(x: a.width + 32, y: 0, width: b.width, height: b.height))
+        guard let image = context.makeImage() else { throw PNG.Failure.encoding }
+        return image
+    }
+
+    /// A Thursday afternoon, so the history's renders show every group and never change with the day.
+    static let thursday: Date = {
+        var components = DateComponents(year: 2026, month: 10, day: 15, hour: 15)
+        components.calendar = .current
+        return components.date ?? .now
+    }()
 
     private static func renderAll(suffix: String, appearance: NSAppearance, into folder: URL) throws {
         let freeze = Freeze(
@@ -112,6 +144,22 @@ enum Render {
         card.appearance = appearance
         try write(
             try onDesktop(card, scale: 2, corner: panel.size), to: folder.appending(path: "preview-\(suffix).png"))
+        // The menu bar item's panel: history off, empty, a few shots today, and many across the week.
+        let screen = desktop(panel, scale: 2)
+        for (name, limit, shots, selection) in [
+            ("panel-off", 0, 0, nil), ("panel-empty", 10, 0, nil), ("panel-few", 10, 3, nil),
+            ("panel-many", 25, 11, 2),
+        ] as [(String, Int, Int, Int?)] {
+            let history = try madeUpHistory(shots, from: screen)
+            defer { try? FileManager.default.removeItem(at: history.directory) }
+            let view = MenuPanelSurface {
+                ShotsPanel(history: history, limit: limit, shortcut: "⇧⌘2", now: thursday, selection: selection)
+            }
+            // As tall as the panel display allows below its menu bar, as the host would let it be.
+            .environment(\.menuPanelMaxHeight, panel.height - 24 - 4 - Tokens.Space.xs)
+            try write(try onMenuBar(view, appearance: appearance), to: folder.appending(path: "\(name)-\(suffix).png"))
+        }
+
         // Settings needs the bundle identifier, which only the binary inside the built app has.
         if CommonTool.thisApp != nil {
             try write(try settings(appearance: appearance), to: folder.appending(path: "settings-\(suffix).png"))
@@ -133,6 +181,80 @@ enum Render {
         guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw PNG.Failure.encoding }
         host.cacheDisplay(in: host.bounds, to: rep)
         guard let image = rep.cgImage else { throw PNG.Failure.encoding }
+        return image
+    }
+
+    /// `count` shots cut from `screen`, spread from an hour ago to last month, in a folder of their own.
+    private static func madeUpHistory(_ count: Int, from screen: CGImage) throws -> History {
+        let folder = FileManager.default.temporaryDirectory.appending(
+            path: "Common Shot render \(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        // Pixels from the panel's top-left, the age in hours, and the app it came from.
+        let cuts: [(CGRect, Double, String?)] = [
+            (CGRect(x: 1520, y: 840, width: 1280, height: 800), 0.5, "com.apple.Terminal"),
+            (CGRect(x: 800, y: 420, width: 1040, height: 520), 2, "com.apple.dt.Xcode"),
+            (CGRect(x: 0, y: 0, width: 3024, height: 1964), 5, "com.apple.finder"),
+            (CGRect(x: 240, y: 240, width: 1640, height: 1200), 27, "com.apple.Safari"),
+            (CGRect(x: 1600, y: 1000, width: 900, height: 300), 30, "com.apple.Terminal"),
+            (CGRect(x: 360, y: 300, width: 400, height: 600), 52, nil),
+            (CGRect(x: 1520, y: 840, width: 1280, height: 800), 75, "com.apple.Terminal"),
+            (CGRect(x: 0, y: 0, width: 1512, height: 982), 140, "com.apple.Safari"),
+            (CGRect(x: 800, y: 420, width: 640, height: 640), 200, "com.apple.dt.Xcode"),
+            (CGRect(x: 240, y: 240, width: 1640, height: 1200), 400, "com.apple.finder"),
+            (CGRect(x: 1600, y: 1000, width: 1200, height: 500), 900, "com.apple.Notes"),
+        ]
+        var apps: [String: String] = [:]
+        for (rect, hours, app) in cuts.prefix(count) {
+            let date = thursday.addingTimeInterval(-hours * 3600)
+            let image = try crop(screen, rect)
+            let url = folder.appending(path: FileName.forShot(at: date))
+            try PNG.data(image, scale: 2).write(to: url)
+            try FileManager.default.setAttributes([.creationDate: date], ofItemAtPath: url.path)
+            if let app { apps[url.lastPathComponent] = app }
+        }
+        try JSONEncoder().encode(apps).write(to: folder.appending(path: ".apps.json"))
+        let history = History(directory: folder)
+        history.loadThumbnailsNow(fitting: 160, scale: 2)
+        return history
+    }
+
+    /// `view` as it opens under the menu bar, over the top-right corner of the desktop.
+    private static func onMenuBar(_ view: some View, appearance: NSAppearance) throws -> CGImage {
+        let host = NSHostingView(rootView: view)
+        let window = NSWindow(
+            contentRect: NSRect(origin: .zero, size: host.fittingSize), styleMask: .borderless, backing: .buffered,
+            defer: false)
+        window.appearance = appearance
+        window.contentView = host
+        // Twice, with the run loop turned between: the grid measures itself in its first layout and
+        // takes that height in the next, as it does on screen.
+        for _ in 0..<2 {
+            window.setContentSize(host.fittingSize)
+            host.layoutSubtreeIfNeeded()
+            RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+        }
+        window.setContentSize(host.fittingSize)
+        host.layoutSubtreeIfNeeded()
+        let size = host.bounds.size
+        let scale: CGFloat = 2
+        guard let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) else { throw PNG.Failure.encoding }
+        host.cacheDisplay(in: host.bounds, to: rep)
+        let area = CGSize(width: size.width + 64, height: size.height + 24 + 4 + 32)
+        let backdrop = desktop(
+            CGRect(x: panel.width - area.width, y: 0, width: area.width, height: area.height), scale: scale)
+        guard let picture = rep.cgImage,
+            let context = CGContext(
+                data: nil, width: backdrop.width, height: backdrop.height, bitsPerComponent: 8, bytesPerRow: 0,
+                space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { throw PNG.Failure.encoding }
+        context.draw(backdrop, in: CGRect(x: 0, y: 0, width: backdrop.width, height: backdrop.height))
+        // Under the menu bar, 4 points down, as the host places it.
+        context.draw(
+            picture,
+            in: CGRect(
+                x: 32 * scale, y: CGFloat(backdrop.height) - (24 + 4) * scale - CGFloat(picture.height),
+                width: CGFloat(picture.width), height: CGFloat(picture.height)))
+        guard let image = context.makeImage() else { throw PNG.Failure.encoding }
         return image
     }
 
