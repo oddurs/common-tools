@@ -90,7 +90,7 @@ struct SettingsView: View {
             } header: {
                 Text("History")
             } footer: {
-                SettingsFootnote("Kept on this Mac, in the menu bar menu. Click one to copy it again.")
+                SettingsFootnote("Kept on this Mac, in the panel the menu bar item opens. Click one to copy it again.")
             }
 
             Section {

@@ -16,11 +16,12 @@ All notable changes to this project are documented here. The format follows [Kee
 - Hold ⌥ to copy the text in an area, window, or screen instead of the image, read on the device with Vision. Monospaced text keeps its indentation, and `name. member` is read back as `name.member`.
 - Shots go to the clipboard as PNG, sized for prompts by default: the long edge at most 1568 px, which keeps a full screen near 2,100 Claude tokens. Full resolution is a setting.
 - A preview of each shot in the screen's corner, with its size and estimated token cost, and a reminder to paste with Ctrl+V when the shot was taken from a terminal. Hover keeps it, dragging the thumbnail drops the PNG as a file, and a click dismisses it.
-- Recent shots as thumbnails in the menu bar menu, the newest 6 at the top and the rest in a submenu; click one to copy it again. Keeps the last 10 by default, from none to 100.
+- Recent shots in the panel the menu bar item opens, grouped under Today, Yesterday, Earlier This Week and Older, as a grid of thumbnails, each with when it was taken, the app it came from, its size and its token cost. Click one to copy it again, drag it out as a file, or use its context menu to show it in Finder or move it to the Trash. The keyboard does it all: arrows move, Return copies, Delete moves to the Trash with Undo (⌘Z), Escape closes. Keeps the last 10 by default, from none to 100.
 - Settings: shortcut, Screen Recording status, image size, preview, history depth, menu bar item, and open at login.
 
 ### Changed
 
+- The menu bar item opens a panel instead of a menu, in the family's look: Take Screenshot with its shortcut, the history in cards by day, then Open History Folder, Settings and Quit. It closes on a click outside or Escape, scrolls when the history is taller than the screen, and says so plainly when there are no shots yet or History is off.
 - The menu shows the shortcut beside Take Screenshot, where macOS shows every menu's, instead of on a line of its own; that line now appears only when the shortcut couldn't be registered.
 - Settings is shorter and plainer: Access appears only while Screen Recording is missing, "Image" is now "Shots" (size on the clipboard, the preview, the sound), and the footnotes name the keys, Option for text included.
 - The preview behaves like the system's thumbnail: it slides in from the screen's right edge and back out when its time is up, and a two-finger swipe or a drag to the right sends it away early. It appears as you let go, before the PNG is even encoded, and its thumbnail can be dragged out as soon as the file is written.

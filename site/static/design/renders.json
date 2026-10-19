@@ -25,7 +25,12 @@
       "height" : 837,
       "name" : "settings",
       "width" : 460
+    },
+    {
+      "height" : 302,
+      "name" : "menu-panel",
+      "width" : 384
     }
   ],
-  "sourceHash" : "4d441af1d077742dbb39311ee48435a660606c14ffb4787c37e793216b3a22f4"
+  "sourceHash" : "86581545fe8bd2c87245f345ef433550ee103439e758e099d611d8820f227a17"
 }

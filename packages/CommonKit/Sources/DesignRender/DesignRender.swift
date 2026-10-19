@@ -78,6 +78,7 @@ enum DesignRender {
             try render("labeled-row", padded: false) { LabeledRowExample() },
             try render("settings-footnote", padded: false) { FootnoteExample() },
             try render("settings", padded: false, titled: "Common UI Settings") { SettingsExample() },
+            try render("menu-panel") { MenuPanelExample() },
         ]
         let data = try encoder.encode(Manifest(command: command, sourceHash: try sourceHash(), renders: renders))
         try (data + Data("\n".utf8)).write(to: manifest)
@@ -214,6 +215,45 @@ private struct FootnoteExample: View {
             }
         }
         .settingsForm()
+    }
+}
+
+/// A menu bar panel as Common Shot opens one: menu rows around a card holding a group of tiles under
+/// its header, the second tile selected as the keyboard leaves it.
+private struct MenuPanelExample: View {
+    var body: some View {
+        MenuPanelSurface {
+            VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                MenuRow("Take Screenshot", symbol: "camera.viewfinder", shortcut: "⇧⌘2") {}
+                Card {
+                    VStack(alignment: .leading, spacing: Tokens.Space.xs) {
+                        SectionHeader("Today", detail: "2 shots")
+                        HStack(alignment: .top, spacing: Tokens.Space.xs) {
+                            ThumbnailTile(
+                                image: Self.picture(.systemIndigo, .systemTeal), title: "2:30 PM",
+                                subtitle: "1280 × 800 · ≈ 1.4k tokens"
+                            ) { Image(systemName: "terminal").foregroundStyle(.secondary) }
+                            ThumbnailTile(
+                                image: Self.picture(.systemOrange, .systemPink), title: "1:05 PM",
+                                subtitle: "640 × 900 · ≈ 768 tokens", aspect: 16 / 10, isSelected: true
+                            ) { Image(systemName: "safari").foregroundStyle(.secondary) }
+                        }
+                    }
+                }
+                Divider().padding(.horizontal, Tokens.Space.xs)
+                MenuRow("Settings…", symbol: "gearshape", shortcut: "⌘,") {}
+            }
+        }
+    }
+
+    /// A stand-in for a shot: a diagonal wash between two system colours.
+    static func picture(_ from: NSColor, _ to: NSColor) -> Image {
+        let size = NSSize(width: 160, height: 100)
+        let image = NSImage(size: size, flipped: false) { rect in
+            NSGradient(starting: from, ending: to)?.draw(in: rect, angle: 30)
+            return true
+        }
+        return Image(nsImage: image)
     }
 }
 
