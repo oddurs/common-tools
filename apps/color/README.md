@@ -7,13 +7,14 @@ Free forever and open source under the MIT licence. Private: no analytics, no cr
 
 Pick a colour from anywhere on screen and paste it as code. Press ⌃⇧⌘C, click any pixel, and the colour is on the clipboard in the format you write: hex, CSS, SwiftUI or AppKit, converted correctly from the display's colour space. **[oddurs.github.io/common-tools/color](https://oddurs.github.io/common-tools/color/)**
 
-![The menu in light and dark](docs/menu.png)
+![The panel in light and dark](docs/menu.png)
 
 - **The system's own loupe.** Picking uses macOS's colour sampler, the magnifier the system colour panel uses, so Common Color reads the one pixel you click and never sees your screen. That is why it needs no Screen Recording permission.
-- **Every format, one click each.** Hex, `rgb()`, `hsl()`, `oklch()`, `color(display-p3 …)`, SwiftUI `Color(…)` and AppKit `NSColor(…)`. A pick is copied in the one you choose in Settings; the menu has the rest.
+- **Every format, one key each.** Hex, `rgb()`, `hsl()`, `oklch()`, `color(display-p3 …)`, SwiftUI `Color(…)` and AppKit `NSColor(…)`. A pick is copied in the one you choose in Settings; in the panel, Return copies that one and 1–7 copy the rest.
+- **It says what it copied.** A small card beside the pointer for a moment, with the colour and the exact text, and VoiceOver hears it too. Turn it off in Settings.
 - **Converted correctly.** sRGB and Display P3 with the sRGB transfer curve both share, matrices derived from the published primaries, and OKLab and OKLCH by Björn Ottosson's matrices. Details under [Colour science](#colour-science).
 - **Never silently clipped.** A colour sRGB can't hold, such as a vivid green on a P3 display, is marked. The sRGB formats give the nearest colour sRGB can show, mapped the way CSS Color 4 specifies so the hue stays put; the others are exact.
-- **The last 12 picks.** Swatches in the menu, kept across launches. Click one to make it current and copy it again; **Clear** forgets them.
+- **The last 12 picks.** Swatches in the panel, kept across launches. The arrow keys move through them, click one to copy it again, and Delete removes one, with Undo.
 - **Contrast between the last two.** The WCAG 2 ratio, and whether it passes AA and AAA for normal and large text.
 
 ## Install
@@ -31,11 +32,18 @@ Requires macOS 14 or later.
 
 ## Usage
 
-Press **⌃⇧⌘C**, or choose **Pick Color** from the eyedropper in the menu bar. The loupe follows the pointer; click to pick, or press Escape to cancel and leave the clipboard as it was.
+Press **⌃⇧⌘C**, or choose **Pick Color** from the eyedropper in the menu bar. The loupe follows the pointer; click to pick, or press Escape to cancel and leave everything as it was. The pick goes to the clipboard, and a card beside the pointer says how: "Copied as Hex", the swatch, and the text.
 
-The menu shows the current colour with a swatch, then a row for each format: click a row to copy it. A check marks the format a pick copies; a warning triangle marks a format that can't hold the colour exactly. Under it, **Recent** holds the last 12 picks; under that, **Contrast** compares the newest pick (as text) with the one before (as background). **Settings…** (⌘,) and **Quit** (⌘Q) are at the bottom.
+The eyedropper opens a panel like Control Center's, which takes the keyboard without taking you out of the app you were in:
 
-Settings has three sections. **Picking**: the shortcut (click it and press a new one; Delete restores ⌃⇧⌘C) and **Copy as**, the format a pick copies. **General**: **Open at login** and the optional update check. **Common Tools**: the other apps in the family.
+- **The colour**, large, with its hex, its family ("Vivid green") and where it sits (sRGB, or Display P3 outside sRGB). **Copy as Hex** (or whichever format you chose) copies it; Return does the same. **All Formats** lists the other six, each with the number key that copies it. A warning triangle marks a format that can't hold the colour exactly.
+- **Recent**: the last 12 picks. The arrow keys move through them and the colour above follows; click one, or press Return, to copy it again and bring it to the front. Delete removes one, with Undo; right-click for Copy As and Remove. **Clear** forgets them all.
+- **Contrast**: the newest pick as text on the one before, the WCAG 2 ratio, the highest bar it clears, and AA and AAA for normal and large text.
+- **Settings…** (⌘,) and **Quit** (⌘Q). Escape or a click outside closes the panel.
+
+Settings has four sections. **Shortcut**: click it and press a new one; Delete restores ⌃⇧⌘C. **Copying**: **Copy as**, the format a pick copies, and **Show what was copied**. **General**: **Open at login** and the optional update check. **Common Tools**: the other apps in the family.
+
+VoiceOver reads a colour as its family and hex ("Blue, hex 3A7BD5"), each format as "Copy as Hex: #3a7bd5", and the contrast as a sentence ("Contrast 4.47 to 1. Normal text: fails AA and AAA. Large text: passes AA, fails AAA.").
 
 ### Colour science
 
@@ -72,7 +80,7 @@ scripts/task check color            # lint + test + build, what CI runs for this
 scripts/task test color --filter=X  # only the tests whose name matches
 ```
 
-`swift build && .build/debug/CommonColor --snapshot out.png` renders the menu's panel in light and dark, in three states (a full history, a colour outside sRGB, no picks yet), to `out.png`. The image above was made this way.
+`scripts/task build color && "build/color/Common Color.app/Contents/MacOS/CommonColor" --snapshot <folder>` draws every state, light and dark, into `<folder>`: the panel empty, with one pick, full, with every format, and with a colour outside sRGB; the copy confirmation; and Settings; with Increase Contrast versions of three. `menu.png` there is the image above. Run from the bundle, Settings shows the family's icons; from `.build`, it draws without them.
 
 Layout:
 

@@ -85,6 +85,10 @@
 			title: 'MenuPanelSurface, MenuRow, SectionHeader, ThumbnailTile',
 			about: 'What a menu bar item opens when a menu can’t hold the job: MenuPanelHost floats MenuPanelSurface under the item on the menu’s material, takes the keyboard without activating the app, and closes on a click outside or Escape. MenuRow acts like a menu item; SectionHeader names a group; ThumbnailTile shows a picture whole with a caption, washed on hover and ringed in the accent when selected.'
 		},
+		confirmation: {
+			title: 'ConfirmationHost, ConfirmationCard',
+			about: 'Says what just happened, beside where it happened, for a moment: a picture of what was copied, what happened, and the text itself, on the popover material. ConfirmationHost floats it near a point without taking a click or the keyboard, announces it to VoiceOver, and fades it out after 1.4 s, at once under Reduce Motion.'
+		},
 		settings: {
 			title: 'The Settings window',
 			about: 'Drawn by the window, title bar included. The app’s own sections, then General with OpenAtLoginToggle and OpenAtLoginFootnote, then CommonToolsSection, in .settingsForm(). Rendered outside an app, so the version line is empty and the window is inactive.'

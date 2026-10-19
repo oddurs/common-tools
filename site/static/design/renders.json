@@ -30,7 +30,12 @@
       "height" : 302,
       "name" : "menu-panel",
       "width" : 384
+    },
+    {
+      "height" : 216,
+      "name" : "confirmation",
+      "width" : 344
     }
   ],
-  "sourceHash" : "86581545fe8bd2c87245f345ef433550ee103439e758e099d611d8820f227a17"
+  "sourceHash" : "86c4a4e1b031d6c22aa55e7c7c331960ff7eee45890055756a11ac7f01ea5a6a"
 }

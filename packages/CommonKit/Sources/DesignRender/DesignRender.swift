@@ -79,6 +79,7 @@ enum DesignRender {
             try render("settings-footnote", padded: false) { FootnoteExample() },
             try render("settings", padded: false, titled: "Common UI Settings") { SettingsExample() },
             try render("menu-panel") { MenuPanelExample() },
+            try render("confirmation") { ConfirmationExample() },
         ]
         let data = try encoder.encode(Manifest(command: command, sourceHash: try sourceHash(), renders: renders))
         try (data + Data("\n".utf8)).write(to: manifest)
@@ -254,6 +255,27 @@ private struct MenuPanelExample: View {
             return true
         }
         return Image(nsImage: image)
+    }
+}
+
+/// What a confirmation says after a copy, as Common Color shows one beside the pointer: a picture of
+/// what was copied, what happened, and the text itself.
+private struct ConfirmationExample: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: Tokens.Space.sm) {
+            ConfirmationCard(title: "Copied as Hex", detail: "#3a7bd5", detailIsCode: true) {
+                RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous).fill(Color(nsColor: .systemBlue))
+            }
+            ConfirmationCard(
+                title: "Copied as SwiftUI", detail: "Color(.sRGB, red: 0.2275, green: 0.4824, blue: 0.8353)",
+                detailIsCode: true
+            ) {
+                RoundedRectangle(cornerRadius: Tokens.Radius.sm, style: .continuous).fill(Color(nsColor: .systemBlue))
+            }
+            ConfirmationCard(title: "Copied 3 lines of text") {
+                Image(systemName: "doc.on.clipboard").font(.title2).foregroundStyle(.secondary)
+            }
+        }
     }
 }
 
