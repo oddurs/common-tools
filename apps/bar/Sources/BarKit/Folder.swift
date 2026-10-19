@@ -13,9 +13,12 @@ public struct AccessibleItem: Equatable, Sendable {
     public var title: String?
     /// `AXDescription`: "Wi‑Fi, connected, 3 bars", "Glyph 2".
     public var label: String?
+    /// `AXIdentifier`, which macOS's own items carry: "com.apple.menuextra.wifi".
+    public var identifier: String?
 
     public init(
-        pid: Int32, bundleID: String?, appName: String, frame: CGRect, title: String? = nil, label: String? = nil
+        pid: Int32, bundleID: String?, appName: String, frame: CGRect, title: String? = nil, label: String? = nil,
+        identifier: String? = nil
     ) {
         self.pid = pid
         self.bundleID = bundleID
@@ -23,6 +26,7 @@ public struct AccessibleItem: Equatable, Sendable {
         self.frame = frame
         self.title = title
         self.label = label
+        self.identifier = identifier
     }
 }
 
@@ -137,7 +141,7 @@ public struct OpenWatch: Sendable {
 
 /// The groups a folder's menu shows, in order, with a separator between each: other apps' icons,
 /// then the Common Tools family's, then macOS's own.
-public enum FolderGroup: Int, Comparable, Sendable {
+public enum FolderGroup: Int, Comparable, CaseIterable, Sendable {
     case apps
     case commonTools
     case system

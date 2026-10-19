@@ -6,7 +6,7 @@
 Keep the menu bar tidy: the icons you rarely use wait in folders. **[oddurs.github.io/common-tools/bar](https://oddurs.github.io/common-tools/bar/)**
 
 - **Folders.** Every icon left of your folders stays off-screen until you open it from one. Hidden icons never pile up under the notch or behind the app's menus, so nothing reshuffles. More holds whatever no other folder does; add your own in Settings.
-- **Each icon by its app.** Click a folder for a list of its icons, each with its app's icon and name: other apps first, then Common Tools, then macOS's own, with a line between them.
+- **Each icon by its app.** Click a folder for a list of its icons, each with its app's icon and name, in groups (other apps, Common Tools, macOS's own). macOS's items show their own symbol and their state, such as Wi‑Fi's. Type to narrow the list; arrows and Return work as in a menu.
 - **Opened right there.** Choose one, and its menu opens where the folder's was: the icon itself, moved in beside the folder, or a copy of its menu.
 - **A small Settings window.** Your folders and their icons, folder names, Accessibility, Open at login, and an optional update check.
 
@@ -32,12 +32,13 @@ Requires macOS 14 or later.
 - **Tidy:** open Common Bar. Every icon left of your folders moves off-screen and stays there. Icons right of the divider, and the system's own, stay in the menu bar.
 - **Reach a hidden icon:** click its folder and choose it. Its menu opens where the folder's was, one of three ways, depending on how far down the folder the icon is:
   - **Near the divider:** Common Bar brings the icon on screen, ⌘-drags it in beside the folder (the pointer hidden for a moment and put back where it was), and opens it. Once its menu or panel closes, the icon is dragged back to its place.
-  - **Further along:** a drag can't start there, behind the app's menus, so Common Bar reads the icon's menu through Accessibility without showing it and opens a copy from the folder, headed by the icon's name. The item you choose is pressed in the real menu.
+  - **Further along:** a drag can't start there, behind the app's menus, so Common Bar reads the icon's menu through Accessibility without showing it, and the folder's list turns into a copy of it in place, headed by the icon with a way back. Submenus open the same way. The item you choose is pressed in the real menu.
   - **Shows a panel or popover, not a menu** (Wi‑Fi, Battery): it opens wherever it comes on screen, which on a crowded notched display is under the notch or behind the app's menus.
 
   With **Open icons beside their folder** off, every icon opens wherever it comes on screen.
 - **Organise:** in Settings › Folders, add folders, rename them, pick a symbol, move them left or right, and delete them; under **Icons in Folders**, pick each icon's folder. An icon is remembered by its app and its label, or its place among that app's icons, so it stays in its folder across launches.
 - **What stays in the menu bar:** the icons right of the divider, and the system's own. Each is where this version found it: icons you had showing stay, icons you had hidden are in More. macOS's own ⌘-drag still moves the icons in the menu bar among themselves.
+- **The dropdown:** opens on the press, like a menu, without taking focus from the app you're in, and closes on Escape, a click outside, or another click on the folder. Start typing to narrow it to what matches; arrows move, Return opens, Escape clears what you typed, then closes. At the bottom, **Edit Folder…** and **Settings…**.
 - **Menu:** right-click (or Control-click) a folder for **Settings…** and **Quit Common Bar**.
 
 **Settings** opens from that menu (⌘,) or by opening Common Bar again while it runs:

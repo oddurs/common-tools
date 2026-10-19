@@ -18,8 +18,6 @@ final class Opener {
         let screen: () -> NSScreen?
         /// The folder's status item, from the window server.
         let folderFrame: (String) -> CGRect?
-        /// The folder's status item itself, to show a copied menu from.
-        let folderItem: (String) -> NSStatusItem?
     }
 
     private enum Metric {
@@ -32,6 +30,14 @@ final class Opener {
     static let log = Logger(subsystem: "com.oddurs.commonbar", category: "open")
     private let context: Context
     private(set) var isBusy = false
+    /// The dropdown the icon was chosen in, while it is being opened.
+    private weak var ui: OpeningUI?
+
+    /// Says in the dropdown that the icon couldn't be opened, as well as in the log.
+    private func fail(_ entry: FolderEntry, _ why: String) {
+        Self.log.error("\(entry.name, privacy: .public): \(why, privacy: .public)")
+        ui?.failed(entry.id, "Couldn't open \(entry.name)")
+    }
 
     init(_ context: Context) {
         self.context = context
@@ -39,16 +45,19 @@ final class Opener {
 
     /// Opens `entry`, moving it in beside the folder with `folderID` first, or where it lands on
     /// screen when that is nil.
-    func open(_ entry: FolderEntry, from folderID: String?, done: @escaping () -> Void) {
+    func open(_ entry: FolderEntry, from folderID: String?, ui: OpeningUI?, done: @escaping () -> Void) {
         guard !isBusy else {
             Self.log.notice("busy with another icon; \(entry.name, privacy: .public) not opened")
             return
         }
         isBusy = true
+        self.ui = ui
+        ui?.opening(entry.id)
         Task {
             await run(entry, from: folderID)
             context.divider.hide()
             isBusy = false
+            self.ui = nil
             done()
         }
     }
@@ -59,20 +68,18 @@ final class Opener {
             "opening \(name, privacy: .public) (window \(entry.id, privacy: .public)) \(folderID.map { "beside folder \($0)" } ?? "where it lands", privacy: .public)"
         )
         guard let screen = context.screen(), let dividerEnd = context.own().divider?.maxX else {
-            Self.log.error("no screen or divider")
+            fail(entry, "no screen or divider")
             return
         }
         // Found now, while the icon is at rest where Accessibility thinks it is; the element stays
         // the icon's through every move, while Accessibility's idea of its position lags.
         let model = MenuBar.model(of: screen, own: context.own())
         guard let target = model.items.first(where: { $0.id == entry.id }) else {
-            Self.log.error("\(name, privacy: .public) is no longer in the menu bar")
+            fail(entry, "no longer in the menu bar")
             return
         }
         guard let element = MenuBarExtras.element(pid: entry.owner.pid, at: target.window.frame) else {
-            Self.log.error(
-                "Accessibility has no item for \(name, privacy: .public) at \(target.window.frame.minX, privacy: .public)"
-            )
+            fail(entry, "Accessibility has no item at \(target.window.frame.minX)")
             return
         }
         let slot = model.slot(of: target)?.id
@@ -99,7 +106,7 @@ final class Opener {
                 ? rightmost
                 : model.blockEnd(toOpen: target, dividerEnd: dividerEnd, padding: DividerItem.Metric.padding)
         else {
-            Self.log.error("\(name, privacy: .public) can't reach the screen")
+            fail(entry, "can't reach the screen")
             return
         }
         context.divider.show(
@@ -107,7 +114,7 @@ final class Opener {
                 showingUpTo: blockEnd, dividerEnd: dividerEnd, padding: DividerItem.Metric.padding))
         guard let arrived = await frame(of: entry.id, within: Metric.arrival, where: { Self.onScreen($0, screen) })
         else {
-            Self.log.error("\(name, privacy: .public) never came on screen")
+            fail(entry, "never came on screen")
             return
         }
         Self.log.notice("\(name, privacy: .public) on screen at \(arrived.minX, privacy: .public)")
@@ -116,6 +123,8 @@ final class Opener {
         var moved = false
         if movable, let folderID, let folder = context.folderFrame(folderID), Move.reachable(arrived, in: geometry) {
             let drag = Move.drag(arrived, toJustLeftOf: folder, barMidY: barMidY)
+            // The dropdown stays up through the drag, and gives way when the icon's own menu appears.
+            ui?.holdOpen(true)
             await MenuBarDrag.perform(from: drag.from, to: drag.to)
             let landed = await frame(of: entry.id, within: Metric.landing) { frame in
                 self.context.folderFrame(folderID).map { Move.landed(frame, justLeftOf: $0) } ?? false
@@ -132,9 +141,10 @@ final class Opener {
         if let error = await press(
             element, name: name, pid: entry.owner.pid, icon: entry.id, since: before, screen: screen)
         {
-            Self.log.error("pressing \(name, privacy: .public) failed: \(error.rawValue, privacy: .public)")
+            fail(entry, "pressing failed: \(error.rawValue)")
         } else {
             Self.log.notice("pressed \(name, privacy: .public)")
+            ui?.handOff()
             var watch = OpenWatch(started: Date())
             var seen = false
             while true {
@@ -161,10 +171,8 @@ final class Opener {
         }
     }
 
-    private let copies = MenuCopyPresenter()
-
-    /// For an icon too far down a folder to move: reads its menu unseen, shows a copy under the
-    /// folder, and presses the chosen item in the real menu, opened unseen again. Returns false when
+    /// For an icon too far down a folder to move: reads its menu unseen, turns the dropdown into a
+    /// copy of it, and presses the chosen item in the real menu, opened unseen again. Returns false when
     /// the icon has no menu that can be copied, having closed whatever it showed instead.
     private func openCopy(
         of entry: FolderEntry, element: MenuBarExtras.Element, under folderID: String, screen: NSScreen
@@ -172,7 +180,7 @@ final class Opener {
         let name = entry.name
         let pid = entry.owner.pid
         let before = MenuBar.onScreenWindowIDs()
-        guard let folder = context.folderItem(folderID) else { return false }
+        guard let ui else { return false }
         guard let nodes = await MenuBarExtras.readMenu(element), MenuCopy.copyable(nodes) else {
             await MenuBarExtras.close(element) { !MenuBar.opened(since: before, by: pid).isEmpty }
             return false
@@ -180,13 +188,17 @@ final class Opener {
         Self.log.notice(
             "read \(nodes.count, privacy: .public) items from \(name, privacy: .public)'s menu; showing them under the folder"
         )
-        let icon = NSRunningApplication(processIdentifier: pid)?.icon
-        icon?.size = NSSize(width: 16, height: 16)
-        guard let path = copies.show(nodes, titled: name, icon: icon, on: folder) else {
+        guard let path = await ui.showCopy(nodes, for: entry.id) else {
             Self.log.notice("\(name, privacy: .public)'s copied menu closed with nothing chosen")
             return true
         }
+        ui.opening(entry.id)
         let found = await MenuBarExtras.choose(path, in: element)
+        if found {
+            ui.handOff()
+        } else {
+            ui.failed(entry.id, "Couldn't find \(path.steps.last?.title ?? "it") in \(name)")
+        }
         Self.log.notice(
             "\(name, privacy: .public): \(found ? "chose" : "couldn't find", privacy: .public) \(path.steps.map(\.title).joined(separator: " › "), privacy: .public) in the real menu"
         )

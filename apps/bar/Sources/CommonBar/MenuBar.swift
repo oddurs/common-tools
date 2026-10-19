@@ -178,7 +178,8 @@ enum MenuBarExtras {
         return children(of: element).map { child in
             AccessibleItem(
                 pid: app.pid, bundleID: app.bundleID, appName: app.name, frame: frame(of: child),
-                title: string(child, kAXTitleAttribute), label: string(child, kAXDescriptionAttribute))
+                title: string(child, kAXTitleAttribute), label: string(child, kAXDescriptionAttribute),
+                identifier: string(child, kAXIdentifierAttribute))
         }
     }
 

@@ -17,8 +17,13 @@ public final class MenuPanelHost {
     public private(set) var isShown = false
     /// After the panel closes, however it closed.
     public var onClose: (() -> Void)?
+    /// While true, a click outside doesn't close the panel: for clicks the app itself plays, such as
+    /// moving a status item, which shouldn't count as the user clicking away.
+    public var holdsOpen = false
 
+    /// Kept between opens, so opening again only orders in a window already built and laid out.
     private var panel: KeyPanel?
+    private var controller: NSHostingController<AnyView>?
     private weak var button: NSStatusBarButton?
     private var monitors: [Any] = []
     private var resizing: NSObjectProtocol?
@@ -33,14 +38,57 @@ public final class MenuPanelHost {
 
     public func show<Content: View>(below button: NSStatusBarButton, @ViewBuilder content: () -> Content) {
         close()
-        guard let window = button.window, let screen = window.screen ?? NSScreen.main else { return }
-        let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
-        let visible = screen.visibleFrame
-        let controller = NSHostingController(
-            rootView: MenuPanelSurface(content: content)
-                .environment(\.menuPanelMaxHeight, visible.height - Self.gap - Tokens.Space.xs))
-        controller.sizingOptions = .preferredContentSize
+        guard let screen = button.window?.screen ?? NSScreen.main else { return }
+        build(content: content, maxHeight: screen.visibleFrame.height)
+        present(below: button)
+    }
 
+    /// Builds the panel and lays it out without showing it, so the first `reopen` or `show` only
+    /// orders in a window that is ready. For a panel whose view never changes, only its model.
+    public func prepare<Content: View>(@ViewBuilder content: () -> Content) {
+        guard panel == nil else { return }
+        build(content: content, maxHeight: NSScreen.main?.visibleFrame.height ?? 800)
+        controller?.view.layoutSubtreeIfNeeded()
+        // Shown once, invisibly and letting clicks through, on the screen it will open on, so the window
+        // server makes its backing and the view settles at that screen's scale now, not on the first open.
+        if let panel, let screen = NSScreen.main {
+            panel.alphaValue = 0
+            panel.ignoresMouseEvents = true
+            panel.setFrameTopLeftPoint(
+                NSPoint(x: screen.visibleFrame.maxX - panel.frame.width, y: screen.visibleFrame.maxY))
+            panel.orderFrontRegardless()
+            panel.displayIfNeeded()
+            panel.orderOut(nil)
+            panel.ignoresMouseEvents = false
+        }
+    }
+
+    /// Lays the hidden panel's view out now, after its model changed, so the next open doesn't.
+    public func settle() {
+        guard !isShown else { return }
+        controller?.view.layoutSubtreeIfNeeded()
+    }
+
+    /// Shows the panel built last, with the view it already has, which is the quickest way back for a
+    /// panel driven by a model: nothing is rebuilt. False when there is nothing built yet.
+    @discardableResult
+    public func reopen(below button: NSStatusBarButton) -> Bool {
+        guard panel != nil else { return false }
+        close()
+        present(below: button)
+        return true
+    }
+
+    private func build<Content: View>(@ViewBuilder content: () -> Content, maxHeight: CGFloat) {
+        let root = AnyView(
+            MenuPanelSurface(content: content).environment(\.menuPanelMaxHeight, maxHeight - Self.gap - Tokens.Space.xs)
+        )
+        if let controller {
+            controller.rootView = root
+            return
+        }
+        let controller = NSHostingController(rootView: root)
+        controller.sizingOptions = .preferredContentSize
         let panel = KeyPanel(
             contentRect: NSRect(origin: .zero, size: controller.view.fittingSize),
             styleMask: [.borderless, .nonactivatingPanel], backing: .buffered, defer: false)
@@ -55,20 +103,33 @@ public final class MenuPanelHost {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .transient, .ignoresCycle]
         panel.onCancel = { [weak self] in self?.close() }
         self.panel = panel
-        self.button = button
+        self.controller = controller
+        resizing = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResizeNotification, object: panel, queue: .main
+        ) { [weak self] _ in MainActor.assumeIsolated { self?.place() } }
+    }
 
+    private func present(below button: NSStatusBarButton) {
+        guard let panel, let window = button.window, let screen = window.screen ?? NSScreen.main else { return }
+        self.button = button
+        let buttonFrame = window.convertToScreen(button.convert(button.bounds, to: nil))
+        let visible = screen.visibleFrame
         // Under the item, its left edge with the item's as a menu's is, and never past the screen's edge.
-        let width = controller.view.fittingSize.width
+        let width = panel.frame.width
         anchor = NSPoint(
             x: min(max(buttonFrame.minX, visible.minX + Tokens.Space.xs), visible.maxX - width - Tokens.Space.xs),
             y: buttonFrame.minY - Self.gap)
         place()
-        resizing = NotificationCenter.default.addObserver(
-            forName: NSWindow.didResizeNotification, object: panel, queue: .main
-        ) { [weak self] _ in MainActor.assumeIsolated { self?.place() } }
 
         panel.alphaValue = 0
-        panel.makeKeyAndOrderFront(nil)
+        panel.orderFrontRegardless()
+        // Key on the next turn: ordering in is what shows it; taking the keyboard can follow a frame later.
+        DispatchQueue.main.async { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.isShown, let panel = self.panel else { return }
+                panel.makeKey()
+            }
+        }
         Tokens.Motion.animate(Tokens.Motion.fast, changes: { panel.animator().alphaValue = 1 })
         button.highlight(true)
         isShown = true
@@ -76,15 +137,13 @@ public final class MenuPanelHost {
     }
 
     public func close() {
-        guard let panel else { return }
+        guard isShown, let panel else { return }
         for monitor in monitors { NSEvent.removeMonitor(monitor) }
         monitors = []
-        if let resizing { NotificationCenter.default.removeObserver(resizing) }
-        resizing = nil
         panel.orderOut(nil)
-        self.panel = nil
         button?.highlight(false)
         isShown = false
+        holdsOpen = false
         onClose?()
     }
 
@@ -102,7 +161,13 @@ public final class MenuPanelHost {
     private func watchForClicksOutside() {
         let clicks: NSEvent.EventTypeMask = [.leftMouseDown, .rightMouseDown, .otherMouseDown]
         if let global = NSEvent.addGlobalMonitorForEvents(
-            matching: clicks, handler: { [weak self] _ in MainActor.assumeIsolated { self?.close() } })
+            matching: clicks,
+            handler: { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, !self.holdsOpen else { return }
+                    self.close()
+                }
+            })
         {
             monitors.append(global)
         }
@@ -110,7 +175,7 @@ public final class MenuPanelHost {
             matching: clicks,
             handler: { [weak self] event in
                 MainActor.assumeIsolated {
-                    guard let self, let panel = self.panel else { return }
+                    guard let self, let panel = self.panel, !self.holdsOpen else { return }
                     if event.window !== panel, event.window !== self.button?.window { self.close() }
                 }
                 return event
