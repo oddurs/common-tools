@@ -56,7 +56,7 @@
 										<span>{word.fixed.flag}</span>
 										<b>{word.fixed.replacement}</b>
 										<s>{word.fixed.original}</s>
-										<kbd>⌘Z</kbd>
+										<span class="hint">⌘Z</span>
 									</span>
 								{/if}</span
 							>{#if front && index === frame.windows[id].length - 1}<span
@@ -153,13 +153,13 @@
 	:global(.dark) .bubble s {
 		color: rgba(235, 235, 245, 0.6);
 	}
-	.bubble kbd {
+	.bubble .hint {
 		font:
 			500 18px/1 -apple-system,
 			sans-serif;
 		color: rgba(60, 60, 67, 0.3);
 	}
-	:global(.dark) .bubble kbd {
+	:global(.dark) .bubble .hint {
 		color: rgba(235, 235, 245, 0.3);
 	}
 </style>

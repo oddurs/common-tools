@@ -185,6 +185,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0067`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0067-every-app-on-the-home-page-in-apple-s-product-page-style.md) Every app on the home page, in Apple's product-page style <sup>feature · p2</sup>
 - [x] [`0068`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0068-keep-the-network-card-s-title-whole-when-its-rates-are-wide.md) Keep the Network card's title whole when its rates are wide <sup>bug · p2</sup>
 - [x] [`0077`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0077-polish-the-site-s-spacing-wrapping-and-type-scale.md) Polish the site's spacing, wrapping and type scale <sup>feature · p2</sup>
+- [x] [`0080`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0080-common-keys-product-page-features.md) Common Keys' product page features <sup>feature · p2</sup>
 - [x] [`0081`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0081-common-shot-product-page-features.md) Common Shot product page features <sup>feature · p2</sup>
 - [x] [`0082`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0082-give-common-color-s-page-three-features-with-stills-from-its-film.md) Give Common Color's page three features with stills from its film <sup>feature · p2</sup>
 - [x] [`0083`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0083-common-battery-s-page-shows-three-features-from-its-film.md) Common Battery's page shows three features from its film <sup>feature · p2</sup>
