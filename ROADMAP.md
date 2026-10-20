@@ -150,7 +150,18 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`##########` 100% · 14 of 14 done
+`#######···` 64% · 14 of 22 done
+
+### backlog
+
+- [ ] [`0069`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0069-give-the-bluetooth-row-its-icon-bluetooth-is-not-a-public-sf-symbol.md) Give the Bluetooth row its icon: "bluetooth" is not a public SF Symbol <sup>bug · p1</sup>
+- [ ] [`0070`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0070-name-common-web-oranges-orange-not-red.md) Name common web oranges orange, not red <sup>bug · p2</sup>
+- [ ] [`0071`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0071-explain-a-full-charge-above-the-design-capacity-on-a-new-battery.md) Explain a full charge above the design capacity on a new battery <sup>bug · p3</sup>
+- [ ] [`0072`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0072-give-folder-rows-a-subtitle-better-than-a-bare.md) Give folder rows a subtitle better than a bare "~" <sup>bug · p3</sup>
+- [ ] [`0073`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0073-launch-without-a-bundle-without-crashing-on-commontool-thisapp.md) Launch without a bundle without crashing on CommonTool.thisApp <sup>bug · p3</sup>
+- [ ] [`0074`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0074-correct-the-status-item-render-command-in-apps-keys-claude-md.md) Correct the status item render command in apps/keys/CLAUDE.md <sup>bug · p3</sup>
+- [ ] [`0075`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0075-correct-the-snapshot-binary-path-in-apps-stats-claude-md-and-apps-battery-claude-md.md) Correct the snapshot binary path in apps/stats/CLAUDE.md and apps/battery/CLAUDE.md <sup>bug · p3</sup>
+- [ ] [`0076`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0076-let-the-pr-assets-orphan-branch-be-pushed-past-the-pre-push-hook.md) Let the pr-assets orphan branch be pushed past the pre-push hook <sup>bug · p3</sup>
 
 ### done
 
