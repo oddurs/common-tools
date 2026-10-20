@@ -18,8 +18,10 @@ export const page: Page = {
 		{
 			title: 'Yours to arrange.',
 			text: 'Show each metric as a value, a graph, or a gauge, whichever suits it, or hide it. Drag to reorder, and pick a density and update rate.',
-			at: 'graphs',
-			crop: { x: 518, y: 0, width: 608, height: 380 }
+			// The bar three ways, stacked: values, graphs, gauges.
+			at: 'values',
+			stack: ['graphs', 'gauges'],
+			crop: { x: 552, y: 0, width: 544, height: 113 }
 		}
 	]
 };

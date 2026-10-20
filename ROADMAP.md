@@ -150,7 +150,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`########··` 73% · 24 of 33 done
+`########··` 76% · 25 of 33 done
 
 ### backlog
 
@@ -162,10 +162,6 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [ ] [`0074`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0074-correct-the-status-item-render-command-in-apps-keys-claude-md.md) Correct the status item render command in apps/keys/CLAUDE.md <sup>bug · p3</sup>
 - [ ] [`0075`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0075-correct-the-snapshot-binary-path-in-apps-stats-claude-md-and-apps-battery-claude-md.md) Correct the snapshot binary path in apps/stats/CLAUDE.md and apps/battery/CLAUDE.md <sup>bug · p3</sup>
 - [ ] [`0076`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0076-let-the-pr-assets-orphan-branch-be-pushed-past-the-pre-push-hook.md) Let the pr-assets orphan branch be pushed past the pre-push hook <sup>bug · p3</sup>
-
-### in progress
-
-- [ ] [`0078`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0078-give-every-app-a-lean-apple-style-page-with-feature-stills.md) Give every app a lean, Apple-style page with feature stills <sup>feature · p1</sup>
 
 ### done
 
@@ -185,6 +181,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0067`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0067-every-app-on-the-home-page-in-apple-s-product-page-style.md) Every app on the home page, in Apple's product-page style <sup>feature · p2</sup>
 - [x] [`0068`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0068-keep-the-network-card-s-title-whole-when-its-rates-are-wide.md) Keep the Network card's title whole when its rates are wide <sup>bug · p2</sup>
 - [x] [`0077`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0077-polish-the-site-s-spacing-wrapping-and-type-scale.md) Polish the site's spacing, wrapping and type scale <sup>feature · p2</sup>
+- [x] [`0078`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0078-give-every-app-a-lean-apple-style-page-with-feature-stills.md) Give every app a lean, Apple-style page with feature stills <sup>feature · p1</sup>
 - [x] [`0079`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0079-common-stats-product-page-features.md) Common Stats product page features <sup>feature · p2</sup>
 - [x] [`0080`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0080-common-keys-product-page-features.md) Common Keys' product page features <sup>feature · p2</sup>
 - [x] [`0081`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0081-common-shot-product-page-features.md) Common Shot product page features <sup>feature · p2</sup>
