@@ -26,6 +26,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 - Settings no longer opens by itself on first launch.
 - When macOS is still waiting for you to allow Common Stats under System Settings › General › Login Items, Settings says so again under **Open at login**.
+- The Network card keeps its title whole when the rates beside it are wide; the interface's name gives way instead of "Network" reading "Netw…".
 - On a Mac with an M5 chip, the CPU card groups its cores under the names macOS gives them, Super and Performance, instead of showing them in one ungrouped row. Every Mac now gets its group names from macOS, so a chip with a new kind of core reads right too.
 
 
