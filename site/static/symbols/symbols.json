@@ -32,8 +32,8 @@
     "width" : 17
   },
   "camera.viewfinder" : {
-    "height" : 17,
-    "width" : 19
+    "height" : 16,
+    "width" : 17
   },
   "checkmark" : {
     "height" : 12,
@@ -102,8 +102,8 @@
     "width" : 21
   },
   "eyedropper" : {
-    "height" : 16,
-    "width" : 17
+    "height" : 17,
+    "width" : 18
   },
   "face.smiling" : {
     "height" : 16,
@@ -165,6 +165,10 @@
     "height" : 16,
     "width" : 18
   },
+  "moon" : {
+    "height" : 16,
+    "width" : 16
+  },
   "music.note" : {
     "height" : 16,
     "width" : 12
@@ -188,6 +192,10 @@
   "photo.badge.plus" : {
     "height" : 32,
     "width" : 41
+  },
+  "play.circle" : {
+    "height" : 16,
+    "width" : 16
   },
   "plus" : {
     "height" : 13,
