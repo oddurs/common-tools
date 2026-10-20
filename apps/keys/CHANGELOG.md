@@ -27,6 +27,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Fixed
 
+- Names typed correctly, such as "David" or "Sarah", are left alone on macOS 26. Its English dictionary accepts them but lists nothing when asked to complete them, so they counted as unknown words, and as habits shifted the weights one could be "fixed" into another script.
 - Welcome answers clicks: it is now a plain titled window, built like Settings. It shows once for the whole Common Tools family, from whichever app opens first, and never on top of another app's; a later app shows it only for a permission it is missing.
 - No system Accessibility prompt at launch: Welcome asks instead. **Reset and Ask Again…** in the menu clears a switch left by an earlier copy, which shows on in System Settings but doesn't apply, and asks again.
 - The flag in the menu bar sits level with the other menu bar icons instead of slightly high. With no layout to show, it shows a keyboard symbol that follows the menu bar's colour.

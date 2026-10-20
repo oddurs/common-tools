@@ -10,6 +10,8 @@ final class FakeSpellService: SpellService {
     var words: Set<String>
     var completes: Bool
     var lenient: Bool
+    /// Words it accepts but never lists among completions, as macOS 26's English does with names.
+    var unlisted: Set<String> = []
     /// How long each completion takes, for a spell service under load.
     var delay: Duration = .zero
     var languages: [String] { ["ru"] }
@@ -27,7 +29,7 @@ final class FakeSpellService: SpellService {
         if delay > .zero { Thread.sleep(forTimeInterval: Double(delay.components.attoseconds) / 1e18) }
         guard completes else { return [] }
         // A full list for any start, as a working dictionary gives.
-        return words.filter { $0.hasPrefix(prefix) } + (0..<20).map { "\(prefix)\($0)" }
+        return words.filter { $0.hasPrefix(prefix) && !unlisted.contains($0) } + (0..<20).map { "\(prefix)\($0)" }
     }
 }
 
@@ -39,6 +41,33 @@ struct SpellServiceTests {
         let lexicon = SystemLexicon(spelling: FakeSpellService(words: russian, completes: true))
         #expect(lexicon.isWord("привет", language: "ru") == true)
         #expect(lexicon.startsWord("при", language: "ru") == true)
+    }
+
+    /// macOS 26's English accepts "David" but lists nothing for it. A name a strict dictionary
+    /// accepts only capitalised is a word, not evidence for converting it.
+    @Test func aNameTheDictionaryListsNothingForIsStillAWord() {
+        let spelling = FakeSpellService(words: russian.union(["Давид"]), completes: true)
+        spelling.unlisted = ["Давид"]
+        let lexicon = SystemLexicon(spelling: spelling)
+        #expect(lexicon.isWord("Давид", language: "ru") == true)
+        #expect(lexicon.isWord("давид", language: "ru") == false)
+    }
+
+    /// Only a capitalised word refused in lower case counts as a name; anything else unlisted doesn't.
+    @Test func anUnlistedWordThatIsNoNameIsNotAWord() {
+        let spelling = FakeSpellService(words: russian.union(["Пока", "ПРИВЕТ"]), completes: true)
+        spelling.unlisted = ["Пока", "ПРИВЕТ"]
+        let lexicon = SystemLexicon(spelling: spelling)
+        #expect(lexicon.isWord("Пока", language: "ru") == false)
+        #expect(lexicon.isWord("ПРИВЕТ", language: "ru") == false)
+    }
+
+    /// A dictionary that passes anything gets no such allowance: there, only listing counts.
+    @Test func aLenientDictionaryNeedsTheWordListed() {
+        let spelling = FakeSpellService(words: russian.union(["Давид"]), completes: true, lenient: true)
+        spelling.unlisted = ["Давид"]
+        let lexicon = SystemLexicon(spelling: spelling)
+        #expect(lexicon.isWord("Давид", language: "ru") == false)
     }
 
     @Test func withoutCompletionsTheSpellCheckDecides() {
