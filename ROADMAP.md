@@ -150,10 +150,11 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`##########` 100% · 9 of 9 done
+`##########` 100% · 10 of 10 done
 
 ### done
 
+- [x] [`0054`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0054-demo-film-for-common-command.md) Demo film for Common Command <sup>feature · p2</sup>
 - [x] [`0056`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0056-demo-film-for-common-color.md) Demo film for Common Color <sup>feature · p2</sup>
 - [x] [`0059`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0059-a-demo-film-for-common-battery.md) A demo film for Common Battery <sup>feature · p2</sup>
 - [x] [`0060`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0060-polish-the-common-keys-demo-film-for-release.md) Polish the Common Keys demo film for release <sup>feature · p2</sup>
