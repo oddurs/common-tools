@@ -20,8 +20,14 @@ export const systemItems = [
 export const extrasRight =
 	screen.width - clock.margin - clock.width - systemItems.reduce((sum, item) => sum + item.width, 0);
 
-/** A status item's slot: the symbol plus the padding macOS puts around it. */
-export const statusSlot = 32;
+/**
+ * A status item's slot: a menu bar symbol plus the padding macOS puts either side of it, measured
+ * from a real menu bar (about 35 points from one symbol's centre to the next).
+ */
+export const statusSlot = 34;
+
+/** The padding either side of a status item whose content isn't a single symbol. */
+export const statusPadding = 9;
 
 /** The output frame the camera looks through. */
 export const viewport = { width: 1280, height: 800 };

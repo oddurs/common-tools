@@ -142,6 +142,16 @@ export const upcoming: Upcoming[] = [
 	}
 ];
 
+/** Any app in the family, released or on its way. */
+export type AppSlug = Slug | Upcoming['slug'];
+
+/** An app's name and icon, released or on its way: what a film's closing card shows. */
+export function app(slug: AppSlug): { name: string; icon: `${AppSlug}/icon.png` } {
+	const found = [...tools, ...upcoming].find((t) => t.slug === slug);
+	if (!found) throw new Error(`no app '${slug}'`);
+	return found;
+}
+
 /** Every release of one app, on GitHub. */
 export const releasesOf = (tool: { slug: string }) => `${github}/releases?q=${tool.slug}-v`;
 

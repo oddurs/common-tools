@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Film from '../film/Film.svelte';
+	import StatusItem from '../mac/StatusItem.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import Window from '../mac/Window.svelte';
 	import { chosen, frameAt, metrics, stage } from './demo';
@@ -20,11 +21,10 @@
 				style:opacity={icon.opacity}><Symbol name={icon.symbol} /></span
 			>
 		{/each}
-		<span
-			class="icon"
-			class:open={frame.folder.open}
-			style:left="{frame.folder.x}px"
-			style:width="{metrics.folder}px"><Symbol name="ellipsis.circle" /><b class="name">More</b></span
+		<span class="icon" style:left="{frame.folder.x}px" style:width="{metrics.folder}px"
+			><StatusItem open={frame.folder.open} width={metrics.folder}
+				><Symbol name="ellipsis.circle" /><b class="name">More</b></StatusItem
+			></span
 		>
 	{/snippet}
 
@@ -78,16 +78,11 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		border-radius: 8px;
 	}
 	/* The folder's name beside its symbol, as the menu bar sets a status item's title. */
 	.name {
 		margin-left: 5px;
 		font-weight: 500;
-	}
-	/* macOS 26 marks an open menu bar extra with a soft capsule. */
-	.icon.open {
-		background: color-mix(in srgb, currentColor 14%, transparent);
 	}
 
 	/* A menu in macOS 26: Liquid Glass, larger corners. */

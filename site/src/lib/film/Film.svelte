@@ -7,7 +7,7 @@
 	import Overlay from '../mac/Overlay.svelte';
 	import Screen from '../mac/Screen.svelte';
 	import Stage from '../mac/Stage.svelte';
-	import { tool, type Tool } from '../tools';
+	import { app as family, type AppSlug } from '../tools';
 	import type { BaseFrame } from './director';
 
 	let {
@@ -22,7 +22,7 @@
 	}: {
 		frame: BaseFrame;
 		dark: boolean;
-		slug: Tool['slug'];
+		slug: AppSlug;
 		/** The frontmost app, whose name and menus fill the left of the menu bar. */
 		app: string;
 		menus: string[];
@@ -44,5 +44,5 @@
 			{/if}
 		{/snippet}
 	</Screen>
-	<Overlay caption={frame.caption} keys={frame.keys} end={frame.end} tool={tool(slug)} />
+	<Overlay caption={frame.caption} keys={frame.keys} end={frame.end} app={family(slug)} />
 </Stage>
