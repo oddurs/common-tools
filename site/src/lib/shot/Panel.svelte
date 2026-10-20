@@ -8,7 +8,13 @@
 	import { selection } from './demo';
 	import { subtitle } from './size';
 
-	let { x, y, opacity, hover }: { x: number; y: number; opacity: number; hover: number | null } = $props();
+	let {
+		x,
+		y,
+		opacity,
+		hover,
+		dark
+	}: { x: number; y: number; opacity: number; hover: number | null; dark: boolean } = $props();
 
 	type Kind = 'code' | 'terminal' | 'chat' | 'screen' | 'log';
 	type Tile = { kind: Kind; when: string; app: 'editor' | 'terminal' | 'chat'; size: [number, number] };
@@ -50,7 +56,12 @@
 					<figure class="tile" class:hover={hover === offsets[g] + i}>
 						<div class="media {tile.kind}">
 							{#if tile.kind === 'code'}
-								<Picture rect={selection} width={codeThumb.width} height={codeThumb.height} />
+								<Picture
+									{dark}
+									rect={selection}
+									width={codeThumb.width}
+									height={codeThumb.height}
+								/>
 							{:else if tile.kind === 'terminal' || tile.kind === 'log'}
 								<div class="term">
 									{#each tile.kind === 'log' ? [9, 7, 12] : [14, 9, 11, 6, 15, 4] as w, l (l)}

@@ -44,7 +44,7 @@ describe('Common Shot demo', () => {
 		expect(onEditor.pill!.runs).toEqual(pill(editor));
 	});
 	it('shows the drag’s size and token cost, the loupe clear of the pill, and no hint', () => {
-		const o = at(shot.film.poster).overlay!;
+		const o = at(m.pick - 100).overlay!;
 		expect(o.hole).toEqual(shot.selection);
 		expect(o.pill!.runs).toEqual(pill(shot.selection));
 		expect(o.hint).toBe(false);
@@ -55,6 +55,12 @@ describe('Common Shot demo', () => {
 			o.loupe.y >= o.pill!.top + 24 ||
 			o.loupe.y + o.loupe.height <= o.pill!.top;
 		expect(clear).toBe(true);
+	});
+	it('leads with the sent message: the code in the chat, the field empty', () => {
+		const poster = at(shot.film.poster);
+		expect(poster.sent).toBe(1);
+		expect(poster.attached).toBe(0);
+		expect(poster.overlay).toBeNull();
 	});
 	it('closes the overlay as you let go, and the shot flies into the preview', () => {
 		const lettingGo = at(m.pick + 100);

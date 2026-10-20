@@ -20,7 +20,8 @@ export const pane = {
 	width: editor.width - sidebarWidth,
 	height: editor.height - titleBar
 };
-export const code = { left: 56, top: 14, line: 20, size: 12, advance: 7.2 };
+/** The advance is what Chrome measures for 12-point `ui-monospace` here, so the loupe's glyphs line up. */
+export const code = { left: 56, top: 14, line: 20, size: 12, advance: 7.2246875, baseline: 13.2 };
 
 /** ShotKit's own Geometry.selection, as it reads in the editor. */
 export const lines = [
@@ -43,10 +44,20 @@ export const lines = [
 
 const lineTop = (i: number) => pane.y + code.top + i * code.line;
 
-/** The drag: from just above and left of `selection(`, to just past the end of the function. */
-export const dragFrom = { x: pane.x + code.left - 12, y: lineTop(5) - 2 };
-const longest = Math.max(...lines.slice(5, 14).map((line) => line.length));
-export const dragTo = { x: pane.x + code.left + longest * code.advance + 12, y: lineTop(14) + 2 };
+/**
+ * The drag: the two lines that answer the question, where the rectangle is clipped to the screen.
+ * It ends tight on the last glyph, so the loupe at the corner shows the pixels of the `d`.
+ */
+const answer = { first: 11, last: 12, indent: 8 };
+const longest = Math.max(...lines.slice(answer.first, answer.last + 1).map((line) => line.length));
+export const dragFrom = {
+	x: pane.x + code.left + answer.indent * code.advance - 3,
+	y: lineTop(answer.first) + 2
+};
+export const dragTo = {
+	x: pane.x + code.left + longest * code.advance + 1.5,
+	y: lineTop(answer.last) + code.baseline + 3.5
+};
 
 export const composer = {
 	x: chat.x + 20,
@@ -69,9 +80,10 @@ export function thumbnailSize(rect: Rect) {
 }
 
 /** The preview card: 12-point insets, the thumbnail, 8 points, the caption; 24 points from the corner. */
-export function toastLayout(rect: Rect) {
+export function toastLayout(rect: Rect, label: string) {
 	const thumb = thumbnailSize(rect);
-	const labelWidth = 200;
+	// The caption at 11-point medium, about 5.9 points a character.
+	const labelWidth = Math.ceil(label.length * 5.9);
 	const width = Math.max(thumb.width, labelWidth) + 24;
 	const height = 12 + thumb.height + 8 + 14 + 12;
 	const x = screen.width - 24 - width;
@@ -82,33 +94,127 @@ export function toastLayout(rect: Rect) {
 	};
 }
 
-// The loupe: the frozen screen, one device pixel at a time. Text is drawn as ink in each character's
-// cell, the way a magnified glyph breaks into pixels; everything else is its flat colour.
+// The editor's colours, light and dark (Xcode's defaults). Code.svelte paints with them and the loupe
+// draws its text in them, so the two agree.
 
-type RGB = [number, number, number];
-type Palette = {
-	wallpaper: RGB;
-	window: RGB;
-	rule: RGB;
-	sidebar: RGB;
-	code: RGB;
-	ink: RGB;
-	comment: RGB;
-	keyword: RGB;
-	field: RGB;
-	fieldEdge: RGB;
+export type Kind = 'plain' | 'keyword' | 'type' | 'number' | 'comment';
+export const codeColours = {
+	light: {
+		background: '#ffffff',
+		gutter: '#a3a3aa',
+		plain: '#1d1d1f',
+		keyword: '#9b2393',
+		type: '#3900a0',
+		number: '#1c00cf',
+		comment: '#5d6c79'
+	},
+	dark: {
+		background: '#1f1f24',
+		gutter: '#66666e',
+		plain: '#dfdfe0',
+		keyword: '#fc5fa3',
+		type: '#d0a8ff',
+		number: '#d0bf69',
+		comment: '#7f8c98'
+	}
+} as const;
+
+const keywords = new Set(['public', 'static', 'let', 'func', 'enum', 'return']);
+const types = new Set(['CGFloat', 'CGPoint', 'CGRect', 'Geometry']);
+
+/** A line of Swift as the editor colours it. */
+export function tokenize(line: string): { text: string; kind: Kind }[] {
+	const comment = line.indexOf('///');
+	if (comment >= 0)
+		return [
+			{ text: line.slice(0, comment), kind: 'plain' },
+			{ text: line.slice(comment), kind: 'comment' }
+		];
+	return line.split(/(\b\w+\b)/).map((text) => ({
+		text,
+		kind: keywords.has(text)
+			? 'keyword'
+			: types.has(text)
+				? 'type'
+				: /^\d+$/.test(text)
+					? 'number'
+					: 'plain'
+	}));
+}
+
+export const codeFont = (bold = false) =>
+	`${bold ? '600 ' : ''}${code.size}px ui-monospace, 'SF Mono', Menlo, monospace`;
+const chatFont = (size: number, bold = false) =>
+	`${bold ? '600 ' : ''}${size}px -apple-system, BlinkMacSystemFont, sans-serif`;
+
+/** A line of text on the frozen screen: pieces drawn one after another from `x`. */
+export type TextRun = {
+	x: number;
+	baseline: number;
+	pieces: { text: string; font: string; colour: string; gap?: number }[];
+	/** Right-aligned at `x`, as the gutter's numbers are. */
+	right?: boolean;
 };
 
-const palettes: Record<'light' | 'dark', Palette> = {
+/** Every line of text the overlay freezes, in screen points, for the loupe to draw. */
+export function textRuns(dark: boolean): TextRun[] {
+	const c = codeColours[dark ? 'dark' : 'light'];
+	const ink = dark ? '#f2f2f7' : '#1d1d1f';
+	const muted = dark ? '#8e8e93' : '#86868b';
+	const runs: TextRun[] = lines.flatMap((line, i) => [
+		{
+			x: pane.x + 36,
+			baseline: lineTop(i) + code.baseline,
+			right: true,
+			pieces: [{ text: String(i + 1), font: codeFont(), colour: c.gutter }]
+		},
+		{
+			x: pane.x + code.left,
+			baseline: lineTop(i) + code.baseline,
+			pieces: tokenize(line).map(({ text, kind }) => ({
+				text,
+				font: codeFont(kind === 'keyword'),
+				colour: c[kind]
+			}))
+		}
+	]);
+	runs.push({
+		x: composer.x + 14,
+		baseline: composer.y + 28.6,
+		pieces: [{ text: typed, font: chatFont(13), colour: ink }]
+	});
+	// Bottom up from the field: each message a name line and a text line, 14 points apart.
+	[...thread].reverse().forEach((message, i) => {
+		const top = composer.y - 16 - 40 - i * 54;
+		runs.push(
+			{
+				x: chat.x + 64,
+				baseline: top + 14.6,
+				pieces: [
+					{ text: message.name, font: chatFont(13, true), colour: ink },
+					{ text: message.time, font: chatFont(11), colour: muted, gap: 8 }
+				]
+			},
+			{
+				x: chat.x + 64,
+				baseline: top + 34.6,
+				pieces: [{ text: message.text, font: chatFont(13), colour: ink }]
+			}
+		);
+	});
+	return runs;
+}
+
+// The loupe's backdrop: the frozen screen's flat colours, one device pixel at a time, before text.
+
+type RGB = [number, number, number];
+const palettes: Record<'light' | 'dark', Record<string, RGB>> = {
 	light: {
 		wallpaper: [222, 220, 244],
 		window: [255, 255, 255],
 		rule: [235, 235, 235],
 		sidebar: [244, 244, 246],
 		code: [255, 255, 255],
-		ink: [29, 29, 31],
-		comment: [93, 108, 121],
-		keyword: [155, 35, 147],
 		field: [255, 255, 255],
 		fieldEdge: [214, 214, 218]
 	},
@@ -118,86 +224,16 @@ const palettes: Record<'light' | 'dark', Palette> = {
 		rule: [44, 44, 46],
 		sidebar: [38, 38, 40],
 		code: [31, 31, 36],
-		ink: [223, 223, 224],
-		comment: [127, 140, 152],
-		keyword: [252, 95, 163],
 		field: [40, 40, 43],
 		fieldEdge: [72, 72, 76]
 	}
 };
 
-type Run = { x: number; baseline: number; size: number; advance: number; text: string };
-
-/** How much of the device pixel [p, p + 1) the stroke [from, to) covers, all in device pixels. */
-const cover = (p: number, from: number, to: number) => Math.max(0, Math.min(p + 1, to) - Math.max(p, from));
-
-/**
- * Ink in device pixel (px, py): each character drawn as a few strokes, a stem or two and a bar or
- * two chosen by its code, about a point thick, so magnified text breaks into pixels the way a glyph
- * does without spelling anything.
- */
-function inkAt(runs: Run[], px: number, py: number): number {
-	const x = px / 2;
-	const y = py / 2;
-	for (const run of runs) {
-		const index = Math.floor((x - run.x) / run.advance);
-		if (index < 0 || index >= run.text.length || run.text[index] === ' ') continue;
-		const char = run.text[index];
-		const code = char.charCodeAt(0);
-		const tall = /[A-Z0-9(){}`/]/.test(char);
-		const height = run.size * (tall ? 0.72 : 0.52);
-		const top = run.baseline - height;
-		if (y < top - 0.5 || y > run.baseline + 0.5) continue;
-		const left = run.x + index * run.advance + run.advance * 0.18;
-		const width = run.advance * 0.64;
-		const stroke = run.size / 12;
-		let ink = 0;
-		const stem = (at: number) => {
-			const from = (left + width * at) * 2;
-			ink = Math.max(ink, cover(px, from, from + stroke * 2) * cover(py, top * 2, run.baseline * 2));
-		};
-		const bar = (at: number) => {
-			const from = (top + (height - stroke) * at) * 2;
-			ink = Math.max(ink, cover(py, from, from + stroke * 2) * cover(px, left * 2, (left + width) * 2));
-		};
-		if (code % 3 !== 0) stem(0);
-		if (code % 2 === 0) stem(0.84);
-		if (code % 5 < 3) bar(0);
-		if (code % 7 < 3) bar(0.5);
-		if (code % 4 < 2) bar(1);
-		if (code % 6 === 1) stem(0.42);
-		return ink;
-	}
-	return 0;
-}
-
-const codeRuns: Run[] = lines.map((text, i) => ({
-	x: pane.x + code.left,
-	baseline: lineTop(i) + 14,
-	size: code.size,
-	advance: code.advance,
-	text
-}));
-const chatRuns: Run[] = [
-	{ x: composer.x + 14, baseline: composer.y + 29, size: 13, advance: 6.9, text: typed },
-	// Bottom up from the field: each message a name line and a text line, 14 points apart.
-	...[...thread].reverse().flatMap((message, i) => [
-		{ x: chat.x + 64, baseline: composer.y - 41 - i * 54, size: 13, advance: 7.4, text: message.name },
-		{ x: chat.x + 64, baseline: composer.y - 21 - i * 54, size: 13, advance: 6.6, text: message.text }
-	])
-];
-
 const inside = (r: { x: number; y: number; width: number; height: number }, x: number, y: number) =>
 	x >= r.x && x < r.x + r.width && y >= r.y && y < r.y + r.height;
 
-const mix = (a: RGB, b: RGB, k: number): RGB => [
-	a[0] + (b[0] - a[0]) * k,
-	a[1] + (b[1] - a[1]) * k,
-	a[2] + (b[2] - a[2]) * k
-];
-
-/** The colour of device pixel (px, py) on a 2× screen. */
-export function pixel(px: number, py: number, dark: boolean): RGB {
+/** The colour under device pixel (px, py) on a 2× screen, text aside. */
+export function backdrop(px: number, py: number, dark: boolean): RGB {
 	const p = palettes[dark ? 'dark' : 'light'];
 	const x = (px + 0.5) / 2;
 	const y = (py + 0.5) / 2;
@@ -210,18 +246,14 @@ export function pixel(px: number, py: number, dark: boolean): RGB {
 				x >= composer.x + composer.width - 0.5 ||
 				y < composer.y + 0.5 ||
 				y >= composer.y + composer.height - 0.5;
-			if (edge) return p.fieldEdge;
-			return mix(p.field, p.ink, inkAt(chatRuns.slice(0, 1), px, py));
+			return edge ? p.fieldEdge : p.field;
 		}
-		return mix(p.window, p.ink, inkAt(chatRuns.slice(1), px, py));
+		return p.window;
 	}
 	if (inside(editor, x, y)) {
 		if (y < editor.y + titleBar - 0.5) return p.window;
 		if (y < editor.y + titleBar) return p.rule;
-		if (x < pane.x) return p.sidebar;
-		const line = Math.floor((y - pane.y - code.top) / code.line);
-		const colour = lines[line]?.trim().startsWith('///') ? p.comment : p.ink;
-		return mix(p.code, colour, inkAt(codeRuns, px, py));
+		return x < pane.x ? p.sidebar : p.code;
 	}
 	return p.wallpaper;
 }

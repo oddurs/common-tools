@@ -9,7 +9,7 @@ import { direct, type BaseFrame } from '../film/director';
 import { ramp, type Point } from '../film/motion';
 import { extrasRight, menuBarHeight, screen, statusSlot, wide } from '../mac/geometry';
 import { dragFrom, dragTo, composer, toastLayout, windows, type WindowID } from './scene';
-import { pill, snapped, type Rect } from './size';
+import { caption, pill, snapped, type Rect } from './size';
 
 export type Overlay = {
 	/** The window lit under the pointer, when nothing is being dragged. */
@@ -46,7 +46,7 @@ export const selection = snapped({
 	width: dragTo.x - dragFrom.x,
 	height: dragTo.y - dragFrom.y
 });
-export const toast = toastLayout(selection);
+export const toast = toastLayout(selection, caption(selection.width * 2, selection.height * 2));
 
 /** Common Shot's item: beside the system's own icons, where it first appears. */
 export const item = { x: extrasRight - statusSlot, width: statusSlot };
@@ -64,9 +64,8 @@ const aside = { x: composer.x + composer.width - 120, y: composer.y - 140 };
 const inEditor = { x: 660, y: 560 };
 
 /** The whole desk with the hint along the bottom; the drag up close, loupe and pill in frame. */
-/** The whole desk with the hint along the bottom; the drag up close, loupe and pill in frame. */
 const intro = { x: 865, y: 598, zoom: 0.83 };
-const onCode = { x: 713, y: 461, zoom: 1.75 };
+const onCode = { x: 640, y: 470, zoom: 2.2 };
 /** Back out before letting go, so the shot's flight to the corner is in frame. */
 const both = { x: 1030, y: 640, zoom: 0.92 };
 /** The preview in the corner and the message field above it. */
@@ -89,18 +88,18 @@ export const film = direct((d) => {
 	d.at(4000).stay();
 	d.at(4800).point(dragFrom);
 	d.at(5000).stay().mark('down').caption('Drag an area. Its size and token cost follow.');
-	d.at(6700).point(dragTo);
-	d.at(7000).poster();
+	d.at(6200).point(dragTo);
 	d.at(7300).camera(both);
 	d.at(8300).mark('pick').caption('Let go: it’s on the clipboard, ready to paste.');
 	d.at(8600).camera(onChat);
 	d.at(9300).stay();
 	d.at(10_100).point(aside);
 	d.at(10_900).hold('command', 'V');
-	d.at(11_050).mark('paste');
+	d.at(11_050).mark('paste').caption('Paste it: the chat gets the code as an image.');
 	d.at(11_250).release();
 	d.at(12_000).hold('return');
 	d.at(12_100).mark('send');
+	d.at(12_900).poster();
 	d.at(12_250).release();
 	d.at(13_000).camera(onBar).caption('Every recent shot waits in the menu bar.');
 	d.at(13_100).stay();

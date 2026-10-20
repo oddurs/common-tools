@@ -27,6 +27,10 @@
     "height" : 15,
     "width" : 17
   },
+  "camera.viewfinder" : {
+    "height" : 17,
+    "width" : 19
+  },
   "checkmark.circle.fill" : {
     "height" : 13,
     "width" : 13

@@ -35,9 +35,10 @@
 	];
 	const copied = caption(selection.width * 2, selection.height * 2);
 	/** The shot as an attachment in the message field, and in the message once it's sent. */
-	const chip = { width: 132, height: (132 * selection.height) / selection.width };
-	const inMessage = { width: 300, height: (300 * selection.height) / selection.width };
-	const grow = $derived(frame.attached * (chip.height + 12));
+	const chip = { width: 200, height: (200 * selection.height) / selection.width };
+	// The message shows the shot at its own size, as a 2× PNG is shown.
+	const inMessage = { width: selection.width, height: selection.height };
+	const grow = $derived(frame.attached * (chip.height + 16 + 12));
 	// The caret blinks, except in the frozen picture under the overlay, which holds it as it was.
 	const blink = (t: number) => Math.floor(t / 530) % 2 === 0;
 	const caretOn = $derived(frame.overlay ? blink(film.marks.freeze) : blink(frame.t));
@@ -62,7 +63,7 @@
 				<p class="file" class:selected={file === 'Geometry.swift'}>{file}</p>
 			{/each}
 		</div>
-		<div class="code" style:left="{pane.x - editor.x}px"><Code /></div>
+		<div class="code" style:left="{pane.x - editor.x}px"><Code {dark} /></div>
 	</Window>
 
 	<Window title="Chat" {...chat}>
@@ -88,7 +89,12 @@
 							<p class="who"><b>Alex</b><span>9:41 AM</span></p>
 							<p>{typed}</p>
 							<div class="sent-shot">
-								<Picture rect={selection} width={inMessage.width} height={inMessage.height} />
+								<Picture
+									{dark}
+									rect={selection}
+									width={inMessage.width}
+									height={inMessage.height}
+								/>
 							</div>
 						</div>
 					</div>
@@ -107,7 +113,7 @@
 						style:opacity={frame.attached}
 						style:transform="scale({0.94 + 0.06 * frame.attached})"
 					>
-						<Picture rect={selection} width={chip.width} height={chip.height} />
+						<Picture {dark} rect={selection} width={chip.width} height={chip.height} />
 					</div>
 				{/if}
 				<p class="field">
@@ -165,7 +171,7 @@
 				style:top="{frame.flight.y}px"
 				style:border-radius="{frame.flight.radius}px"
 			>
-				<Picture rect={selection} width={frame.flight.width} height={frame.flight.height} />
+				<Picture {dark} rect={selection} width={frame.flight.width} height={frame.flight.height} />
 			</div>
 		{/if}
 
@@ -180,14 +186,14 @@
 				style:transform="translateX({frame.toast.dx}px)"
 			>
 				<div class="thumb">
-					<Picture rect={selection} width={toast.thumb.width} height={toast.thumb.height} />
+					<Picture {dark} rect={selection} width={toast.thumb.width} height={toast.thumb.height} />
 				</div>
 				<p>{copied}</p>
 			</div>
 		{/if}
 
 		{#if frame.panel > 0}
-			<Panel x={panel.x} y={panel.y} opacity={frame.panel} hover={frame.hoverTile} />
+			<Panel {dark} x={panel.x} y={panel.y} opacity={frame.panel} hover={frame.hoverTile} />
 		{/if}
 	{/snippet}
 </Film>
@@ -298,6 +304,9 @@
 	:global(.dark) .chip {
 		--rule-strong: rgba(255, 255, 255, 0.2);
 	}
+	:global(.dark) .chip {
+		background: #1f1f24;
+	}
 	.composer {
 		position: absolute;
 		box-sizing: border-box;
@@ -313,8 +322,10 @@
 		position: absolute;
 		left: 12px;
 		top: 12px;
+		padding: 8px;
 		overflow: hidden;
 		border-radius: 8px;
+		background: #fff;
 		box-shadow: 0 0 0 0.5px var(--rule-strong, rgba(0, 0, 0, 0.18));
 		transform-origin: 0 100%;
 	}
@@ -458,35 +469,19 @@
 		white-space: nowrap;
 	}
 
-	/* The editor's code pane (Code.svelte), in the editor's default colours. */
+	/* The editor's code pane (Code.svelte); its colours come from scene.ts, which the loupe shares. */
 	:global(.shot-code) {
 		position: absolute;
 		left: 0;
 		top: 0;
 		overflow: hidden;
-		background: #fff;
-		color: #1d1d1f;
 		font:
-			12px / 20px ui-monospace,
+			12px/20px ui-monospace,
 			'SF Mono',
 			Menlo,
 			monospace;
 		letter-spacing: 0;
 		white-space: pre;
-		--keyword: #9b2393;
-		--type: #3900a0;
-		--number: #1c00cf;
-		--comment: #5d6c79;
-		--gutter: #a3a3aa;
-	}
-	:global(.dark .shot-code) {
-		background: #1f1f24;
-		color: #dfdfe0;
-		--keyword: #fc5fa3;
-		--type: #d0a8ff;
-		--number: #d0bf69;
-		--comment: #7f8c98;
-		--gutter: #66666e;
 	}
 	:global(.shot-code .gutter),
 	:global(.shot-code .line) {
@@ -496,21 +491,7 @@
 		left: 0;
 		width: 36px;
 		text-align: right;
-		color: var(--gutter);
 		font-variant-numeric: tabular-nums;
-	}
-	:global(.shot-code .keyword) {
-		color: var(--keyword);
-		font-weight: 600;
-	}
-	:global(.shot-code .type) {
-		color: var(--type);
-	}
-	:global(.shot-code .number) {
-		color: var(--number);
-	}
-	:global(.shot-code .comment) {
-		color: var(--comment);
 	}
 
 	/* The history panel (Panel.svelte). Its colours live here with the rest of the scene's. */
