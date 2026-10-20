@@ -9,21 +9,10 @@ export type Section = { title: string; rows: Row[] };
 
 export const results: Record<string, Section[]> = {
 	c: [
-		{
-			title: 'Top Hit',
-			rows: [
-				{
-					title: 'iCloud Drive',
-					subtitle: '~/Library/Mobile Documents',
-					icon: 'icloud-drive',
-					bold: [1]
-				}
-			]
-		},
+		{ title: 'Top Hit', rows: [{ title: 'Chess', icon: 'chess', bold: [0] }] },
 		{
 			title: 'Applications',
 			rows: [
-				{ title: 'Chess', icon: 'chess', bold: [0] },
 				{ title: 'Clock', icon: 'clock', bold: [0] },
 				{ title: 'Console', icon: 'console', bold: [0] },
 				{ title: 'Calendar', icon: 'calendar', bold: [0] },
@@ -32,16 +21,22 @@ export const results: Record<string, Section[]> = {
 				{ title: 'ColorSync Utility', icon: 'colorsync-utility', bold: [0] }
 			]
 		},
-		{ title: 'System Settings', rows: [{ title: 'Classroom', icon: 'system-settings', bold: [0] }] },
 		{
 			title: 'Files',
 			rows: [
+				{
+					title: 'iCloud Drive',
+					subtitle: '~/Library/Mobile Documents',
+					icon: 'icloud-drive',
+					bold: [1]
+				},
 				{ title: 'Pictures', subtitle: '~', icon: 'pictures', bold: [2] },
 				{ title: 'Documents', subtitle: '~', icon: 'documents', bold: [2] },
 				{ title: 'Public', subtitle: '~', icon: 'public', bold: [5] },
 				{ title: 'Applications', subtitle: '/', icon: 'applications', bold: [5] }
 			]
 		},
+		{ title: 'System Settings', rows: [{ title: 'Classroom', icon: 'system-settings', bold: [0] }] },
 		{
 			title: 'Search the Web',
 			rows: [{ title: 'c', subtitle: 'Google', icon: 'magnifyingglass', badge: true }]
@@ -53,10 +48,17 @@ export const results: Record<string, Section[]> = {
 			title: 'Applications',
 			rows: [
 				{ title: 'Calculator', icon: 'calculator', bold: [0, 1] },
+				{ title: 'Contacts', icon: 'contacts', bold: [0, 4] },
 				{ title: 'Image Capture', icon: 'image-capture', bold: [6, 7] },
 				{ title: 'Boot Camp Assistant', icon: 'boot-camp-assistant', bold: [5, 6] },
-				{ title: 'Contacts', icon: 'contacts', bold: [0, 4] },
 				{ title: 'Podcasts', icon: 'podcasts', bold: [3, 4] }
+			]
+		},
+		{
+			title: 'System Settings',
+			rows: [
+				{ title: 'Classroom', icon: 'system-settings', bold: [0, 2] },
+				{ title: 'Class Progress', icon: 'system-settings', bold: [0, 2] }
 			]
 		},
 		{
@@ -64,13 +66,6 @@ export const results: Record<string, Section[]> = {
 			rows: [
 				{ title: 'Applications', subtitle: '/', icon: 'applications', bold: [5, 6] },
 				{ title: 'Applications', subtitle: '/System', icon: 'system-applications', bold: [5, 6] }
-			]
-		},
-		{
-			title: 'System Settings',
-			rows: [
-				{ title: 'Classroom', icon: 'system-settings', bold: [0, 2] },
-				{ title: 'AppleCare & Warranty', icon: 'coveragesettings', bold: [5, 6] }
 			]
 		},
 		{
@@ -148,22 +143,17 @@ export const results: Record<string, Section[]> = {
 			title: 'Applications',
 			rows: [
 				{ title: 'DVD Player', icon: 'dvd-player', bold: [0, 6] },
-				{ title: 'Calendar', icon: 'calendar', bold: [5, 6] },
 				{ title: 'Dictionary', icon: 'dictionary', bold: [0, 7] },
-				{ title: 'Digital Color Meter', icon: 'digital-color-meter', bold: [0, 5] }
+				{ title: 'Digital Color Meter', icon: 'digital-color-meter', bold: [0, 5] },
+				{ title: 'Calendar', icon: 'calendar', bold: [5, 6] }
 			]
 		},
 		{
 			title: 'System Settings',
 			rows: [
 				{ title: 'Displays', icon: 'displaysext', bold: [0, 5] },
-				{ title: 'Show date', subtitle: 'Menu Bar', icon: 'controlcentersettings', bold: [5, 6] },
-				{
-					title: 'Dark Noise',
-					subtitle: 'Accessibility',
-					icon: 'accessibilitysettingsextension',
-					bold: [0, 1]
-				}
+				{ title: 'Device Management', icon: 'profilessettingsext', bold: [0, 8] },
+				{ title: 'Show date', subtitle: 'Menu Bar', icon: 'controlcentersettings', bold: [5, 6] }
 			]
 		},
 		{
@@ -199,21 +189,16 @@ export const results: Record<string, Section[]> = {
 		}
 	],
 	dark: [
+		{ title: 'Top Hit', rows: [{ title: 'Appearance', icon: 'appearance' }] },
 		{
-			title: 'Top Hit',
+			title: 'System Settings',
 			rows: [
 				{
 					title: 'Dark Noise',
 					subtitle: 'Accessibility',
 					icon: 'accessibilitysettingsextension',
 					bold: [0, 1, 2, 3]
-				}
-			]
-		},
-		{
-			title: 'System Settings',
-			rows: [
-				{ title: 'Appearance', icon: 'appearance' },
+				},
 				{ title: 'Illuminate keyboard', subtitle: 'Keyboard', icon: 'keyboardsettings' },
 				{
 					title: 'Appearance (Keyboard)',
@@ -236,21 +221,16 @@ export const results: Record<string, Section[]> = {
 		}
 	],
 	'dark ': [
+		{ title: 'Top Hit', rows: [{ title: 'Appearance', icon: 'appearance' }] },
 		{
-			title: 'Top Hit',
+			title: 'System Settings',
 			rows: [
 				{
 					title: 'Dark Noise',
 					subtitle: 'Accessibility',
 					icon: 'accessibilitysettingsextension',
 					bold: [0, 1, 2, 3]
-				}
-			]
-		},
-		{
-			title: 'System Settings',
-			rows: [
-				{ title: 'Appearance', icon: 'appearance' },
+				},
 				{ title: 'Illuminate keyboard', subtitle: 'Keyboard', icon: 'keyboardsettings' },
 				{
 					title: 'Appearance (Keyboard)',

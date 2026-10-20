@@ -15,6 +15,10 @@
     "height" : 12,
     "width" : 26
   },
+  "bolt" : {
+    "height" : 17,
+    "width" : 12
+  },
   "bolt.fill" : {
     "height" : 18,
     "width" : 14
@@ -61,12 +65,20 @@
     "height" : 17,
     "width" : 18
   },
+  "equal" : {
+    "height" : 8,
+    "width" : 12
+  },
   "eye" : {
     "height" : 13,
     "width" : 21
   },
   "eyedropper" : {
     "height" : 16,
+    "width" : 17
+  },
+  "folder" : {
+    "height" : 14,
     "width" : 17
   },
   "gauge.with.dots.needle.33percent" : {
@@ -136,6 +148,10 @@
   "shippingbox.fill" : {
     "height" : 17,
     "width" : 17
+  },
+  "square.grid.2x2" : {
+    "height" : 14,
+    "width" : 15
   },
   "square.stack.3d.up" : {
     "height" : 18,
