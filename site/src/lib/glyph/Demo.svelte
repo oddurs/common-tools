@@ -845,7 +845,9 @@
 		line-height: 14px;
 		color: var(--secondary);
 	}
+	/* A menu writes its shortcuts as plain text; undo the site's global key cap. */
 	kbd {
+		all: unset;
 		font: inherit;
 		color: var(--secondary);
 	}
