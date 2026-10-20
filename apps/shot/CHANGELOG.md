@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
 ### Added
 
 - The screenshot sound, the one macOS plays for its own, as you let go. It follows "Play user interface sound effects", the alert volume and the sound-effects device in System Settings, and Settings › Image can turn it off.
@@ -37,6 +39,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings follows the layout shared by every Common Tools app: the same window, width, grouped sections, and footnotes as Common Stats and Common Keys.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/shot
+[0.1.0]: https://github.com/oddurs/common-tools/releases/tag/shot-v0.1.0
 
 ### Fixed
 
