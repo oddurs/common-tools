@@ -3,7 +3,8 @@
 	// the left and the system's extras on the right.
 	import type { Snippet } from 'svelte';
 	import Symbol from './Symbol.svelte';
-	import { clock, extrasRight, menuBarHeight, screen, systemItems, viewport } from './geometry';
+	import { clock, menuBarHeight, screen, systemItems, viewport } from './geometry';
+	import type { SymbolName } from './symbols';
 	import type { Camera } from '../film/motion';
 
 	let {
@@ -12,6 +13,7 @@
 		app,
 		menus,
 		extras,
+		hideSystem = [],
 		children,
 		top
 	}: {
@@ -21,6 +23,11 @@
 		menus: string[];
 		/** Third-party menu bar extras, laid out right to left from `extrasRight`. */
 		extras?: Snippet;
+		/**
+		 * System extras turned off on this Mac, such as the battery an app replaces. The rest close up
+		 * to the clock, and the third-party extras follow them right, as macOS lays them out.
+		 */
+		hideSystem?: SymbolName[];
 		/** Windows and anything else on the desktop. */
 		children?: Snippet;
 		/** Drawn over the menu bar: menus that drop from it, and the pointer. */
@@ -29,6 +36,11 @@
 
 	const tx = $derived(viewport.width / 2 - camera.x * camera.zoom);
 	const ty = $derived(viewport.height / 2 - camera.y * camera.zoom);
+	const shown = $derived(systemItems.filter((item) => !hideSystem.includes(item.symbol)));
+	/** `extrasRight` from geometry when nothing is hidden. */
+	const extrasRight = $derived(
+		screen.width - clock.margin - clock.width - shown.reduce((sum, item) => sum + item.width, 0)
+	);
 </script>
 
 <div
@@ -52,7 +64,7 @@
 		<div class="extras" style:width="{extrasRight}px">{@render extras?.()}</div>
 
 		<div class="system" style:left="{extrasRight}px">
-			{#each [...systemItems].reverse() as item (item.symbol)}
+			{#each [...shown].reverse() as item (item.symbol)}
 				<span class="slot" style:width="{item.width}px"><Symbol name={item.symbol} /></span>
 			{/each}
 			<span class="clock" style:width="{clock.width}px">{clock.text}</span>
