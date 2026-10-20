@@ -37,13 +37,15 @@ changed_files() {
 
 changed_areas() {
     changed_files | sort -u | awk -v apps="$(all_apps | tr '\n' ' ')" '
-        # Workflows, root documents and docs/, the hooks, and the scripts other than this one change
-        # nothing a check tests: the workflow tooling, releases, and generated icons, which are committed.
+        # Workflows, root documents and docs/, the cairn items of the roadmap, the hooks, and the scripts
+        # other than this one change nothing a check tests: the workflow tooling, releases, and
+        # generated icons, which are committed.
         /^scripts\/task$/    { site = 1; kit = 1; everyapp = 1; next }
         /^scripts\//         { next }
         /^\.githooks\//      { next }
         /^\.github\//        { next }
         /^docs\//            { next }
+        /^cairn\//           { next }
         /^[^\/]+\.md$/       { next }
         /^LICENSE$/          { next }
         /^site\//            { site = 1; next }
