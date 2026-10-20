@@ -16,14 +16,16 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "paperclip": (14, .regular), "cup.and.saucer.fill": (13, .regular), "headphones": (14, .regular),
     "calendar": (14, .regular), "keyboard": (13, .regular),
     "gauge.with.dots.needle.33percent": (14, .regular), "globe": (14, .regular), "timer": (14, .regular),
-    // Common Bar's More folder.
-    "ellipsis.circle": (15, .regular),
+    // Common Bar's More folder, and the symbols its dropdown and the icons in it show: macOS's
+    // own items (Dropdown.symbol) and Common Color's and Common Shot's menu bar icons.
+    "ellipsis.circle": (15, .regular), "moon": (14, .regular), "play.circle": (14, .regular),
+    "eyedropper": (14, .regular), "camera.viewfinder": (14, .regular),
     // Common Stats' card icons.
     "cpu": (13, .medium), "memorychip": (13, .medium), "network": (13, .medium),
     "arrow.up.arrow.down": (12, .semibold), "square.stack.3d.up": (13, .medium),
     "internaldrive": (12, .medium), "battery.75percent": (12, .medium),
     // Common Color: the menu bar eyedropper (unconfigured, as the app sets it) and its panel's symbols.
-    "eyedropper": (13, .regular), "gearshape": (13, .regular), "power": (13, .regular),
+    "gearshape": (13, .regular), "power": (13, .regular),
     "chevron.down": (8, .semibold), "chevron.up": (8, .semibold),
     "checkmark.circle.fill": (11, .regular), "xmark.circle": (11, .regular),
     // Added by 71466b9 (feat(site): a demo film for Common Command).
@@ -34,7 +36,6 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     // Added by fc47ea6 (feat(site): draw the Common Stats film's menu from the real app).
     "gauge.with.dots.needle.67percent": (13, .regular),
     // Added by 4a59020 (feat(site): film Common Shot from the shortcut to the paste).
-    "camera.viewfinder": (15, .regular),
     // Added by 3c59a6b (feat(site): film Common Glyph lifting a cat into the menu bar).
     "photo.badge.plus": (26, .regular),
     "rotate.right": (13, .regular),
