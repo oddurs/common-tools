@@ -70,8 +70,9 @@ code {
 	font-family: var(--font-mono);
 	font-size: 0.87em;
 }
-/* A key cap, as macOS draws a shortcut in a menu: the system face, raised a little off the line. */
-kbd {
+/* A key cap for a shortcut in the site's copy: the system face, raised a little off the line. Never
+   inside a film (#stage), whose menus draw their shortcuts as macOS does, in plain text. */
+kbd:not(#stage *) {
 	display: inline-block;
 	min-width: 1.7em;
 	padding: 0 0.42em;
@@ -153,7 +154,7 @@ section.ruled {
 .band.tinted {
 	background: var(--surface-card);
 }
-.band.tinted kbd {
+.band.tinted kbd:not(#stage *) {
 	background: var(--surface-base);
 }
 .eyebrow {

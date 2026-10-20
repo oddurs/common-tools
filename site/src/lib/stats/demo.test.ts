@@ -20,8 +20,8 @@ describe('Common Stats demo', () => {
 		expect(stats.historyLength * stats.interval).toBe(3 * 60 * 1000);
 	});
 
-	it('gets busy while the menu is open, and reads back the moment it started', () => {
-		expect(last(at('open').readings.cpu)).toBeLessThan(0.3);
+	it('opens on a stretch that has been busy a while, and reads back the moment it started', () => {
+		expect(last(at('open').readings.cpu)).toBeGreaterThan(0.8);
 		expect(last(at('hover').readings.cpu)).toBeGreaterThan(0.8);
 		const poster = stats.frameAt(stats.film.poster);
 		expect(poster.menu).toBe(1);
@@ -31,6 +31,8 @@ describe('Common Stats demo', () => {
 		// The hovered sample is busy, and the one before it isn't: the start of the stretch.
 		expect(cpu[hovered]).toBeGreaterThan(0.8);
 		expect(cpu[hovered - 1]).toBeLessThan(0.3);
+		// Far enough back to read as a plateau on a three-minute graph, not a cliff at its edge.
+		expect(poster.hover! * stats.interval).toBeGreaterThan(30_000);
 	});
 
 	it('closes the menu, then shows values, graphs, and gauges', () => {

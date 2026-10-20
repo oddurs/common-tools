@@ -150,7 +150,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`#######···` 69% · 20 of 29 done
+`########··` 71% · 22 of 31 done
 
 ### backlog
 
@@ -191,4 +191,5 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0083`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0083-common-battery-s-page-shows-three-features-from-its-film.md) Common Battery's page shows three features from its film <sup>feature · p2</sup>
 - [x] [`0084`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0084-common-bar-product-page-features.md) Common Bar product page features <sup>feature · p2</sup>
 - [x] [`0085`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0085-common-glyph-s-product-page-features.md) Common Glyph's product page features <sup>feature · p2</sup>
+- [x] [`0086`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0086-draw-the-stats-film-s-busy-stretch-as-a-plateau-and-keep-key-caps-out-of-the-films.md) Draw the Stats film's busy stretch as a plateau, and keep key caps out of the films <sup>bug · p1</sup>
 
