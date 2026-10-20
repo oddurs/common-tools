@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
 ### Added
 
 - Common Color joins the Common Tools family: an eyedropper in the menu bar, the Welcome window on first launch, and Settings with Open at login, the optional update check, and the other apps in the family.
@@ -19,3 +21,4 @@ All notable changes to this project are documented here. The format follows [Kee
 - `--snapshot` renders every state of the panel, the confirmation, and Settings, light and dark, for review.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/color
+[0.1.0]: https://github.com/oddurs/common-tools/releases/tag/color-v0.1.0
