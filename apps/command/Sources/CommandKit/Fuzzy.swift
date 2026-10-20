@@ -21,9 +21,11 @@ public struct SearchText: Sendable, Hashable {
         self.bonus = bonus
     }
 
-    /// Word starts are what people type: "vsc" for Visual Studio Code, "ss" for System Settings.
+    /// Word starts are what people type: "vsc" for Visual Studio Code, "ss" for System Settings. The name's
+    /// own start counts most, by more than a place's weight over an app's, so a name that starts with the
+    /// query beats a later word or a camel-case hump: "c" is Calendar before the C of iCloud Drive.
     static func bonus(_ c: Character, after previous: Character?) -> Int16 {
-        guard let previous else { return 10 }
+        guard let previous else { return 16 }
         if !previous.isLetter && !previous.isNumber { return c.isLetter || c.isNumber ? 9 : 0 }
         if c.isUppercase && previous.isLowercase { return 8 }
         if c.isLetter && previous.isNumber { return 6 }
@@ -174,13 +176,17 @@ public enum Fuzzy {
 
     static let minimumKeywordLength = 4
 
-    /// A keyword the query starts: below a name that starts the same way, above a scattered name match.
+    /// A keyword the query starts: below a name that starts the same way, above a scattered name match. A
+    /// whole keyword, a word System Settings indexes the item under, scores as that word would starting a
+    /// later word of the name: still below a name that starts with it, and above a topic that does, as "dark"
+    /// finds Appearance before Dark Noise.
     static func keywordScore(_ q: [UInt32], _ keywords: [[UInt32]]) -> Int? {
         // Three letters are nearly always the start of an app's name, and hundreds of keywords would match.
         guard q.count >= minimumKeywordLength else { return nil }
+        let m = q.count
         var best: Int?
-        for keyword in keywords where keyword.count >= q.count && keyword.starts(with: q) {
-            let score = 12 * q.count + 8 + (keyword.count == q.count ? 10 : 0)
+        for keyword in keywords where keyword.count >= m && keyword.starts(with: q) {
+            let score = keyword.count == m ? matchScore * m + consecutiveBonus * (m - 1) + 9 : 12 * m + 8
             best = max(best ?? score, score)
         }
         return best

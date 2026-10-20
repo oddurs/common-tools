@@ -247,9 +247,13 @@ final class Icons {
 
     func image(for item: Item) -> NSImage? {
         switch item.kind {
-        case .application, .file, .folder:
+        case .application:
             guard let path = item.fileURL?.path else { return nil }
             return cached(path)
+        case .file, .folder:
+            // A link Spotlight found keeps its arrow, as Finder shows it.
+            guard let path = item.fileURL?.path else { return nil }
+            return cached(path, resolvingLinks: false)
         case .settings:
             guard let path = item.iconFile?.path else { return settingsIcon }
             return cached(path)
@@ -259,11 +263,11 @@ final class Icons {
         }
     }
 
-    private func cached(_ path: String) -> NSImage {
+    private func cached(_ path: String, resolvingLinks: Bool = true) -> NSImage {
         if let image = cache[path] { return image }
         let image =
             IconCache.shared.image(forPath: path).map { NSImage(cgImage: $0, size: .zero) }
-            ?? NSWorkspace.shared.icon(forFile: path)
+            ?? (resolvingLinks ? IconCache.icon(forFile: path) : NSWorkspace.shared.icon(forFile: path))
         cache[path] = image
         return image
     }

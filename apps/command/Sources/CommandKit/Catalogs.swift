@@ -27,7 +27,7 @@ public enum AppCatalog {
         var seen: Set<String> = []
         var candidates: [Candidate] = []
         func add(_ url: URL) {
-            let resolved = url.resolvingSymlinksInPath().path
+            let resolved = url.resolvingLinks.resolvingSymlinksInPath().path
             guard seen.insert(resolved).inserted else { return }
             let fileName = url.deletingPathExtension().lastPathComponent
             let name = displayName(url)
@@ -59,6 +59,14 @@ public enum AppCatalog {
     public static func defaultDisplayName(_ url: URL) -> String {
         let name = FileManager.default.displayName(atPath: url.path)
         return name.hasSuffix(".app") ? String(name.dropLast(4)) : name
+    }
+}
+
+extension URL {
+    /// What a symlink or a Finder alias points to, or the URL itself. /Applications/Safari.app is a symlink
+    /// into a cryptex, and some installers leave aliases in ~/Applications.
+    var resolvingLinks: URL {
+        (try? URL(resolvingAliasFileAt: self, options: [.withoutUI, .withoutMounting])) ?? self
     }
 }
 
