@@ -21,11 +21,6 @@ export type Tool = {
 	permission?: { name: 'Accessibility' | 'Screen Recording'; why: string };
 	/** The last step of getting started, after downloading, opening, and allowing it. */
 	firstRun: string;
-	/**
-	 * What its page says it does, as titled paragraphs, for apps drawn by the shared page
-	 * (`routes/(site)/[tool]`) rather than a page of their own.
-	 */
-	features?: [title: string, text: string][];
 	/** It has its own docs pages, at `<slug>/docs/`. */
 	docs?: true;
 };
@@ -107,25 +102,7 @@ export const tools: Tool[] = [
 		requires: anyMac,
 		icon: 'glyph/icon.png',
 		firstRun: 'Choose or paste an image in Settings, pick a style, and it appears beside the clock.',
-		demo: 'Common Glyph puts your own images in the menu bar: a picture, an emoji, and a word, each its own menu bar item with a small menu.',
-		features: [
-			[
-				'Anything you like.',
-				'An image, an animated GIF, an emoji, or a piece of text. Add as many glyphs as you want; each is its own menu bar item.'
-			],
-			[
-				'Made to fit.',
-				'Crop, rotate, and flip, then choose Colour, Silhouette, or Ink. Vision lifts the subject out of a photo, or the edge color is removed.'
-			],
-			[
-				'Seen both ways first.',
-				'The editor previews each glyph on a light and a dark menu bar before it goes in yours.'
-			],
-			[
-				'Where you can see it.',
-				'New glyphs start beside the clock, so a menu bar manager doesn’t hide them, and Settings says when one still can’t be seen.'
-			]
-		]
+		demo: 'Common Glyph puts your own images in the menu bar: a picture, an emoji, and a word, each its own menu bar item with a small menu.'
 	},
 	{
 		slug: 'command',
@@ -139,25 +116,7 @@ export const tools: Tool[] = [
 		icon: 'command/icon.png',
 		firstRun:
 			'Press ⌥Space, type a few letters of an app’s name, and press Return. Change the shortcut in Settings.',
-		demo: 'Pressing Option-Space opens Common Command over the app in front. Typing a few letters finds an app, a System Settings pane, and a conversion, and Return opens or copies each.',
-		features: [
-			[
-				'Everything in one panel.',
-				'Apps, System Settings panes, files and folders from the Spotlight index, your shortcuts, and the web. “dark mode” or “firewall” finds the right pane.'
-			],
-			[
-				'Learns what you mean.',
-				'Fuzzy matching on word starts, with case and accents folded. The result you choose for a query comes first next time.'
-			],
-			[
-				'Sums and units.',
-				'Sums like “(4 + 5) * 12” and conversions like “10 km to mi” or “70 f in c”, answered offline as you type. Return copies the result.'
-			],
-			[
-				'All from the keyboard.',
-				'Scopes on ⌘1–⌘3 as in Spotlight, an action menu on ⌘K, Quick Look on ⌘Y. The app you were in stays in front.'
-			]
-		]
+		demo: 'Pressing Option-Space opens Common Command over the app in front. Typing a few letters finds an app, a System Settings pane, and a conversion, and Return opens or copies each.'
 	},
 	{
 		slug: 'shot',
@@ -172,25 +131,7 @@ export const tools: Tool[] = [
 		permission: { name: 'Screen Recording', why: 'to capture what you pick' },
 		firstRun:
 			'Press ⇧⌘2, drag over part of the screen, and paste. Click a window instead to take only that window.',
-		demo: 'Pressing Shift-Command-2 freezes the screen under Common Shot’s overlay. Dragging over part of it puts that area on the clipboard, a preview slides in, and the shot is pasted into a message.',
-		features: [
-			[
-				'Drag, click, or Return.',
-				'Drag for an area, with its size and a loupe; click for the window under the pointer; Return for the whole screen. The arrow keys move by one pixel.'
-			],
-			[
-				'Sized for prompts.',
-				'Shots go to the clipboard as PNG, at most 1568 pixels on the long edge by default, with what they cost in Claude tokens. Full resolution is a setting.'
-			],
-			[
-				'Text, too.',
-				'Hold ⌥ to copy the text in an area instead of the image, read on your Mac with Vision. Code keeps its indentation.'
-			],
-			[
-				'Recent shots, close by.',
-				'The menu bar panel keeps your recent shots by day. Click one to copy it again, or drag it out as a file.'
-			]
-		]
+		demo: 'Pressing Shift-Command-2 freezes the screen under Common Shot’s overlay. Dragging over part of it puts that area on the clipboard, a preview slides in, and the shot is pasted into a message.'
 	},
 	{
 		slug: 'battery',
@@ -204,25 +145,7 @@ export const tools: Tool[] = [
 		icon: 'battery/icon.png',
 		firstRun:
 			'Pick what the menu bar shows in Settings, where a shortcut also hides the system’s own battery icon.',
-		demo: 'Common Battery in the menu bar, showing the level and the time left. Its menu opens with a charge chart and the battery’s details.',
-		features: [
-			[
-				'Your parts, your order.',
-				'The icon, the percentage beside it or inside it, and the time remaining, in the order you choose. Red when low, yellow in Low Power Mode, or monochrome.'
-			],
-			[
-				'A time left that learns.',
-				'A model trained on your Mac predicts the next hour’s draw, takes over from macOS’s estimate only once it scores better, and counts down steadily.'
-			],
-			[
-				'Everything in one menu.',
-				'A 12-hour charge chart, the power source and adapter wattage, live watts, cycle count, full-charge capacity, and temperature.'
-			],
-			[
-				'Alerts at your levels.',
-				'A notification as the battery drains to the level you choose, and as it charges to one.'
-			]
-		]
+		demo: 'Common Battery in the menu bar, showing the level and the time left. Its menu opens with a charge chart and the battery’s details.'
 	},
 	{
 		slug: 'color',
@@ -235,25 +158,7 @@ export const tools: Tool[] = [
 		requires: anyMac,
 		icon: 'color/icon.png',
 		firstRun: 'Press ⌃⇧⌘C, click any pixel, and paste. Choose the format it pastes in Settings.',
-		demo: 'Pressing Control-Shift-Command-C brings up the color loupe. Clicking a pixel copies its color as code, a card says what was copied, and it is pasted into a stylesheet.',
-		features: [
-			[
-				'No permission.',
-				'macOS’s own color sampler reads the one pixel you click, so the app never sees your screen.'
-			],
-			[
-				'Your format.',
-				'Hex, rgb(), hsl(), oklch(), color(display-p3 …), SwiftUI Color, or AppKit NSColor. A small card by the pointer says exactly what was copied.'
-			],
-			[
-				'Converted correctly.',
-				'Between sRGB, Display P3, and OKLCH, with a color outside sRGB marked rather than silently clipped.'
-			],
-			[
-				'Picks and contrast.',
-				'The last 12 picks stay a click away, with the WCAG contrast between the newest two and whether it passes AA and AAA.'
-			]
-		]
+		demo: 'Pressing Control-Shift-Command-C brings up the color loupe. Clicking a pixel copies its color as code, a card says what was copied, and it is pasted into a stylesheet.'
 	}
 ];
 

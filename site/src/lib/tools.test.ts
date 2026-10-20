@@ -77,10 +77,6 @@ describe('tools', () => {
 	it('shows every app on the home page exactly once', () => {
 		expect([...showcase].sort()).toEqual(tools.map((t) => t.slug).sort());
 	});
-	it('gives every app without a page of its own what the shared page shows', () => {
-		const ownPages = ['stats', 'keys', 'bar'];
-		for (const t of tools) expect(!!t.features?.length, t.slug).toBe(!ownPages.includes(t.slug));
-	});
 	it('says which apps have docs pages, so no page links to one that is missing', () => {
 		expect(tools.filter((t) => t.docs).map((t) => t.slug)).toEqual(['stats', 'keys', 'bar']);
 	});

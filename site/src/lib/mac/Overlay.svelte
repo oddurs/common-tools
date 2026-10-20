@@ -22,7 +22,7 @@
 </script>
 
 {#if keys.length}
-	<div class="keys" aria-label="Keys pressed">
+	<div class="keys overlay" aria-label="Keys pressed">
 		{#each keys as key, i (i)}
 			<kbd
 				>{#if symbolic(key)}<Symbol name={key} />{:else}{key}{/if}</kbd
@@ -32,11 +32,11 @@
 {/if}
 
 {#if caption && end < 1}
-	<p class="caption" style:opacity={1 - end}>{caption}</p>
+	<p class="caption overlay" style:opacity={1 - end}>{caption}</p>
 {/if}
 
 {#if end > 0}
-	<div class="end" style:opacity={end}>
+	<div class="end overlay" style:opacity={end}>
 		<img
 			src={asset(app.icon)}
 			alt=""
