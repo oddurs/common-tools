@@ -78,10 +78,15 @@ private struct MetricCard: View {
             VStack(alignment: .leading, spacing: Tokens.Space.xs) {
                 HStack(alignment: .center, spacing: Tokens.Space.xs) {
                     MetricSymbol(metric: metric, font: .body, width: 18)
+                    // The title keeps its width; with busy rates in the header, the interface's name gives way
+                    // instead, or "Network" would read "Netw…".
                     Text(metric == .disk ? "Disk" : metric.name).font(.headline)
                         .lineLimit(1)
+                        .fixedSize()
                     if metric == .network, let source = readout.latest.network?.source {
                         Text(source).font(.subheadline).foregroundStyle(.tertiary)
+                            .lineLimit(1)
+                            .layoutPriority(-1)
                     }
                     Spacer(minLength: Tokens.Space.xs)
                     headline
