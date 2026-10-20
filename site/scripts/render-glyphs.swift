@@ -26,6 +26,11 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "eyedropper": (13, .regular), "gearshape": (13, .regular), "power": (13, .regular),
     "chevron.down": (8, .semibold), "chevron.up": (8, .semibold),
     "checkmark.circle.fill": (11, .regular), "xmark.circle": (11, .regular),
+    // Added by 71466b9 (feat(site): a demo film for Common Command).
+    "square.grid.2x2": (12.4, .medium),
+    "folder": (12.4, .medium),
+    "bolt": (12.4, .medium),
+    "equal": (12, .semibold),
     // Key caps.
     "command": (22, .regular), "option": (22, .regular),
 ]
