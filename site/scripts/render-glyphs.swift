@@ -31,6 +31,8 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "folder": (12.4, .medium),
     "bolt": (12.4, .medium),
     "equal": (12, .semibold),
+    // Added by fc47ea6 (feat(site): draw the Common Stats film's menu from the real app).
+    "gauge.with.dots.needle.67percent": (13, .regular),
     // Key caps.
     "command": (22, .regular), "option": (22, .regular),
 ]
@@ -70,6 +72,19 @@ try png(arrow.image, size: cursorSize).write(to: out.appendingPathComponent("cur
 manifest["cursor"] = [
     "width": cursorSize.width, "height": cursorSize.height, "x": arrow.hotSpot.x, "y": arrow.hotSpot.y,
 ]
+
+// The icons macOS 26 gives a menu's standard items by their title and action. Quit's has no public
+// name, so both are taken from real menu items.
+let standard = NSMenu()
+for (name, item) in [
+    ("gear", NSMenuItem(title: "Settings…", action: Selector(("openSettings")), keyEquivalent: ",")),
+    ("Quit_app", NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")),
+] {
+    standard.addItem(item)
+    guard let image = item.image else { continue }
+    try png(image, size: image.size).write(to: out.appendingPathComponent("\(name).png"))
+    manifest[name] = ["width": image.size.width, "height": image.size.height]
+}
 
 let json = try JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
 try json.write(to: out.appendingPathComponent("symbols.json"))
