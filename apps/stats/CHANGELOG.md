@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-20
+
 ### Added
 
 - A Welcome window on first launch: what Common Stats does, Open at login, the Common Tools family, and the family's promise.
@@ -69,6 +71,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Lower power use: drawing pauses while the item is hidden, sampling halves in Low Power Mode, and sampling stops while the displays sleep.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/stats
+[0.4.0]: https://github.com/oddurs/common-tools/releases/tag/stats-v0.4.0
 [0.3.0]: https://github.com/oddurs/common-stats/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/oddurs/common-stats/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/oddurs/common-stats/compare/v0.1.0...v0.2.0
