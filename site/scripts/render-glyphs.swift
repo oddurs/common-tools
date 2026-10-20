@@ -35,6 +35,19 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "gauge.with.dots.needle.67percent": (13, .regular),
     // Added by 4a59020 (feat(site): film Common Shot from the shortcut to the paste).
     "camera.viewfinder": (15, .regular),
+    // Added by 3c59a6b (feat(site): film Common Glyph lifting a cat into the menu bar).
+    "photo.badge.plus": (26, .regular),
+    "rotate.right": (13, .regular),
+    "arrow.left.and.right.righttriangle.left.righttriangle.right": (13, .regular),
+    "face.smiling": (14, .regular),
+    "chevron.right": (11, .semibold),
+    "chevron.up.chevron.down": (9, .bold),
+    "checkmark": (11, .semibold),
+    "slider.horizontal.3": (13, .regular),
+    "photo": (13, .regular),
+    "doc.on.clipboard": (13, .regular),
+    "plus": (13, .regular),
+    "eye.slash": (13, .regular),
     // Key caps.
     "command": (22, .regular), "option": (22, .regular),
 ]

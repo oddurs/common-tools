@@ -3,6 +3,10 @@
     "height" : 17,
     "width" : 13
   },
+  "arrow.left.and.right.righttriangle.left.righttriangle.right" : {
+    "height" : 16,
+    "width" : 18
+  },
   "arrow.up.arrow.down" : {
     "height" : 14,
     "width" : 18
@@ -31,6 +35,10 @@
     "height" : 17,
     "width" : 19
   },
+  "checkmark" : {
+    "height" : 12,
+    "width" : 13
+  },
   "checkmark.circle.fill" : {
     "height" : 13,
     "width" : 13
@@ -39,9 +47,17 @@
     "height" : 6,
     "width" : 10
   },
+  "chevron.right" : {
+    "height" : 12,
+    "width" : 9
+  },
   "chevron.up" : {
     "height" : 6,
     "width" : 10
+  },
+  "chevron.up.chevron.down" : {
+    "height" : 12,
+    "width" : 9
   },
   "command" : {
     "height" : 24,
@@ -61,6 +77,10 @@
     "x" : 5,
     "y" : 5
   },
+  "doc.on.clipboard" : {
+    "height" : 18,
+    "width" : 16
+  },
   "drop.fill" : {
     "height" : 16,
     "width" : 12
@@ -77,9 +97,17 @@
     "height" : 13,
     "width" : 21
   },
+  "eye.slash" : {
+    "height" : 16,
+    "width" : 21
+  },
   "eyedropper" : {
     "height" : 16,
     "width" : 17
+  },
+  "face.smiling" : {
+    "height" : 16,
+    "width" : 16
   },
   "folder" : {
     "height" : 14,
@@ -153,6 +181,18 @@
     "height" : 18,
     "width" : 16
   },
+  "photo" : {
+    "height" : 14,
+    "width" : 18
+  },
+  "photo.badge.plus" : {
+    "height" : 32,
+    "width" : 41
+  },
+  "plus" : {
+    "height" : 13,
+    "width" : 14
+  },
   "power" : {
     "height" : 16,
     "width" : 15
@@ -161,9 +201,17 @@
     "height" : 14,
     "width" : 18
   },
+  "rotate.right" : {
+    "height" : 17,
+    "width" : 15
+  },
   "shippingbox.fill" : {
     "height" : 17,
     "width" : 17
+  },
+  "slider.horizontal.3" : {
+    "height" : 13,
+    "width" : 16
   },
   "square.grid.2x2" : {
     "height" : 14,
