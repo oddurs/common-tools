@@ -23,6 +23,18 @@
     "height" : 15,
     "width" : 17
   },
+  "checkmark.circle.fill" : {
+    "height" : 13,
+    "width" : 13
+  },
+  "chevron.down" : {
+    "height" : 6,
+    "width" : 10
+  },
+  "chevron.up" : {
+    "height" : 6,
+    "width" : 10
+  },
   "command" : {
     "height" : 24,
     "width" : 26
@@ -53,7 +65,15 @@
     "height" : 13,
     "width" : 21
   },
+  "eyedropper" : {
+    "height" : 16,
+    "width" : 17
+  },
   "gauge.with.dots.needle.33percent" : {
+    "height" : 16,
+    "width" : 16
+  },
+  "gearshape" : {
     "height" : 16,
     "width" : 16
   },
@@ -109,6 +129,10 @@
     "height" : 18,
     "width" : 16
   },
+  "power" : {
+    "height" : 16,
+    "width" : 15
+  },
   "shippingbox.fill" : {
     "height" : 17,
     "width" : 17
@@ -132,5 +156,9 @@
   "wifi" : {
     "height" : 14,
     "width" : 18
+  },
+  "xmark.circle" : {
+    "height" : 13,
+    "width" : 13
   }
 }
