@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-20
+
 ### Added
 
 - A new folder dropdown. It opens on the press like a menu, in about 10 ms, without taking focus from the app you're in. Rows come in groups with quiet headers. macOS's own items (Wi‑Fi, Battery, Focus, Now Playing) show their own symbol and, where macOS says it, their state. Start typing to narrow the list; arrows, Return and Escape work as in a menu; **Edit Folder…** and **Settings…** sit at the bottom.
@@ -91,6 +93,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Universal (Apple silicon and Intel) builds for macOS 14 and later.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/bar
+[0.4.0]: https://github.com/oddurs/common-tools/releases/tag/bar-v0.4.0
 [0.3.0]: https://github.com/oddurs/common-bar/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/oddurs/common-bar/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/oddurs/common-bar/compare/v0.1.0...v0.2.0
