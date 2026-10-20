@@ -1,5 +1,5 @@
-// The Common Command demo: writing in Notes, ⌥Space opens the panel over it without taking Notes
-// out of the front, three letters find Calendar, "dark mode" finds the Appearance pane, and a
+// The Common Command demo: writing in Notes, ⌥Space opens the panel above it, floating over the
+// desktop without taking Notes out of the front, three letters find Calendar, "dark mode" finds the Appearance pane, and a
 // conversion's Return copies the answer, which ⌘V pastes into the note.
 //
 // Every list the panel shows is the app's own: `results.ts` holds what CommandKit's
@@ -43,8 +43,11 @@ export const panel = {
 	y: Math.round(visible.top + visible.height * 0.2)
 };
 
-/** Notes sits under the panel, its title clear of the field and the rest of the note under the glass. */
-export const notes = { x: 560, y: 116, width: 640, height: 600 };
+/**
+ * Notes sits low and to the left, so the panel floats over the desktop and covers only Notes' corner:
+ * it reads as something above every app, not a part of Notes.
+ */
+export const notes = { x: 250, y: 410, width: 500, height: 480 };
 /** The note as it starts, and what the end of the film adds to its last line. */
 export const note = {
 	title: 'Saturday hike',
@@ -77,14 +80,14 @@ const noteEdits: { at: number; text: string }[] = [];
 /** The whole desk: the menu bar, Notes, and room for the panel over it. */
 const desk = { x: 880, y: 440, zoom: 0.85 };
 const medium = { x: 880, y: 400, zoom: 1 };
-/** In on the panel, with the whole of Notes' window behind it and the wallpaper either side. */
-const onPanel = { x: 880, y: 372, zoom: 1.5 };
+/** In on the panel, with wallpaper round it and Notes' corner behind its lower left. */
+const onPanel = { x: 820, y: 430, zoom: 1.45 };
 const onNote = { x: notes.x + 250, y: notes.y + 150, zoom: 1.6 };
 
 export const film = direct((d) => {
 	d.camera(desk);
 	d.at(400).camera(medium);
-	d.at(500).caption('⌥Space opens Command. Notes stays in front.');
+	d.at(500).caption('⌥Space opens Command over any app.');
 	d.at(1200).hold('option', 'Space');
 	d.at(1350).mark('open');
 	d.at(1700).release();
