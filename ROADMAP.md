@@ -150,7 +150,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`#######···` 67% · 18 of 27 done
+`#######···` 69% · 20 of 29 done
 
 ### backlog
 
@@ -188,4 +188,5 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0081`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0081-common-shot-product-page-features.md) Common Shot product page features <sup>feature · p2</sup>
 - [x] [`0083`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0083-common-battery-s-page-shows-three-features-from-its-film.md) Common Battery's page shows three features from its film <sup>feature · p2</sup>
 - [x] [`0084`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0084-common-bar-product-page-features.md) Common Bar product page features <sup>feature · p2</sup>
+- [x] [`0085`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0085-common-glyph-s-product-page-features.md) Common Glyph's product page features <sup>feature · p2</sup>
 
