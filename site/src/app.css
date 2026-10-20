@@ -55,6 +55,17 @@ h2 {
 	font: var(--type-headline);
 	letter-spacing: var(--type-headline-tracking);
 }
+/* Headings break into even lines, and running text never ends on a word alone. */
+h1,
+h2,
+h3,
+.lede {
+	text-wrap: balance;
+}
+p,
+li {
+	text-wrap: pretty;
+}
 code {
 	font-family: var(--font-mono);
 	font-size: 0.87em;
@@ -90,6 +101,7 @@ kbd {
 	font: var(--type-footnote);
 	letter-spacing: var(--type-footnote-tracking);
 	color: var(--text-secondary);
+	font-variant-numeric: tabular-nums;
 }
 .muted,
 .features p {
@@ -135,7 +147,8 @@ section.ruled {
    card surface, as Apple's product pages alternate white and grey. */
 .band {
 	margin-inline: calc(50% - 50vw);
-	padding: var(--space-section) max(var(--layout-gutter), calc(50vw - var(--layout-content) / 2));
+	padding: calc(var(--space-section) + var(--space-xl))
+		max(var(--layout-gutter), calc(50vw - var(--layout-content) / 2));
 }
 .band.tinted {
 	background: var(--surface-card);
