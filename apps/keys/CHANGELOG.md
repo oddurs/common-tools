@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-20
+
 ### Added
 
 - A Welcome window on first launch: what Common Keys does, the Accessibility permission it needs with a live check and a button to System Settings, Open at login, and the Common Tools family.
@@ -87,6 +89,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Universal (Apple silicon and Intel) release builds of the app and the `worldkey` command.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/keys
+[0.3.0]: https://github.com/oddurs/common-tools/releases/tag/keys-v0.3.0
 [0.2.0]: https://github.com/oddurs/common-keys/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/oddurs/common-keys/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/oddurs/common-keys/releases/tag/v0.1.0
