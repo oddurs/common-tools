@@ -5,7 +5,7 @@
 
 import { direct, type BaseFrame } from '../film/director';
 import { clamp, noise, ramp } from '../film/motion';
-import { extrasRight, menuBarHeight, screen, wide } from '../mac/geometry';
+import { extrasRight, menuBarHeight, screen, statusPadding, wide } from '../mac/geometry';
 
 export type Metric = 'cpu' | 'gpu' | 'memory' | 'network' | 'disk' | 'storage' | 'battery';
 export type Style = 'value' | 'graph' | 'graphValue' | 'gauge' | 'gaugeValue';
@@ -101,13 +101,17 @@ function readingsAt(t: number): Readings {
 
 // Where things sit on the screen, in points; Demo.svelte lays out to the same numbers.
 const menuWidth = 320;
+/** The item: 163 points of cells (see Bar.svelte) and the status item's padding either side. */
+const itemWidth = 163 + 2 * statusPadding;
+const itemLeft = extrasRight - itemWidth;
 export const stage = {
 	/** The item's right edge, against the system's own extras. */
 	itemRight: extrasRight,
-	itemCenter: { x: extrasRight - 76, y: menuBarHeight / 2 },
-	menu: { x: extrasRight - menuWidth, y: menuBarHeight + 5, width: menuWidth },
+	itemCenter: { x: itemLeft + itemWidth / 2, y: menuBarHeight / 2 },
+	// A status item's menu opens under its left edge.
+	menu: { x: itemLeft, y: menuBarHeight + 5, width: menuWidth },
 	// Menu padding 7, card padding 12, header 26 + 8.
-	graph: { x: extrasRight - menuWidth + 19, y: menuBarHeight + 5 + 53, width: 282, height: 64 }
+	graph: { x: itemLeft + 19, y: menuBarHeight + 5 + 53, width: 282, height: 64 }
 };
 
 const g = stage.graph;

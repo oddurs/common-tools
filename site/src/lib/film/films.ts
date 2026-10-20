@@ -1,9 +1,12 @@
-// Every film the site has, by tool. The demo route, the recorder, and `pnpm film list` read this.
+// Every film the site has, by app: each app's folder under src/lib/ with a demo.ts exporting `film`
+// is one, so adding a film touches nothing shared. The demo route, the recorder, and `pnpm film list`
+// read this.
 
-import { film as bar } from '../bar/demo';
-import { film as keys } from '../keys/demo';
-import { film as stats } from '../stats/demo';
-import type { Tool } from '../tools';
+import type { AppSlug } from '../tools';
 import type { Film } from './director';
 
-export const films: Record<Tool['slug'], Film> = { stats, keys, bar };
+const modules = import.meta.glob<{ film: Film }>('../*/demo.ts', { eager: true });
+
+export const films = Object.fromEntries(
+	Object.entries(modules).map(([path, module]) => [path.split('/')[1], module.film])
+) as Partial<Record<AppSlug, Film>>;

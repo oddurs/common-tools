@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Film from '../film/Film.svelte';
+	import StatusItem from '../mac/StatusItem.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import { statusSlot } from '../mac/geometry';
 	import type { SymbolName } from '../mac/symbols';
@@ -58,13 +59,13 @@
 
 <Film {frame} {dark} slug="stats" app="Finder" menus={['File', 'Edit', 'View', 'Go', 'Window', 'Help']}>
 	{#snippet extras()}
-		<div class="extras" style:right="{1728 - stage.itemRight}px">
+		<div class="extras">
 			{#each others as symbol (symbol)}
-				<span class="other" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
+				<StatusItem width={statusSlot}><Symbol name={symbol} /></StatusItem>
 			{/each}
-			<span class="item" class:open={frame.menu > 0.5}>
+			<StatusItem open={frame.menu > 0.5}>
 				<Bar items={layouts[frame.layout]} readings={r} />
-			</span>
+			</StatusItem>
 		</div>
 	{/snippet}
 
@@ -78,7 +79,7 @@
 				style:opacity={frame.menu}
 				style:transform="translateY({(1 - frame.menu) * -4}px)"
 			>
-				<section class="card">
+				<section class="group">
 					<header>
 						<span class="tile" style:background="#0a84ff"><Symbol name="cpu" /></span><b>CPU</b
 						><span class="big">{percent(r.cpu)}</span>
@@ -119,7 +120,7 @@
 					</p>
 				</section>
 
-				<section class="card">
+				<section class="group">
 					<header>
 						<span class="tile" style:background="#ff375f"><Symbol name="memorychip" /></span><b
 							>Memory</b
@@ -136,7 +137,7 @@
 					</p>
 				</section>
 
-				<section class="card">
+				<section class="group">
 					<header>
 						<span class="tile" style:background="#5ac8fa"><Symbol name="network" /></span><b
 							>Network</b
@@ -150,7 +151,7 @@
 					</svg>
 				</section>
 
-				<section class="card">
+				<section class="group">
 					<header>
 						<span class="tile" style:background="#ff9f0a"
 							><Symbol name="arrow.up.arrow.down" /></span
@@ -166,7 +167,7 @@
 
 				<div class="tiles">
 					{#each tiles as t (t.name)}
-						<section class="card ringcard">
+						<section class="group ringcard">
 							<header class="mini">
 								<span class="tile" style:background={t.tint}><Symbol name={t.symbol} /></span
 								><b>{t.name}</b>
@@ -196,24 +197,10 @@
 	.extras {
 		position: absolute;
 		top: 0;
+		right: 0;
 		height: 100%;
 		display: flex;
 		align-items: center;
-	}
-	.item {
-		height: 21px;
-		padding: 0 8px;
-		display: flex;
-		align-items: center;
-		border-radius: 8px;
-	}
-	/* macOS 26 marks an open menu bar extra with a soft capsule. */
-	.item.open {
-		background: color-mix(in srgb, currentColor 14%, transparent);
-	}
-	.other {
-		display: flex;
-		justify-content: center;
 	}
 
 	/* A menu in macOS 26: Liquid Glass, larger corners. */
@@ -240,7 +227,7 @@
 		color: #1d1d1f;
 		text-shadow: none;
 		--primary: #1d1d1f;
-		--card: rgba(0, 0, 0, 0.04);
+		--group: rgba(0, 0, 0, 0.04);
 		--well: rgba(0, 0, 0, 0.05);
 		--secondary: #6e6e73;
 		--accent: #0a84ff;
@@ -255,17 +242,17 @@
 			0 0 0 0.5px rgba(255, 255, 255, 0.14);
 		color: #f5f5f7;
 		--primary: #f5f5f7;
-		--card: rgba(255, 255, 255, 0.06);
+		--group: rgba(255, 255, 255, 0.06);
 		--well: rgba(255, 255, 255, 0.05);
 		--secondary: #98989d;
 		--accent-2: #2f6fc0;
 		--accent-3: #1f4a85;
 	}
-	.card {
+	.group {
 		position: relative;
 		padding: 12px;
 		border-radius: 11px;
-		background: var(--card);
+		background: var(--group);
 	}
 	header {
 		height: 26px;

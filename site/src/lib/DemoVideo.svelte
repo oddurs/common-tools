@@ -25,7 +25,7 @@
 	onMount(() => {
 		held = matchMedia('(prefers-reduced-motion: reduce)').matches;
 		// Open on the poster's moment, where something is happening, rather than the fade-in.
-		const start = () => (video.currentTime = films[tool.slug].poster / 1000);
+		const start = () => (video.currentTime = (films[tool.slug]?.poster ?? 0) / 1000);
 		if (video.readyState >= 1) start();
 		else video.addEventListener('loadedmetadata', start, { once: true });
 		const observer = new IntersectionObserver(

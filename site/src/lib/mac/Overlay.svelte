@@ -4,14 +4,19 @@
 	import { asset } from '$app/paths';
 	import Symbol from './Symbol.svelte';
 	import type { SymbolName } from './symbols';
-	import type { Tool } from '../tools';
+	import type { AppSlug } from '../tools';
 
 	let {
 		caption,
 		keys = [],
 		end = 0,
-		tool
-	}: { caption: string; keys?: (SymbolName | string)[]; end?: number; tool: Tool } = $props();
+		app
+	}: {
+		caption: string;
+		keys?: (SymbolName | string)[];
+		end?: number;
+		app: { name: string; icon: `${AppSlug}/icon.png` };
+	} = $props();
 
 	const symbolic = (key: string): key is SymbolName => key === 'command' || key === 'option';
 </script>
@@ -33,13 +38,13 @@
 {#if end > 0}
 	<div class="end" style:opacity={end}>
 		<img
-			src={asset(tool.icon)}
+			src={asset(app.icon)}
 			alt=""
 			width="168"
 			height="168"
 			style:transform="scale({0.92 + 0.08 * end})"
 		/>
-		<h1>{tool.name}</h1>
+		<h1>{app.name}</h1>
 		<p>Free for Mac · oddurs.github.io/common-tools</p>
 	</div>
 {/if}

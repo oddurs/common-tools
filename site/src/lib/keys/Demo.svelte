@@ -1,8 +1,9 @@
 <script lang="ts">
 	import Film from '../film/Film.svelte';
+	import StatusItem from '../mac/StatusItem.svelte';
 	import Symbol from '../mac/Symbol.svelte';
 	import Window from '../mac/Window.svelte';
-	import { extrasRight, screen, statusSlot } from '../mac/geometry';
+	import { statusSlot } from '../mac/geometry';
 	import type { SymbolName } from '../mac/symbols';
 	import { frameAt, windows, type WindowID, type Word } from './demo';
 
@@ -36,12 +37,12 @@
 	menus={['File', 'Edit', 'Format', 'View', 'Window', 'Help']}
 >
 	{#snippet extras()}
-		<div class="extras" style:right="{screen.width - extrasRight}px">
+		<div class="extras">
 			{#each others as symbol (symbol)}
-				<span class="slot" style:width="{statusSlot}px"><Symbol name={symbol} /></span>
+				<StatusItem width={statusSlot}><Symbol name={symbol} /></StatusItem>
 			{/each}
-			<span class="slot flag" style:width="{statusSlot + 4}px" aria-label="Current keyboard"
-				><span style:transform="scale({flagScale})">{frame.flag}</span></span
+			<StatusItem width={statusSlot + 4} label="Current keyboard"
+				><span class="flag" style:transform="scale({flagScale})">{frame.flag}</span></StatusItem
 			>
 		</div>
 	{/snippet}
@@ -82,15 +83,12 @@
 	.extras {
 		position: absolute;
 		top: 0;
+		right: 0;
 		height: 100%;
 		display: flex;
 		align-items: center;
 	}
-	.slot {
-		display: flex;
-		justify-content: center;
-	}
-	.flag span {
+	.flag {
 		display: inline-block;
 		font-size: 16px;
 		line-height: 1;
