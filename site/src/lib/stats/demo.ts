@@ -1,5 +1,5 @@
-// The Common Stats demo: the menu bar item up close, its menu of the last three minutes, a busy
-// stretch arriving live, the pointer reading back when it began, and the item's styles.
+// The Common Stats demo: the menu bar item up close, its menu of the last three minutes with a busy
+// stretch under way, the pointer reading back when it began, and the item's styles.
 //
 // Readings are synthetic but shaped like a real Mac (a 14-core M4 Pro with 24 GB, sampling once a
 // second, the app's default): quiet, with one busy stretch. The menu shows a card for each metric
@@ -66,8 +66,11 @@ export type Readings = {
 	memoryParts: { app: number; wired: number; compressed: number; cached: number; swap: number };
 };
 
-/** The busy stretch, in film time: the first busy sample, and the last. */
-export const busy = { from: 6000, to: 16_000 };
+/**
+ * The busy stretch, in film time: the first busy sample, and the last. It began well before the film,
+ * so on a graph of the last three minutes it reads as a plateau, not a cliff at the right edge.
+ */
+export const busy = { from: -36_000, to: 16_000 };
 
 /** How busy sample n is, 0 to 1. Sample 0 is the film's first second; earlier ones are history. */
 function busyness(n: number): number {
@@ -76,13 +79,10 @@ function busyness(n: number): number {
 	return clamp((busy.to + 2000 - t) / 2000);
 }
 
-/** A shorter stretch two minutes before the film starts, so the graph has a past worth reading. */
-const earlier = (n: number) => (n >= -118 && n <= -96 ? 0.55 + 0.1 * noise(n, 20) : 0);
-
 function cpuAt(n: number): number {
 	const quiet = 0.09 + 0.06 * noise(n, 1) + 0.025 * Math.sin(n / 5);
 	const loaded = 0.86 + 0.08 * noise(n, 2);
-	const k = Math.max(busyness(n), earlier(n));
+	const k = busyness(n);
 	return quiet + (loaded - quiet) * k;
 }
 const systemAt = (n: number) => cpuAt(n) * (0.36 - 0.12 * busyness(n)) * (0.85 + 0.3 * noise(n, 3));
@@ -94,7 +94,7 @@ function downAt(n: number): number {
 }
 const upAt = (n: number) => (noise(n, 9) > 0.95 ? 2.6e5 * noise(n, 10) : 14e3 + 40e3 * noise(n, 11));
 function readAt(n: number): number {
-	const k = Math.max(busyness(n), earlier(n) ? 0.6 : 0);
+	const k = busyness(n);
 	const quiet = noise(n, 12) > 0.85 ? 8e6 + 30e6 * noise(n, 13) : 0.4e6 * noise(n, 14);
 	return quiet + k * (60e6 + 160e6 * noise(n, 15));
 }
@@ -175,7 +175,7 @@ export const cpuChart = {
 export const step = cpuChart.width / (historyLength - 1);
 
 const item = { x: itemLeft + itemWidth(0) / 2, y: menuBarHeight / 2 };
-/** The pointer comes to rest on the first busy sample, a few seconds after it arrived. */
+/** The pointer comes to rest on the first busy sample, the start of the plateau. */
 const hoverAt = 10_400;
 const onSpike = {
 	x: cpuChart.x + cpuChart.width - ((hoverAt - busy.from) / interval) * step,
@@ -208,7 +208,6 @@ export const film = direct((d) => {
 	d.at(3100).click().mark('open').caption('Click for graphs of the last three minutes.');
 	d.at(3200).camera(wholeMenu);
 	d.at(4700).camera(cpuCard);
-	d.at(busy.from).mark('busy');
 	d.at(6400).caption('Something busy? Hover to see when it started.');
 	d.at(9400).point(item);
 	d.at(hoverAt).point(onSpike).mark('hover');
