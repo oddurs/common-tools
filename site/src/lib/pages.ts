@@ -13,6 +13,12 @@ export type Feature = {
 	at: number | string;
 	/** The part of the 1280 × 800 frame to show; the whole frame when left out. */
 	crop?: { x: number; y: number; width: number; height: number };
+	/**
+	 * Further moments to show under the first, each cropped to the same strip and stacked top to
+	 * bottom, for something too thin for a 16:10 frame of its own, like the menu bar in three styles.
+	 * With it, `crop` is one strip, and the strips together make the 16:10.
+	 */
+	stack?: (number | string)[];
 };
 
 export type Page = { features: Feature[] };

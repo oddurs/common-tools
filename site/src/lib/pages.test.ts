@@ -19,11 +19,12 @@ describe.each(Object.entries(pages))('%s page', (slug, page) => {
 		});
 	});
 	it('crops stills to the film frame', () => {
-		for (const { crop, title } of page!.features)
+		for (const { crop, title, stack } of page!.features)
 			if (crop) {
+				const strips = 1 + (stack?.length ?? 0);
 				expect(crop.x + crop.width, title).toBeLessThanOrEqual(1280);
 				expect(crop.y + crop.height, title).toBeLessThanOrEqual(800);
-				expect(crop.width / crop.height, title).toBeCloseTo(1.6, 1);
+				expect(crop.width / (crop.height * strips), title).toBeCloseTo(1.6, 1);
 			}
 	});
 });

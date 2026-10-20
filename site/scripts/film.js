@@ -187,32 +187,49 @@ switch (command) {
 					for (const dark of [false, true]) {
 						const { page, clip, still } = await open(browser, base, tool, dark, true);
 						for (const [index, feature] of features.entries()) {
-							const at =
-								feature.at === 'poster'
-									? film.poster
-									: (film.marks[feature.at] ?? feature.at);
-							if (!Number.isFinite(at))
-								usage(
-									`${tool} feature ${index + 1}: '${feature.at}' is not ms, a mark, or poster`
-								);
+							const moment = (m) => {
+								const t = m === 'poster' ? film.poster : (film.marks[m] ?? m);
+								if (!Number.isFinite(t))
+									usage(
+										`${tool} feature ${index + 1}: '${m}' is not ms, a mark, or poster`
+									);
+								return t;
+							};
 							const crop = feature.crop ?? {
 								x: 0,
 								y: 0,
 								width: viewport.width,
 								height: viewport.height
 							};
+							const region = {
+								x: clip.x + crop.x,
+								y: clip.y + crop.y,
+								width: crop.width,
+								height: crop.height
+							};
 							const path = join(out, `${index + 1}${dark ? '-dark' : ''}.jpg`);
-							await still(at, {
-								path,
-								type: 'jpeg',
-								quality: 86,
-								clip: {
-									x: clip.x + crop.x,
-									y: clip.y + crop.y,
-									width: crop.width,
-									height: crop.height
+							const moments = [feature.at, ...(feature.stack ?? [])].map(moment);
+							if (moments.length === 1) {
+								await still(moments[0], { path, type: 'jpeg', quality: 86, clip: region });
+							} else {
+								// Each moment's strip, then ffmpeg stacks them into one picture.
+								const strips = await mkdtemp(join(tmpdir(), `stills-${tool}-`));
+								try {
+									const files = [];
+									for (const [i, t] of moments.entries()) {
+										const file = join(strips, `${i}.png`);
+										await still(t, { path: file, clip: region });
+										files.push(file);
+									}
+									// prettier-ignore
+									await run('ffmpeg', [
+										'-y', '-loglevel', 'error', ...files.flatMap((f) => ['-i', f]),
+										'-filter_complex', `vstack=inputs=${files.length}`, '-q:v', '3', path
+									]);
+								} finally {
+									await rm(strips, { recursive: true, force: true });
 								}
-							});
+							}
 							console.log(path);
 						}
 						await page.close();
