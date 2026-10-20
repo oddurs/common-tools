@@ -8,6 +8,7 @@
 	import Screen from '../mac/Screen.svelte';
 	import Stage from '../mac/Stage.svelte';
 	import { app as family, type AppSlug } from '../tools';
+	import type { SymbolName } from '../mac/symbols';
 	import type { BaseFrame } from './director';
 
 	let {
@@ -17,6 +18,7 @@
 		app,
 		menus,
 		extras,
+		hideSystem,
 		children,
 		top: topContent
 	}: {
@@ -28,6 +30,8 @@
 		menus: string[];
 		/** The scene's menu bar extras, laid out from the right as in `Screen`. */
 		extras?: Snippet;
+		/** System extras this Mac has turned off; see `Screen`. */
+		hideSystem?: SymbolName[];
 		/** Windows and anything else on the desktop. */
 		children?: Snippet;
 		/** Menus that drop from the menu bar, drawn over it and under the pointer. */
@@ -36,7 +40,7 @@
 </script>
 
 <Stage {dark} opacity={frame.opacity}>
-	<Screen {dark} camera={frame.camera} {app} {menus} {extras} {children}>
+	<Screen {dark} camera={frame.camera} {app} {menus} {extras} {hideSystem} {children}>
 		{#snippet top()}
 			{@render topContent?.()}
 			{#if frame.cursor}
