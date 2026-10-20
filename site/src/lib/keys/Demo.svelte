@@ -11,9 +11,6 @@
 
 	const frame = $derived(frameAt(time));
 	const titles: Record<WindowID, string> = { notes: 'Notes', chat: 'Chat' };
-	// Entrances are drawn from the scene clock, not CSS animations, so recorded frames match it.
-	const flagScale = $derived(1 + 0.45 * Math.max(0, 1 - frame.sinceFlag / 450));
-	const bubbleIn = $derived(Math.min(1, frame.sinceBubble / 140));
 	const order: WindowID[] = $derived(frame.front === 'notes' ? ['chat', 'notes'] : ['notes', 'chat']);
 
 	/** Other apps' menu bar extras, left of Common Keys. */
@@ -41,9 +38,7 @@
 			{#each others as symbol (symbol)}
 				<StatusItem width={statusSlot}><Symbol name={symbol} /></StatusItem>
 			{/each}
-			<StatusItem width={statusSlot + 4} label="Current keyboard"
-				><span class="flag" style:transform="scale({flagScale})">{frame.flag}</span></StatusItem
-			>
+			<StatusItem label="Current keyboard"><span class="flag">{frame.flag}</span></StatusItem>
 		</div>
 	{/snippet}
 
@@ -54,13 +49,10 @@
 				{#each lines(frame.windows[id]) as line, lineIndex (lineIndex)}
 					<p>
 						{#each line as { word, index }, position (index)}
-							{#if position > 0}{' '}{/if}<span class="word" class:fixed={!!word.fixed}
+							{#if position > 0}{' '}{/if}<span class="word"
 								>{word.text}{#if frame.bubble?.window === id && frame.bubble.index === index && word.fixed}
-									<span
-										class="bubble"
-										style:opacity={bubbleIn}
-										style:transform="translateY({(1 - bubbleIn) * -3}px)"
-									>
+									<!-- Its fade is drawn from the scene clock, not a CSS animation, so recorded frames match. -->
+									<span class="bubble" style:opacity={frame.bubble.opacity}>
 										<span>{word.fixed.flag}</span>
 										<b>{word.fixed.replacement}</b>
 										<s>{word.fixed.original}</s>
@@ -88,9 +80,10 @@
 		display: flex;
 		align-items: center;
 	}
+	/* The flag drawn at 15 points, as `StatusMenu.flagImage` draws it. */
 	.flag {
 		display: inline-block;
-		font-size: 16px;
+		font-size: 15px;
 		line-height: 1;
 	}
 
@@ -109,13 +102,6 @@
 	}
 	.word {
 		position: relative;
-		border-radius: 4px;
-	}
-	.word.fixed {
-		background: rgba(10, 132, 255, 0.1);
-	}
-	:global(.dark) .word.fixed {
-		background: rgba(10, 132, 255, 0.24);
 	}
 	.caret {
 		display: inline-block;
@@ -130,46 +116,50 @@
 		opacity: 1;
 	}
 
-	/* The app's own fix bubble: flag, the fixed word, what it was, and how to take it back. */
+	/*
+	 * The app's own fix bubble (`Bubble.swift`): callout text in a capsule of regular material with a
+	 * hairline and no shadow, a little under the word and just left of it. Its metrics are the app's
+	 * scaled with the text, which the film draws at twice a text field's size.
+	 */
 	.bubble {
 		position: absolute;
-		left: -8px;
-		top: calc(100% + 6px);
+		left: -7px;
+		top: calc(100% + 10px);
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 5px 12px;
+		gap: 15px;
+		padding: 7px 15px;
 		border-radius: 999px;
 		white-space: nowrap;
-		font-size: 17px;
+		font-size: 22px;
 		line-height: 1.2;
-		background: rgba(250, 250, 252, 0.86);
+		background: rgba(238, 238, 242, 0.88);
 		backdrop-filter: blur(24px) saturate(1.8);
-		box-shadow:
-			inset 0 0.5px 0 rgba(255, 255, 255, 0.9),
-			0 6px 18px rgba(0, 0, 0, 0.16),
-			0 0 0 0.5px rgba(0, 0, 0, 0.12);
+		box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.06);
 		color: #1d1d1f;
 		z-index: 2;
 	}
 	:global(.dark) .bubble {
-		background: rgba(50, 50, 56, 0.86);
+		background: rgba(58, 58, 62, 0.86);
 		color: #f5f5f7;
-		box-shadow:
-			inset 0 0.5px 0 rgba(255, 255, 255, 0.2),
-			0 6px 18px rgba(0, 0, 0, 0.4),
-			0 0 0 0.5px rgba(255, 255, 255, 0.14);
+		box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.06);
 	}
 	.bubble b {
-		font-weight: 600;
+		font-weight: 500;
 	}
 	.bubble s {
-		color: #8e8e93;
+		color: rgba(60, 60, 67, 0.6);
+	}
+	:global(.dark) .bubble s {
+		color: rgba(235, 235, 245, 0.6);
 	}
 	.bubble kbd {
 		font:
-			600 12px/1 -apple-system,
+			500 18px/1 -apple-system,
 			sans-serif;
-		color: #aeaeb2;
+		color: rgba(60, 60, 67, 0.3);
+	}
+	:global(.dark) .bubble kbd {
+		color: rgba(235, 235, 245, 0.3);
 	}
 </style>
