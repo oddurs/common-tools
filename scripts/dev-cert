@@ -61,7 +61,8 @@ for slug in ${*:-$(ls apps)}; do
     bundle_id="$(plutil -extract "$slug.BUNDLE" raw -o - apps.json)"
     for service in $(plutil -extract "$slug.PERMISSIONS" raw -o - apps.json); do
         echo "==> resetting the $service permission for $bundle_id; grant it again when the app asks"
-        tccutil reset "$service" "$bundle_id"
+        # An app that was never installed has no grants, and tccutil says so with an error.
+        tccutil reset "$service" "$bundle_id" 2>/dev/null || echo "    (no grants: never installed here)"
     done
 done
 
