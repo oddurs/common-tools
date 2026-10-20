@@ -154,6 +154,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ### done
 
+- [x] [`0062`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0062-legible-digits-in-the-battery-icon-and-a-chart-that-never-clips.md) Legible digits in the battery icon, and a chart that never clips <sup>bug · p1</sup>
 - [x] [`0063`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0063-group-the-cpu-card-s-cores-on-chips-with-super-cores.md) Group the CPU card's cores on chips with Super cores <sup>bug · p1</sup>
 - [x] [`0065`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0065-never-convert-a-correctly-typed-name-the-system-lexicon-knows.md) Never convert a correctly typed name the system lexicon knows <sup>bug · p0</sup>
 - [x] [`0068`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0068-keep-the-network-card-s-title-whole-when-its-rates-are-wide.md) Keep the Network card's title whole when its rates are wide <sup>bug · p2</sup>

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 import Testing
 
 @testable import BatteryKit
@@ -120,5 +121,40 @@ struct HistoryTests {
         var h = ChargeHistory()
         h.record(reading(0.5, charging: true), at: start)
         #expect(h.samples.first?.charging == true)
+    }
+}
+
+struct ChartFrameTests {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    /// A lone sample near full, taken just now, drew its dot on the chart's top-right corner,
+    /// where the rounded clip cut it away and the chart looked empty. Every extreme a sample can
+    /// reach leaves the whole dot inside the chart's continuous rounded corners.
+    @Test(arguments: [0.0, 0.5, 0.99, 1.0])
+    func aDotNeverLeavesTheChart(_ level: Double) {
+        let size = CGSize(width: 290, height: 44), radius: CGFloat = 8
+        let frame = ChartFrame(size: size, cornerRadius: radius)
+        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .path(in: CGRect(origin: .zero, size: size))
+        for age in [0, ChargeHistory.span / 2, ChargeHistory.span] {
+            let sample = ChargeHistory.Sample(time: now.addingTimeInterval(-age), level: level, charging: false)
+            let p = frame.point(sample, now: now)
+            let edge = (0..<32).map { k in
+                let a = Double(k) / 32 * 2 * .pi
+                return CGPoint(x: p.x + ChartFrame.dotRadius * cos(a), y: p.y + ChartFrame.dotRadius * sin(a))
+            }
+            #expect(edge.allSatisfy { shape.contains($0) }, "\(level) at \(age) s old: dot at \(p) leaves the chart")
+        }
+    }
+
+    @Test func fullIsAboveEmptyAndNowIsRightOfThen() {
+        let frame = ChartFrame(size: CGSize(width: 290, height: 44), cornerRadius: 8)
+        let full = frame.point(.init(time: now, level: 1, charging: false), now: now)
+        let then = now.addingTimeInterval(-ChargeHistory.span)
+        let empty = frame.point(.init(time: then, level: 0, charging: false), now: now)
+        #expect(full.y < empty.y)
+        #expect(full.x > empty.x)
+        // The 50% line sits halfway between them.
+        #expect(abs(frame.plot.midY - (full.y + empty.y) / 2) < 0.001)
     }
 }

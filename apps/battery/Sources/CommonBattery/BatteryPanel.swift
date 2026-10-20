@@ -98,15 +98,11 @@ struct ChargeChart: View {
     var body: some View {
         VStack(spacing: Tokens.Space.xxs) {
             Canvas { context, size in
-                let start = now.addingTimeInterval(-ChargeHistory.span)
-                func point(_ s: ChargeHistory.Sample) -> CGPoint {
-                    CGPoint(
-                        x: size.width * s.time.timeIntervalSince(start) / ChargeHistory.span,
-                        y: size.height * (1 - min(max(s.level, 0), 1)))
-                }
+                let frame = ChartFrame(size: size, cornerRadius: Tokens.Radius.sm)
+                func point(_ s: ChargeHistory.Sample) -> CGPoint { frame.point(s, now: now) }
                 // A 50% line gives the level a scale without an axis.
                 context.fill(
-                    Path(CGRect(x: 0, y: size.height / 2 - 0.25, width: size.width, height: 0.5)),
+                    Path(CGRect(x: 0, y: frame.plot.midY - 0.25, width: size.width, height: 0.5)),
                     with: .color(Tokens.Color.border.color))
                 for run in history.runs() {
                     // Split where charging starts or stops; the boundary sample ends one stretch and
@@ -132,8 +128,10 @@ struct ChargeChart: View {
                             ? Tokens.Color.success.color : Tokens.Color.accent.color
                         guard points.count > 1 else {
                             let p = points[0]
+                            let r = ChartFrame.dotRadius
                             context.fill(
-                                Path(ellipseIn: CGRect(x: p.x - 2, y: p.y - 2, width: 4, height: 4)), with: .color(ink))
+                                Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: 2 * r, height: 2 * r)),
+                                with: .color(ink))
                             continue
                         }
                         var line = Path()

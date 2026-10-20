@@ -81,6 +81,98 @@ struct RendererTests {
         return CGFloat(first) / CGFloat(scale)...CGFloat(last + 1) / CGFloat(scale)
     }
 
+    // MARK: Percentage in Icon
+
+    /// The fill area inside the Percentage in Icon body, as `drawIcon` lays it out in a 24-point bar.
+    static let inner: CGRect = {
+        let size = BarRenderer.bodySize(.percentInside)
+        return CGRect(x: 0, y: ((24 - size.height) / 2).rounded(), width: size.width, height: size.height)
+            .insetBy(dx: 2, dy: 2)
+    }()
+
+    /// The plug touched the first digit at "80" and ran into it at "100": the number was centred
+    /// by its advance in whatever room the plug left, and three digits don't fit in that room.
+    @Test(arguments: 0...100)
+    func theGlyphAndTheNumberKeepClear(_ percent: Int) {
+        let room = Self.inner.insetBy(dx: BarRenderer.insetPadding, dy: 0)
+        for glyph in [nil, BarRenderer.bolt, BarRenderer.plugGlyph] {
+            let layout = BarRenderer.insetLayout("\(percent)", glyph: glyph, in: Self.inner)
+            let name = glyph.map { $0 === BarRenderer.bolt ? "bolt" : "plug" } ?? "no glyph"
+            #expect(room.minX <= layout.ink.minX && layout.ink.maxX <= room.maxX, "\(percent) with \(name)")
+            #expect(Self.inner.minY <= layout.ink.minY && layout.ink.maxY <= Self.inner.maxY, "\(percent) with \(name)")
+            if let rect = layout.glyph {
+                #expect(room.minX <= rect.minX, "\(percent): the \(name) leaves the body")
+                #expect(
+                    layout.ink.minX - rect.maxX >= BarRenderer.glyphGap - 0.001,
+                    "\(percent): \(layout.ink.minX - rect.maxX) pt between the \(name) and the number")
+            }
+            // What's drawn sits in the middle of the body, glyph and number together.
+            let left = (layout.glyph?.minX ?? layout.ink.minX) - Self.inner.minX
+            let right = Self.inner.maxX - layout.ink.maxX
+            #expect(abs(left - right) <= 0.5, "\(percent) with \(name): \(left) left, \(right) right")
+        }
+    }
+
+    /// In Low Power Mode the yellow fill had the number cut out of it, so on a light menu bar the
+    /// first digit of "55" showed the pale bar through pale yellow and all but vanished. A
+    /// coloured fill keeps every pixel; the number is drawn on it instead.
+    @Test(arguments: [
+        BatteryReading(level: 0.55, state: .discharging, isLowPowerMode: true),
+        BatteryReading(level: 0.9, state: .discharging, isLowPowerMode: true),
+        BatteryReading(level: 0.8, state: .charging, isLowPowerMode: true),
+    ])
+    func aColouredFillIsNeverCutOut(_ reading: BatteryReading) throws {
+        let alert = BarRenderer(appearance: BarAppearance(parts: [.battery], iconStyle: .percentInside), height: 24)
+        #expect(Self.holesInTheFill(alert, reading) == 0)
+        // Over the template's fill the number is still knocked out, as the system's battery draws it.
+        var plain = alert.appearance
+        plain.colorsAlerts = false
+        #expect(Self.holesInTheFill(BarRenderer(appearance: plain, height: 24), reading) > 0)
+    }
+
+    /// Transparent pixels in the middle of the fill, at 2x.
+    static func holesInTheFill(_ renderer: BarRenderer, _ reading: BatteryReading) -> Int {
+        let image = renderer.image(reading)
+        let scale = 2
+        let w = Int(image.size.width) * scale, h = Int(image.size.height) * scale
+        guard
+            let rep = NSBitmapImageRep(
+                bitmapDataPlanes: nil, pixelsWide: w, pixelsHigh: h, bitsPerSample: 8, samplesPerPixel: 4,
+                hasAlpha: true, isPlanar: false, colorSpaceName: .deviceRGB, bytesPerRow: w * 4, bitsPerPixel: 32),
+            let data = rep.bitmapData
+        else { return -1 }
+        rep.size = image.size
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+        image.draw(in: CGRect(origin: .zero, size: image.size))
+        NSGraphicsContext.restoreGraphicsState()
+        // The icon alone is centred in an item a little wider than it; the bitmap's rows run top
+        // down, as the flipped image does.
+        let slack = renderer.size.width - BarRenderer.iconWidth(.percentInside)
+        var fill = Self.inner.offsetBy(dx: (slack / 2).rounded(), dy: 0)
+        fill.size.width *= reading.level
+        let core = fill.insetBy(dx: 1, dy: 1)
+        var holes = 0
+        for py in 0..<h {
+            for px in 0..<w where core.contains(CGPoint(x: (CGFloat(px) + 0.5) / 2, y: (CGFloat(py) + 0.5) / 2)) {
+                if data[py * w * 4 + px * 4 + 3] < 128 { holes += 1 }
+            }
+        }
+        return holes
+    }
+
+    /// What the number is drawn in over a coloured fill reads against it in both appearances.
+    @Test(arguments: [NSColor.systemRed, .systemYellow])
+    func theNumberContrastsWithAColouredFill(_ fill: NSColor) throws {
+        for name in [NSAppearance.Name.aqua, .darkAqua] {
+            let appearance = try #require(NSAppearance(named: name))
+            appearance.performAsCurrentDrawingAppearance {
+                let ratio = BarRenderer.contrast(BarRenderer.legible(on: fill), fill)
+                #expect(ratio >= 4.5, "\(fill) in \(name.rawValue): \(ratio):1")
+            }
+        }
+    }
+
     @Test func templateUnlessAnAlertNeedsColour() {
         let renderer = BarRenderer(appearance: .standard, height: 24)
         #expect(renderer.image(BarRendererFixtures.normal).isTemplate)

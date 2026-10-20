@@ -33,6 +33,10 @@ public struct BarRenderer {
     static let nubGap: CGFloat = 1
     static let nubSize = CGSize(width: 1.5, height: 4.5)
     static let plugSize = CGSize(width: 15, height: 10)
+    /// In Percentage in Icon, the clear space between what's drawn and the sides of the fill area,
+    /// and between the glyph and the number.
+    static let insetPadding: CGFloat = 1
+    static let glyphGap: CGFloat = 1.5
 
     static func bodySize(_ style: IconStyle) -> CGSize {
         style == .percentInside ? CGSize(width: 33, height: 12.5) : CGSize(width: 23, height: 11.5)
@@ -69,6 +73,23 @@ public struct BarRenderer {
             // resolves once, against whatever appearance is current when it's made.
             Ink(text: .labelColor, outline: .secondaryLabelColor, fill: fill, isTemplate: false)
         }
+    }
+
+    /// Black or white, whichever reads better on `fill` as it resolves in the current appearance.
+    static func legible(on fill: NSColor) -> NSColor {
+        contrast(.black, fill) >= contrast(.white, fill) ? .black : .white
+    }
+
+    /// The WCAG contrast ratio between two colours, from 1 to 21.
+    static func contrast(_ a: NSColor, _ b: NSColor) -> CGFloat {
+        func luminance(_ color: NSColor) -> CGFloat {
+            guard let c = color.usingColorSpace(.sRGB) else { return 0 }
+            func linear(_ v: CGFloat) -> CGFloat { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
+            return 0.2126 * linear(c.redComponent) + 0.7152 * linear(c.greenComponent)
+                + 0.0722 * linear(c.blueComponent)
+        }
+        let (x, y) = (luminance(a), luminance(b))
+        return (max(x, y) + 0.05) / (min(x, y) + 0.05)
     }
 
     func ink(_ reading: BatteryReading) -> Ink {
@@ -206,7 +227,10 @@ public struct BarRenderer {
         }
 
         // Everything else inside the body (the plug, and in Percentage in Icon the number and the
-        // bolt) is cut out of the fill and drawn in ink beyond it, so it reads at any level.
+        // bolt) is drawn in ink beyond the fill and, over it, cut out of a template's fill, as the
+        // system draws it: the menu bar shows through, and contrasts with a fill AppKit tints in
+        // the bar's own text colour. A coloured fill can be as pale as the bar (yellow on a light
+        // one), so on it they're drawn in black or white, whichever reads against that colour.
         let glyph: NSBezierPath? =
             switch reading.state {
             case .charging: Self.bolt
@@ -216,19 +240,9 @@ public struct BarRenderer {
         var marks: [NSBezierPath] = []
         var text: (NSAttributedString, CGPoint)?
         if style == .percentInside {
-            var content = inner.insetBy(dx: 1, dy: 0)
-            if let glyph {
-                let h = glyph === Self.bolt ? inner.height - 1 : inner.height - 2.5
-                let w = h * Self.aspect(glyph)
-                marks.append(Self.place(glyph, in: CGRect(x: content.minX, y: inner.midY - h / 2, width: w, height: h)))
-                content.origin.x += w + 0.5
-                content.size.width -= w + 0.5
-            }
-            let font = Self.insetFont
-            let number = NSAttributedString(string: "\(reading.percent)", attributes: [.font: font])
-            let origin = CGPoint(
-                x: content.midX - number.size().width / 2, y: inner.midY + font.capHeight / 2 - font.ascender)
-            text = (number, origin)
+            let layout = Self.insetLayout("\(reading.percent)", glyph: glyph, in: inner)
+            if let glyph, let rect = layout.glyph { marks.append(Self.place(glyph, in: rect)) }
+            text = (layout.number, layout.origin)
         } else if let glyph {
             let h = inner.height - 0.5
             let w = h * Self.aspect(glyph)
@@ -249,13 +263,54 @@ public struct BarRenderer {
         }
         ctx.saveGState()
         ctx.clip(to: fill)
-        ctx.setBlendMode(.destinationOut)
-        drawMarks(.black)
+        if ink.isTemplate {
+            ctx.setBlendMode(.destinationOut)
+            drawMarks(.black)
+        } else {
+            drawMarks(Self.legible(on: ink.fill))
+        }
         ctx.restoreGState()
         ctx.saveGState()
         ctx.clip(to: CGRect(x: fill.maxX, y: body.minY, width: body.maxX - fill.maxX, height: body.height))
         drawMarks(ink.text)
         ctx.restoreGState()
+    }
+
+    /// Where Percentage in Icon puts its glyph and number inside the body: the rect the glyph fills,
+    /// the number, where it's drawn from, and the extent of its ink.
+    struct InsetLayout {
+        let glyph: CGRect?
+        let number: NSAttributedString
+        let origin: CGPoint
+        let ink: CGRect
+    }
+
+    /// The glyph, a gap, and the number's ink (not its advance: digits carry side bearings) are
+    /// centred together as one group. A glyph is as wide as fits beside "100" with `glyphGap`
+    /// between them and `insetPadding` to spare at both ends, and no taller than the body allows.
+    static func insetLayout(_ text: String, glyph: NSBezierPath?, in inner: CGRect) -> InsetLayout {
+        let font = insetFont
+        func line(_ text: String) -> NSAttributedString { NSAttributedString(string: text, attributes: [.font: font]) }
+        func ink(_ line: NSAttributedString) -> CGRect {
+            CTLineGetImageBounds(CTLineCreateWithAttributedString(line), nil)
+        }
+        let number = line(text)
+        let bounds = ink(number)
+        let glyphSize = glyph.map { glyph in
+            let room = inner.width - 2 * insetPadding - glyphGap - ink(line("100")).width
+            let h = min(glyph === bolt ? inner.height - 1 : inner.height - 2.5, room / aspect(glyph))
+            return CGSize(width: h * aspect(glyph), height: h)
+        }
+        let lead = glyphSize.map { $0.width + glyphGap } ?? 0
+        let start = inner.midX - (lead + bounds.width) / 2
+        let glyphRect = glyphSize.map {
+            CGRect(x: start, y: inner.midY - $0.height / 2, width: $0.width, height: $0.height)
+        }
+        // The flipped drawing starts the line at its top; its baseline sits one ascender below.
+        let baseline = inner.midY + font.capHeight / 2
+        let origin = CGPoint(x: start + lead - bounds.minX, y: baseline - font.ascender)
+        let numberInk = CGRect(x: start + lead, y: baseline - bounds.maxY, width: bounds.width, height: bounds.height)
+        return InsetLayout(glyph: glyphRect, number: number, origin: origin, ink: numberInk)
     }
 
     // MARK: Glyphs
