@@ -48,3 +48,28 @@ public struct ChargeHistory: Sendable {
         return runs
     }
 }
+
+/// Where the menu's chart puts each sample: oldest at the left, now at the right, full at the top.
+public struct ChartFrame: Sendable {
+    /// The dot drawn for a stretch with a single sample.
+    public static let dotRadius: CGFloat = 2
+
+    /// The rect the samples are plotted in, inset from the chart's edges so a dot on it stays whole.
+    public let plot: CGRect
+
+    /// `cornerRadius` is the chart's clip. A dot (and a point of clear space around it) at a corner
+    /// of the plot sits on the corner arc's diagonal, so it must be inset by the radius less its
+    /// distance along that diagonal; on a straight edge, by the dot's reach alone.
+    public init(size: CGSize, cornerRadius: CGFloat) {
+        let reach = Self.dotRadius + 1
+        let inset = max(reach, cornerRadius - (cornerRadius - reach) / 2.squareRoot()).rounded(.up)
+        plot = CGRect(origin: .zero, size: size).insetBy(dx: inset, dy: inset)
+    }
+
+    public func point(_ sample: ChargeHistory.Sample, now: Date) -> CGPoint {
+        let start = now.addingTimeInterval(-ChargeHistory.span)
+        return CGPoint(
+            x: plot.minX + plot.width * sample.time.timeIntervalSince(start) / ChargeHistory.span,
+            y: plot.minY + plot.height * (1 - min(max(sample.level, 0), 1)))
+    }
+}
