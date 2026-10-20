@@ -22,6 +22,10 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "cpu": (13, .medium), "memorychip": (13, .medium), "network": (13, .medium),
     "arrow.up.arrow.down": (12, .semibold), "square.stack.3d.up": (13, .medium),
     "internaldrive": (12, .medium), "battery.75percent": (12, .medium),
+    // Common Color: the menu bar eyedropper (unconfigured, as the app sets it) and its panel's symbols.
+    "eyedropper": (13, .regular), "gearshape": (13, .regular), "power": (13, .regular),
+    "chevron.down": (8, .semibold), "chevron.up": (8, .semibold),
+    "checkmark.circle.fill": (11, .regular), "xmark.circle": (11, .regular),
     // Key caps.
     "command": (22, .regular), "option": (22, .regular),
 ]
