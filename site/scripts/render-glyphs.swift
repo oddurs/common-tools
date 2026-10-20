@@ -33,6 +33,8 @@ let symbols: [String: (CGFloat, NSFont.Weight)] = [
     "equal": (12, .semibold),
     // Added by fc47ea6 (feat(site): draw the Common Stats film's menu from the real app).
     "gauge.with.dots.needle.67percent": (13, .regular),
+    // Added by 4a59020 (feat(site): film Common Shot from the shortcut to the paste).
+    "camera.viewfinder": (15, .regular),
     // Key caps.
     "command": (22, .regular), "option": (22, .regular),
 ]
