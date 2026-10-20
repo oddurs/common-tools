@@ -11,6 +11,17 @@
 			? page.data.releases.keys.download.replace(/CommonKeys\.zip$/, 'common-keys.zip')
 			: releasesOf(keys)
 	);
+	// From `common-keys eval`: 150 dictionary words per language, typed on the right keyboard and the wrong.
+	const accuracy = [
+		['U.S. + Icelandic', '0 of 300', '97% (most words read the same on both)'],
+		['U.S. + Russian', '0 of 300', '98% · 100%'],
+		['U.S. + Korean 2-Set', '0 of 300', '100% · 100%'],
+		['U.S. + Greek', '0 of 300', '99% · 97%'],
+		['U.S. + Hebrew', '0 of 300', '93% · 97%'],
+		['U.S. + Arabic', '0 of 300', '88% · 98%'],
+		['U.S. + French', '0 of 300', '100% · 92%'],
+		['U.S. + German', '0 of 300', '97% · 82%']
+	];
 	const sections: [string, string][] = [
 		['install', 'Install'],
 		['fixing', 'How fixing works'],
@@ -19,6 +30,7 @@
 		['learning', 'What it learns'],
 		['menu', 'The menu'],
 		['settings', 'Settings'],
+		['accuracy', 'How accurate it is'],
 		['limits', 'Limits'],
 		['cli', 'The common-keys command'],
 		['source', 'Build from source']
@@ -119,6 +131,26 @@
 		<li><b>General</b>: <b>Open at login</b>.</li>
 		<li><b>Common Tools</b>: the other Common Tools apps, and the version you're running.</li>
 	</ul>
+
+	<h2 id="accuracy">How accurate it is</h2>
+	<p>
+		<code>common-keys eval</code> types 150 dictionary words per language on the right keyboard and on the wrong
+		one, and counts what happens.
+	</p>
+	<table>
+		<thead>
+			<tr><th>Keyboards</th><th>Correct words changed</th><th>Wrong-keyboard words fixed</th></tr>
+		</thead>
+		<tbody>
+			{#each accuracy as [keyboards, changed, fixed] (keyboards)}
+				<tr><td>{keyboards}</td><td>{changed}</td><td>{fixed}</td></tr>
+			{/each}
+		</tbody>
+	</table>
+	<p>
+		Most misses are short words that are real in both languages, like <em>an</em> and <em>αν</em>, where
+		leaving them alone is right.
+	</p>
 
 	<h2 id="limits">Limits</h2>
 	<ul>

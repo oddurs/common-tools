@@ -3,6 +3,7 @@
 //   pnpm film list                                   each film's length, poster, and marks
 //   pnpm film shot <tool> [moment ...] [--dark]      stills into shots/; a moment is ms, a mark, or "poster"
 //   pnpm film record [tool ...] [--light | --dark]   videos and posters into static/<tool>/
+//   pnpm film stills [tool ...]                      each page feature's still into static/<tool>/features/
 //   pnpm film glyphs                                 SF Symbols and the cursor into static/symbols/
 //
 // shot and record run their own dev server with file watching off, so editing the site while a
@@ -31,7 +32,7 @@ function run(command, args) {
 function usage(message) {
 	if (message) console.error(`film: ${message}`);
 	console.error(
-		'usage: pnpm film list | shot <tool> [moment ...] [--dark] | record [tool ...] [--light|--dark] | glyphs'
+		'usage: pnpm film list | shot <tool> [moment ...] [--dark] | record [tool ...] [--light|--dark] | stills [tool ...] | glyphs'
 	);
 	process.exit(2);
 }
@@ -46,16 +47,19 @@ async function serve(work) {
 	await server.listen();
 	try {
 		const { films } = await server.ssrLoadModule('/src/lib/film/films.ts');
-		return await work(server.resolvedUrls.local[0].replace(/\/$/, ''), films);
+		const { pages } = await server.ssrLoadModule('/src/lib/pages.ts');
+		return await work(server.resolvedUrls.local[0].replace(/\/$/, ''), films, pages);
 	} finally {
 		await server.close();
 	}
 }
 
 /** Opens a film's page held still, ready to be stepped with seek(). */
-async function open(browser, base, tool, dark) {
+async function open(browser, base, tool, dark, clean = false) {
 	const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
-	await page.goto(`${base}/${tool}/demo/?record${dark ? '&dark' : ''}`, { waitUntil: 'networkidle' });
+	await page.goto(`${base}/${tool}/demo/?record${dark ? '&dark' : ''}${clean ? '&clean' : ''}`, {
+		waitUntil: 'networkidle'
+	});
 	await page.waitForFunction(() => '__seek' in window);
 	// The stage never moves, so measure it once and shoot that rectangle. An element screenshot waits
 	// for the element to be "stable" every frame, which stalls on a busy machine.
@@ -63,13 +67,14 @@ async function open(browser, base, tool, dark) {
 	if (!clip) throw new Error(`the ${tool} film has no #stage`);
 	return {
 		page,
+		clip,
 		async still(t, options) {
 			await page.evaluate((t) => window.__seek(t), t);
 			// Two animation frames: one for Svelte to update the DOM, one for it to paint.
 			await page.evaluate(
 				() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
 			);
-			await page.screenshot({ ...options, clip, timeout: 120_000 });
+			await page.screenshot({ clip, ...options, timeout: 120_000 });
 		}
 	};
 }
@@ -161,6 +166,56 @@ switch (command) {
 						} finally {
 							await rm(frames, { recursive: true, force: true });
 						}
+					}
+				}
+			} finally {
+				await browser.close();
+			}
+		});
+		break;
+
+	case 'stills':
+		await serve(async (base, films, pages) => {
+			const browser = await chromium.launch({ channel: 'chrome' });
+			try {
+				for (const tool of pickTools(words, films)) {
+					const features = pages[tool]?.features;
+					if (!features) usage(`no page features for '${tool}'; add src/lib/${tool}/page.ts`);
+					const film = films[tool];
+					const out = join(root, 'static', tool, 'features');
+					await mkdir(out, { recursive: true });
+					for (const dark of [false, true]) {
+						const { page, clip, still } = await open(browser, base, tool, dark, true);
+						for (const [index, feature] of features.entries()) {
+							const at =
+								feature.at === 'poster'
+									? film.poster
+									: (film.marks[feature.at] ?? feature.at);
+							if (!Number.isFinite(at))
+								usage(
+									`${tool} feature ${index + 1}: '${feature.at}' is not ms, a mark, or poster`
+								);
+							const crop = feature.crop ?? {
+								x: 0,
+								y: 0,
+								width: viewport.width,
+								height: viewport.height
+							};
+							const path = join(out, `${index + 1}${dark ? '-dark' : ''}.jpg`);
+							await still(at, {
+								path,
+								type: 'jpeg',
+								quality: 86,
+								clip: {
+									x: clip.x + crop.x,
+									y: clip.y + crop.y,
+									width: crop.width,
+									height: crop.height
+								}
+							});
+							console.log(path);
+						}
+						await page.close();
 					}
 				}
 			} finally {

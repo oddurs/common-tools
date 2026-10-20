@@ -14,13 +14,16 @@
 	} = $props();
 
 	// Plays live, or holds still for `pnpm film`, which steps it with window.__seek.
-	// ?dark draws the scene in dark mode.
+	// ?dark draws the scene in dark mode. ?clean leaves out the overlay (caption, keys held, closing
+	// card), for the stills on the apps' pages.
 	let time = $state(0);
 	let dark = $state(false);
+	let clean = $state(false);
 
 	onMount(() => {
 		const params = new URLSearchParams(location.search);
 		dark = params.has('dark');
+		clean = params.has('clean');
 		if (params.has('record')) {
 			Object.assign(window, {
 				__seek: (t: number) => (time = t),
@@ -47,7 +50,7 @@
 	<link rel="icon" href={asset('icon.svg')} />
 </svelte:head>
 
-<div class="center"><div id="stage"><Scene {time} {dark} /></div></div>
+<div class="center"><div id="stage" class:clean><Scene {time} {dark} /></div></div>
 
 <style>
 	:global(body) {
@@ -61,5 +64,9 @@
 	#stage {
 		width: 1280px;
 		height: 800px;
+	}
+	/* The overlay draws nothing in a still. */
+	#stage.clean :global(.overlay) {
+		display: none;
 	}
 </style>
