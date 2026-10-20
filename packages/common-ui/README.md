@@ -41,6 +41,8 @@ swift run --package-path packages/CommonKit DesignRender   # after changing a Co
 
 `build.mjs` turns a hue into sRGB stops, lowering chroma where a colour falls outside sRGB rather than shifting its hue. The site gets `--brand-<app>`, `--brand-<app>-top`, `--brand-<app>-deep` and `--brand-<app>-gradient`. `scripts/make-icon <app>` reads `node packages/common-ui/build.mjs --brand <app>` for the icon's body and the tint of its glass shadows. The apps' own interfaces keep the system accent: this is the icon's colour, not the app's.
 
+The Common Tools mark is the same system in one picture: a "C" of seven arcs, one per app, sorted round the wheel, on an ink squircle (Common Color is the wheel itself). `node packages/common-ui/logo.mjs > site/static/icon.svg` draws it from the tokens.
+
 ## What is the system's and what is ours
 
 The apps must look like macOS, so a token maps to a system colour wherever one exists and defines a value only where macOS has none:

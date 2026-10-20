@@ -210,7 +210,17 @@ export function renderCSS({ tokens, hash }) {
 					declare(cssName('brand', slug, 'top'), colors.top);
 					declare(cssName('brand', slug, 'deep'), colors.deep);
 					const stops = colors.spectrum ?? [colors.top, colors.mid, colors.deep];
-					declare(cssName('brand', slug, 'gradient'), `linear-gradient(170deg, ${stops.join(', ')})`);
+					const args = ['170deg', ...stops];
+					const flat = `linear-gradient(${args.join(', ')})`;
+					const name = cssName('brand', slug, 'gradient');
+					// Laid out as Prettier lays out a value too long for one line, so formatting the site
+					// leaves the generated file as it is.
+					declare(
+						name,
+						`\t${name}: ${flat};`.length <= 100
+							? flat
+							: `linear-gradient(\n${args.map((a) => `\t\t${a}`).join(',\n')}\n\t)`
+					);
 				}
 				break;
 			case 'layout':

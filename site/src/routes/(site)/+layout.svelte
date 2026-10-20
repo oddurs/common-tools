@@ -16,7 +16,9 @@
 
 <nav>
 	<div class="inner">
-		<a class="home" href={resolve('/(site)')}>Common Tools</a>
+		<a class="home" href={resolve('/(site)')}
+			><img src={asset('icon.svg')} alt="" width="22" height="22" />Common Tools</a
+		>
 		<span class="tools">
 			{#each tools as t (t.slug)}
 				<a href={resolve(`${t.slug}/`)} aria-current={current === t ? 'page' : undefined}>
@@ -58,8 +60,14 @@
 		letter-spacing: var(--type-footnote-tracking);
 	}
 	.home {
+		display: flex;
+		align-items: center;
+		gap: var(--space-xs);
 		color: var(--text-primary);
 		font-weight: var(--weight-semibold);
+	}
+	.home:hover {
+		text-decoration: none;
 	}
 	.tools {
 		display: flex;

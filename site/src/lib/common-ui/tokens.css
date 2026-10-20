@@ -36,7 +36,21 @@
 	--brand-color: #c958c2;
 	--brand-color-top: #e09ae6;
 	--brand-color-deep: #a22488;
-	--brand-color-gradient: linear-gradient(170deg, #f771a0, #fd7562, #ef8604, #c89f07, #98b305, #3fc168, #06bfa8, #05b9cf, #11afff, #829eff, #b688fe, #de79d7);
+	--brand-color-gradient: linear-gradient(
+		170deg,
+		#f771a0,
+		#fd7562,
+		#ef8604,
+		#c89f07,
+		#98b305,
+		#3fc168,
+		#06bfa8,
+		#05b9cf,
+		#11afff,
+		#829eff,
+		#b688fe,
+		#de79d7
+	);
 	--text-primary: #1d1d1f;
 	--text-secondary: #6e6e73;
 	--text-inverse: #ffffff;
