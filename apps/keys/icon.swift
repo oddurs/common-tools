@@ -13,7 +13,7 @@ func glyph(_ ctx: CGContext) {
     // A keycap seen from above: a glass cap on a darker skirt.
     let cap = CGRect(x: 232, y: 262, width: 560, height: 520)
     ctx.saveGState()
-    ctx.addPath(rounded(cap.offsetBy(dx: 0, dy: -26), 120)); ctx.setFillColor(rgb(0x0a3fa8, 0.55)); ctx.fillPath()
+    ctx.addPath(rounded(cap.offsetBy(dx: 0, dy: -26), 120)); ctx.setFillColor(shade(0.55)); ctx.fillPath()
     ctx.restoreGState()
     glass(ctx, rounded(cap, 120))
     ink(ctx) {

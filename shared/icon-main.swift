@@ -12,9 +12,15 @@ func render(_ px: Int, _ glyph: (CGContext) -> Void) -> Data {
     return rep.representation(using: .png, properties: [:])!
 }
 
-// Arguments: the app's directory and the shared family icons directory.
+// Arguments: the app's directory, the shared family icons directory, the app's brand colours as
+// build.mjs --brand prints them, and where the site keeps the app's icon.
 let app = URL(fileURLWithPath: CommandLine.arguments[1])
 let family = URL(fileURLWithPath: CommandLine.arguments[2])
+let site = URL(fileURLWithPath: CommandLine.arguments[4])
+let brand = try JSONSerialization.jsonObject(with: Data(CommandLine.arguments[3].utf8)) as! [String: Any]
+func hex(_ value: Any?) -> CGColor { rgb(UInt32((value as! String).dropFirst(), radix: 16)!) }
+(brandTop, brandMid, brandDeep) = (hex(brand["top"]), hex(brand["mid"]), hex(brand["deep"]))
+brandSpectrum = (brand["spectrum"] as? [String])?.map(hex) ?? []
 let slug = app.lastPathComponent
 let iconset = FileManager.default.temporaryDirectory.appendingPathComponent("AppIcon.iconset")
 if FileManager.default.fileExists(atPath: iconset.path) { try FileManager.default.removeItem(at: iconset) }
@@ -24,6 +30,8 @@ for size in [16, 32, 128, 256, 512] {
     try render(size * 2, glyph).write(to: iconset.appendingPathComponent("icon_\(size)x\(size)@2x.png"))
 }
 try render(256, glyph).write(to: app.appendingPathComponent("docs/icon.png"))
+// The site's copy, sharp at the size its pages show it on a Retina screen.
+try render(512, glyph).write(to: site)
 // The family icon every app's Settings shows.
 try render(128, glyph).write(to: family.appendingPathComponent("\(slug).png"))
 let iconutil = Process()

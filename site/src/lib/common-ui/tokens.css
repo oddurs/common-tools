@@ -1,10 +1,42 @@
 /*
  * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
  * change the source and run `node packages/common-ui/build.mjs`.
- * source sha256: fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9
+ * source sha256: 3835d01f86534d656cff197b88e8e277f1e34b22bb84c3ddd4927723ec121f0b
  */
 :root {
 	color-scheme: light dark;
+	--brand-glyph: #db509c;
+	--brand-glyph-top: #f195cc;
+	--brand-glyph-deep: #af1863;
+	--brand-glyph-gradient: linear-gradient(170deg, #f195cc, #db509c, #af1863);
+	--brand-bar: #e84e5f;
+	--brand-bar-top: #fe93a1;
+	--brand-bar-deep: #b71920;
+	--brand-bar-gradient: linear-gradient(170deg, #fe93a1, #e84e5f, #b71920);
+	--brand-keys: #e05f00;
+	--brand-keys-top: #fd9976;
+	--brand-keys-deep: #984b00;
+	--brand-keys-gradient: linear-gradient(170deg, #fd9976, #e05f00, #984b00);
+	--brand-battery: #05a944;
+	--brand-battery-top: #85cc7e;
+	--brand-battery-deep: #047745;
+	--brand-battery-gradient: linear-gradient(170deg, #85cc7e, #05a944, #047745);
+	--brand-shot: #069fa6;
+	--brand-shot-top: #1bd1d0;
+	--brand-shot-deep: #00707d;
+	--brand-shot-gradient: linear-gradient(170deg, #1bd1d0, #069fa6, #00707d);
+	--brand-stats: #048ff4;
+	--brand-stats-top: #70bffe;
+	--brand-stats-deep: #005dca;
+	--brand-stats-gradient: linear-gradient(170deg, #70bffe, #048ff4, #005dca);
+	--brand-command: #9270f4;
+	--brand-command-top: #b1acfe;
+	--brand-command-deep: #763ebd;
+	--brand-command-gradient: linear-gradient(170deg, #b1acfe, #9270f4, #763ebd);
+	--brand-color: #c958c2;
+	--brand-color-top: #e09ae6;
+	--brand-color-deep: #a22488;
+	--brand-color-gradient: linear-gradient(170deg, #f771a0, #fd7562, #ef8604, #c89f07, #98b305, #3fc168, #06bfa8, #05b9cf, #11afff, #829eff, #b688fe, #de79d7);
 	--text-primary: #1d1d1f;
 	--text-secondary: #6e6e73;
 	--text-inverse: #ffffff;

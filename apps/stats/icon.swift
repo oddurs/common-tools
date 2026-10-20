@@ -32,6 +32,6 @@ func glyph(_ ctx: CGContext) {
         ctx.setFillColor(rgb(0xffffff));
         ctx.fillEllipse(in: CGRect(x: end.x - 30, y: end.y - 30, width: 60, height: 60))
     }
-    ctx.setFillColor(rgb(0x1a6ff0));
+    ctx.setFillColor(brandMid);
     ctx.fillEllipse(in: CGRect(x: pts.last!.x - 14, y: pts.last!.y - 14, width: 28, height: 28))
 }

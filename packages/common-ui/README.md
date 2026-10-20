@@ -28,6 +28,19 @@ swift run --package-path packages/CommonKit DesignRender   # after changing a Co
 3. **Primitives**: the few reusable pieces built from tokens. In the `CommonUI` product of CommonKit (`import CommonUI`): `Card`, `IconBadge`, `LabeledRow`, `SettingsWindowHost`, `.settingsForm()`, `SettingsFootnote`, `OpenAtLoginToggle`, `OpenAtLoginFootnote`, and for a menu bar panel `MenuPanelHost`, `MenuPanelSurface`, `MenuRow`, `SectionHeader`, `ThumbnailTile`; in CommonKit, `CommonToolsSection`, which carries the family list and the promise every app makes. On the site: `.button`, `.link`, `.card`, `section.ruled`, `.callout`, `.badge`, and the `table` and `pre` styles in `site/src/app.css`.
 4. **Pages and views** compose primitives. They may lay things out, but take every colour, size, and duration from a token.
 
+## App colours
+
+`brand` gives each app its own colour: its icon's body, and its accent on the site. Every app sits on one ramp of OKLCH lightness and chroma (`brand.ramp`: `top`, `mid`, `deep`) and differs only in hue (`brand.apps`), so the family reads as a set while each app is easy to tell apart. Common Color takes the whole spectrum. Hues stay clear of yellow, where white marks don't read.
+
+| App | Hue | | App | Hue |
+| --- | --- | --- | --- | --- |
+| Glyph | 350° pink | | Shot | 200° teal |
+| Bar | 18° coral | | Stats | 250° blue |
+| Keys | 46° orange | | Command | 292° violet |
+| Battery | 148° green | | Color | the spectrum |
+
+`build.mjs` turns a hue into sRGB stops, lowering chroma where a colour falls outside sRGB rather than shifting its hue. The site gets `--brand-<app>`, `--brand-<app>-top`, `--brand-<app>-deep` and `--brand-<app>-gradient`. `scripts/make-icon <app>` reads `node packages/common-ui/build.mjs --brand <app>` for the icon's body and the tint of its glass shadows. The apps' own interfaces keep the system accent: this is the icon's colour, not the app's.
+
 ## What is the system's and what is ours
 
 The apps must look like macOS, so a token maps to a system colour wherever one exists and defines a value only where macOS has none:

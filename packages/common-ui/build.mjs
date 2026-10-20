@@ -5,6 +5,7 @@
 //
 //   node packages/common-ui/build.mjs          write both
 //   node packages/common-ui/build.mjs --check  exit 1 if either is out of date
+//   node packages/common-ui/build.mjs --brand <app>   the app's colours as JSON, for scripts/make-icon
 //
 // No dependencies: Node's standard library only, so it runs wherever the tests run. Tests on both
 // surfaces fail when an output is older than the source (see README.md).
@@ -85,6 +86,58 @@ function wrap(text, prefix, width = 118) {
 	return lines;
 }
 
+// MARK: - Brand colours
+
+/** OKLCH to an sRGB hex, lowering chroma until the colour fits sRGB rather than clipping its hue. */
+export function oklch(l, c, h) {
+	for (let chroma = c; chroma >= 0; chroma -= 0.002) {
+		const a = chroma * Math.cos((h * Math.PI) / 180);
+		const b = chroma * Math.sin((h * Math.PI) / 180);
+		// Ottosson's OKLab to linear sRGB.
+		const l_ = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+		const m_ = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+		const s_ = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
+		const linear = [
+			4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+			-1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+			-0.0041960863 * l_ - 0.7034186147 * m_ + 1.707614701 * s_
+		];
+		if (linear.every((v) => v >= -0.0005 && v <= 1.0005)) {
+			const encode = (v) => {
+				const x = Math.min(Math.max(v, 0), 1);
+				return Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055));
+			};
+			return `#${linear.map((v) => encode(v).toString(16).padStart(2, '0')).join('')}`;
+		}
+	}
+	throw new Error(`no sRGB colour for oklch(${l} ${c} ${h})`);
+}
+
+/** The spectrum Common Color's body runs through, in hue degrees: the wheel, every 30°, a little lighter than
+ * the ramp's middle so its yellows stay clean rather than olive. */
+const spectrum = Array.from({ length: 12 }, (_, i) => i * 30);
+
+/**
+ * An app's colours: its body's stops top to bottom, the solid that stands for it, and for Common
+ * Color the spectrum's stops as well.
+ */
+export function brand(tokens, slug) {
+	const { ramp, apps } = tokens.brand;
+	const app = apps[slug];
+	if (!app || typeof app !== 'object') throw new Error(`no brand colour for '${slug}'`);
+	const stop = (name, hue) => oklch(ramp[name].l, ramp[name].c, (hue + ramp[name].turn + 360) % 360);
+	if (app.spectrum) {
+		// The solid is the spectrum's own pink, where a white mark reads best.
+		return {
+			top: stop('top', 330),
+			mid: stop('mid', 330),
+			deep: stop('deep', 330),
+			spectrum: spectrum.map((hue) => oklch(0.72, 0.17, hue))
+		};
+	}
+	return { top: stop('top', app.hue), mid: stop('mid', app.hue), deep: stop('deep', app.hue) };
+}
+
 const camel = (name) => name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
 const cssName = (...parts) => `--${parts.join('-')}`;
 const cubic = ([a, b, c, d]) => `cubic-bezier(${a}, ${b}, ${c}, ${d})`;
@@ -148,6 +201,17 @@ export function renderCSS({ tokens, hash }) {
 				break;
 			case 'layer':
 				for (const [name, value] of entries(group)) declare(cssName('layer', name), value);
+				break;
+			case 'brand':
+				// The same in both appearances: an icon's body doesn't change with the theme.
+				for (const [slug] of entries(group.apps)) {
+					const colors = brand(tokens, slug);
+					declare(cssName('brand', slug), colors.mid);
+					declare(cssName('brand', slug, 'top'), colors.top);
+					declare(cssName('brand', slug, 'deep'), colors.deep);
+					const stops = colors.spectrum ?? [colors.top, colors.mid, colors.deep];
+					declare(cssName('brand', slug, 'gradient'), `linear-gradient(170deg, ${stops.join(', ')})`);
+				}
 				break;
 			case 'layout':
 				// Media queries can't read a custom property, so the breakpoint stays in each @media by
@@ -278,7 +342,10 @@ export function render() {
 	return { swift: renderSwift(src), css: renderCSS(src) };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1] && process.argv.includes('--brand')) {
+	const slug = process.argv[process.argv.indexOf('--brand') + 1];
+	console.log(JSON.stringify(brand(source().tokens, slug)));
+} else if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
 	const rendered = render();
 	let stale = 0;
 	for (const [name, path] of Object.entries(outputs)) {

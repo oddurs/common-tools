@@ -13,6 +13,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- A new icon in the app's own colour. Each Common Tools app now has its own hue on one shared ramp, so the family reads as a set and each app is easy to tell apart.
 - Common Bar goes by its own name inside too: the bundle identifier is `com.oddurs.commonbar` and the executable `CommonBar`, like every Common Tools app. The first launch after the update quits the old copy if it's still running and brings your settings and the positions of More and its divider over.
 - macOS asks for Accessibility once more after this update, the first time you open More. Permissions belong to the bundle identifier, which changed, so the old grant doesn't carry over. An old Common Bar switch left on in System Settings › Privacy & Security › Accessibility belongs to the earlier copy; select it and click − to remove it.
 - Open at login should carry over: the first time the old login item opens Common Bar, the new one takes its place. If Common Bar doesn't open at your next login, turn on **Open at login** in Settings › General again; an old Common Bar entry left in System Settings › General › Login Items can be removed with −.
