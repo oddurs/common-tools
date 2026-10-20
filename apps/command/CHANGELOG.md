@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
 ### Added
 
 - A Welcome window on first launch: what Common Command does, Open at login, and the Common Tools family.
@@ -49,3 +51,4 @@ All notable changes to this project are documented here. The format follows [Kee
 - A file Spotlight listed twice showed as two rows.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/command
+[0.1.0]: https://github.com/oddurs/common-tools/releases/tag/command-v0.1.0
