@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A new folder dropdown. It opens on the press like a menu, in about 10 ms, without taking focus from the app you're in. Rows come in groups with quiet headers. macOS's own items (Wi‑Fi, Battery, Focus, Now Playing) show their own symbol and, where macOS says it, their state. Start typing to narrow the list; arrows, Return and Escape work as in a menu; **Edit Folder…** and **Settings…** sit at the bottom.
+- Opening an icon that can't be moved beside its folder turns the dropdown into a copy of the icon's menu, in place, with a way back; submenus open the same way. A row that couldn't be opened says so for a moment instead of the dropdown vanishing.
 - Folders of your own. Add, rename, choose a symbol for, reorder, and delete folders in Settings › Folders, and choose the folder for each icon under **Icons in Folders**. More keeps every icon no other folder holds. Each folder is its own item in the menu bar.
 - An icon chosen in a folder opens its menu under that folder. One near the divider is ⌘-dragged in beside the folder, the pointer hidden and put back where it was, and dragged back to its place afterwards. One further along has its menu read through Accessibility and shown from the folder, and the item you choose is pressed in the real menu. An icon that shows a panel or popover instead opens wherever it comes on screen. **Open icons beside their folder** in Settings turns this off.
 

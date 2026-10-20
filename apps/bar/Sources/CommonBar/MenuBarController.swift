@@ -28,7 +28,7 @@ final class MenuBarController: NSObject {
     /// The window server's id for each of Common Bar's own items, found once AppKit agrees on where
     /// the item is. AppKit's frame lags behind a length change; this doesn't.
     private var windowIDs: [ObjectIdentifier: UInt32] = [:]
-    private var folderMenu: FolderMenu!
+    private var folderMenu: FolderDropdown!
     private var opener: Opener!
     private var settleTimer: Timer?
     private var observers: [Any] = []
@@ -42,16 +42,16 @@ final class MenuBarController: NSObject {
         divider = DividerItem(named: ItemName.divider)
         super.init()
 
-        folderMenu = FolderMenu(
+        folderMenu = FolderDropdown(
             store: store, inputs: { [weak self] in self?.folderInputs },
             choose: { [weak self] entry, folderID in self?.open(entry, from: folderID) },
-            fillAppMenu: { [weak self] menu in self?.fillAppMenu(menu) })
+            edit: { [weak self] _ in self?.showSettings() },
+            settings: { [weak self] in self?.showSettings() })
         opener = Opener(
             Opener.Context(
                 divider: divider, own: { [weak self] in self?.ownItems ?? OwnItems(divider: nil) },
                 screen: { [weak self] in self?.screen },
-                folderFrame: { [weak self] id in self?.folders[id].flatMap { self?.windowServerFrame(of: $0) } },
-                folderItem: { [weak self] id in self?.folders[id] }))
+                folderFrame: { [weak self] id in self?.folders[id].flatMap { self?.windowServerFrame(of: $0) } }))
         store.onChange = { [weak self] old in self?.foldersChanged(from: old) }
         syncFolders(reorder: false)
 
@@ -142,8 +142,11 @@ final class MenuBarController: NSObject {
             let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
             item.autosaveName = name
             item.button?.imagePosition = .imageLeading
-            // The status item's own menu: AppKit opens it on the press, highlighted, with no click of ours.
-            item.menu = folderMenu.makeMenu(for: folder.id)
+            // Its dropdown opens on the press, as a menu bar extra's menu does.
+            item.button?.target = self
+            item.button?.action = #selector(folderPressed(_:))
+            item.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
+            item.button?.identifier = NSUserInterfaceItemIdentifier(folder.id)
             folders[folder.id] = item
         }
         for folder in config.folders {
@@ -216,29 +219,43 @@ final class MenuBarController: NSObject {
         folders[FolderConfig.moreID]?.button?.window?.screen ?? NSScreen.main
     }
 
-    private var folderInputs: FolderMenu.Inputs? {
+    private var folderInputs: FolderDropdown.Inputs? {
         guard let screen else { return nil }
         let apps = NSWorkspace.shared.runningApplications.map {
             MenuBarExtras.App(pid: $0.processIdentifier, bundleID: $0.bundleIdentifier, name: $0.localizedName ?? "")
         }
-        return FolderMenu.Inputs(own: ownItems, geometry: MenuBar.geometry(of: screen), apps: apps)
+        return FolderDropdown.Inputs(own: ownItems, geometry: MenuBar.geometry(of: screen), apps: apps)
     }
 
-    /// The menu a right-click or ⌃-click on a folder opens.
-    private func fillAppMenu(_ menu: NSMenu) {
+    /// A press on a folder: its dropdown, or with a right-click or ⌃-click, the app's own menu.
+    @objc private func folderPressed(_ button: NSStatusBarButton) {
+        guard let id = button.identifier?.rawValue else { return }
+        let event = NSApp.currentEvent
+        if event?.type == .rightMouseDown || event?.modifierFlags.contains(.control) == true {
+            folderMenu.close()
+            showAppMenu(below: button)
+            return
+        }
+        folderMenu.toggle(id, below: button, pressedAt: event?.timestamp)
+    }
+
+    /// Settings… and Quit, as a real menu under the folder.
+    private func showAppMenu(below button: NSStatusBarButton) {
+        let menu = NSMenu()
         let settingsItem = NSMenuItem(title: "Settings…", action: #selector(showSettings), keyEquivalent: ",")
         settingsItem.target = self
         menu.addItem(settingsItem)
         menu.addItem(.separator())
         menu.addItem(
             NSMenuItem(title: "Quit Common Bar", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + Tokens.Space.xxs), in: button)
     }
 
     // MARK: Opening
 
     private func open(_ entry: FolderEntry, from folderID: String) {
         let beside = UserDefaults.standard.bool(forKey: Self.opensBesideFolderKey)
-        opener.open(entry, from: beside ? folderID : nil) { [weak self] in
+        opener.open(entry, from: beside ? folderID : nil, ui: folderMenu) { [weak self] in
             self?.apply()
             self?.folderMenu.refresh(after: [Metric.settleDelay])
         }

@@ -43,8 +43,10 @@
 	<h2 id="open">Open an icon</h2>
 	<ol>
 		<li>
-			Click a folder. It lists its icons, each with its app's icon and name: other apps first, then
-			Common Tools, then macOS's own, with a line between them and each app's icons together.
+			Click a folder. It opens on the press, like a menu, without taking focus from the app you're in.
+			It lists its icons, each with its app's icon and name, in groups: other apps, Common Tools, and
+			macOS's own, which show their own symbol and, where macOS says it, their state. Start typing to
+			narrow the list; arrows, Return and Escape work as in a menu.
 		</li>
 		<li>
 			Choose one. Its menu opens where the folder's was, one of three ways, depending on how far down
@@ -60,8 +62,9 @@
 		</li>
 		<li>
 			<b>Further along:</b> there the icon would land behind the app's menus, where a drag can't start, so
-			Common Bar reads the icon's menu through Accessibility without showing it and opens a copy from the
-			folder, headed by the icon's name. The item you choose is pressed in the real menu.
+			Common Bar reads the icon's menu through Accessibility without showing it, and the folder's list turns
+			into a copy of it in place, headed by the icon with a way back. Submenus open the same way. The item
+			you choose is pressed in the real menu.
 		</li>
 		<li>
 			<b>A panel or popover, not a menu</b> (Wi‑Fi, Battery): it can't be copied, so it opens wherever the
@@ -91,8 +94,8 @@
 
 	<h2 id="menu">The menu</h2>
 	<p>
-		Right-click a folder, or <kbd>⌃</kbd>-click it, for <b>Settings…</b> (<kbd>⌘,</kbd>) and
-		<b>Quit Common Bar</b>.
+		The bottom of every folder's dropdown has <b>Edit Folder…</b> and <b>Settings…</b>. Right-click a
+		folder, or <kbd>⌃</kbd>-click it, for <b>Settings…</b> (<kbd>⌘,</kbd>) and <b>Quit Common Bar</b>.
 	</p>
 
 	<h2 id="settings">Settings</h2>
