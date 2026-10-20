@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-20
+
 ### Added
 
 - A Welcome window on first launch: what Common Battery does, Open at login, and the Common Tools family.
@@ -23,6 +25,7 @@ All notable changes to this project are documented here. The format follows [Kee
 - Settings follows the Common Tools family layout: the same window, grouped sections, and footnotes as the other apps, and the menu's panel shares their card style.
 
 [Unreleased]: https://github.com/oddurs/common-tools/commits/main/apps/battery
+[0.1.0]: https://github.com/oddurs/common-tools/releases/tag/battery-v0.1.0
 
 ### Fixed
 
