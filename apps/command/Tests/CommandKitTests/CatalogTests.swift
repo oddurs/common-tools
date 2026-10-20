@@ -32,6 +32,14 @@ import Testing
         #expect(AppCatalog.scan(roots: [root], extras: []).count == 1)
     }
 
+    @Test func aFinderAliasAndItsTargetAreOneApp() throws {
+        let root = try makeTree(["Real/Safari.app"])
+        defer { try? FileManager.default.removeItem(at: root) }
+        let bookmark = try root.appending(path: "Real/Safari.app").bookmarkData(options: .suitableForBookmarkFile)
+        try URL.writeBookmarkData(bookmark, to: root.appending(path: "Safari.app"))
+        #expect(AppCatalog.scan(roots: [root], extras: []).count == 1)
+    }
+
     @Test func theFileNameIsAnAlternativeToALocalisedName() throws {
         let root = try makeTree(["System Settings.app"])
         defer { try? FileManager.default.removeItem(at: root) }
@@ -352,6 +360,13 @@ import Testing
         // A place named like an app yields to it, and still leads the folders.
         let music = ranked("music", apps: [app("Music")], found: [folder("/Users/me/Backups/Music", used: 40 * 86400)])
         #expect(music.map(\.item.id) == ["app:Music", "file:/Users/me/Music", "file:/Users/me/Backups/Music"])
+    }
+
+    @Test func aLetterOpensTheAppsThatStartWithIt() {
+        // iCloud Drive's C is a camel-case hump, and the place's weight once lifted it above all three.
+        let rows = ranked("c", apps: [app("Calendar"), app("Chess"), app("Clock")])
+        #expect(titles(Array(rows.prefix(3))) == ["Chess", "Clock", "Calendar"])
+        #expect(rows.contains { $0.item.title == "iCloud Drive" })
     }
 
     @Test func choosingAnotherFolderStillWins() throws {

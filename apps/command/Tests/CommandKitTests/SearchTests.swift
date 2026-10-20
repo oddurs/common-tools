@@ -38,6 +38,14 @@ func titles(_ ranked: [Ranked]) -> [String] { ranked.map(\.item.title) }
         #expect(try #require(score("note", "Notes")) > #require(score("note", "Sticky Notes")))
     }
 
+    @Test func aNamesStartOutweighsTheWeightsBetweenKinds() throws {
+        // A place's weight over an app's mustn't lift a hump or a later word past a name that starts with the query.
+        let prefix = try #require(score("c", "Calendar"))
+        let lead = Places.mainWeight - AppCatalog.weight
+        #expect(try prefix - #require(score("c", "iCloud Drive")) > lead)
+        #expect(try prefix - #require(score("c", "Google Chrome")) > lead)
+    }
+
     @Test func anExactNameBeatsALongerOne() throws {
         #expect(try #require(score("mail", "Mail")) > #require(score("mail", "Mailspring")))
     }
@@ -211,6 +219,20 @@ func titles(_ ranked: [Ranked]) -> [String] { ranked.map(\.item.title) }
             [pane("Appearance", keywords: ["display"]), pane("Displays")], query: "disp", usage: Usage(), now: now,
             limit: 2)
         #expect(ranked.map(\.item.title) == ["Displays", "Appearance"])
+    }
+
+    @Test func aWholeKeywordBeatsATopicThatStartsTheSameWay() {
+        // System Settings indexes Appearance under "dark"; Dark Noise is one of hundreds of topics.
+        let topic = Candidate(
+            Item(
+                id: "pane:a11y#Dark Noise", title: "Dark Noise", subtitle: "Accessibility", kind: .settings,
+                action: .open(URL(string: "x-apple.systempreferences:x")!)),
+            weight: SettingsPanes.topicWeight, matchesWordStarts: true)
+        let appearance = pane("Appearance", keywords: ["light", "dark", "theme", "Dark Mode"])
+        let ranked = Ranker.rank(
+            [topic, appearance, app("Darkroom")], query: "dark", usage: Usage(), now: now, limit: 3)
+        // An app whose name starts with the word still comes first.
+        #expect(ranked.map(\.item.title) == ["Darkroom", "Appearance", "Dark Noise"])
     }
 
     @Test func topicsStayBelowAppsTheyMerelyResemble() {

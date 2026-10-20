@@ -84,6 +84,25 @@ import Testing
 }
 
 extension IconCacheTests {
+    /// /Applications/Safari.app is a symlink into a cryptex; read for the link, its icon wears Finder's alias arrow.
+    @Test func drawsWhatASymlinkOrAliasPointsToWithoutTheArrow() throws {
+        let folder = FileManager.default.temporaryDirectory.appending(path: "icons-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
+        let target = URL(filePath: finder)
+        let symlink = folder.appending(path: "Linked.app")
+        try FileManager.default.createSymbolicLink(at: symlink, withDestinationURL: target)
+        let alias = folder.appending(path: "Aliased.app")
+        try URL.writeBookmarkData(target.bookmarkData(options: .suitableForBookmarkFile), to: alias)
+
+        let cache = IconCache()
+        cache.prerender([finder, symlink.path, alias.path])
+        let pixels = { (path: String) in cache.image(forPath: path)?.dataProvider?.data as Data? }
+        let original = try #require(pixels(finder))
+        #expect(pixels(symlink.path) == original)
+        #expect(pixels(alias.path) == original)
+    }
+
     @Test func forgetsEverythingWhenTheAppearanceChanges() {
         let cache = IconCache()
         cache.prerender([finder])

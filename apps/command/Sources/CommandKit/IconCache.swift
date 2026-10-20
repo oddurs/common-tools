@@ -33,6 +33,11 @@ public final class IconCache: @unchecked Sendable {
         }
     }
 
+    /// The icon of what a symlink or alias points to: read for the link itself, it wears Finder's alias arrow.
+    public static func icon(forFile path: String) -> NSImage {
+        NSWorkspace.shared.icon(forFile: URL(filePath: path).resolvingLinks.path)
+    }
+
     static func render(_ path: String, pixels: Int) -> CGImage? {
         guard
             let context = CGContext(
@@ -40,7 +45,7 @@ public final class IconCache: @unchecked Sendable {
                 space: CGColorSpace(name: CGColorSpace.sRGB)!,
                 bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         else { return nil }
-        let icon = NSWorkspace.shared.icon(forFile: path)
+        let icon = icon(forFile: path)
         // The graphics context is per thread, so this doesn't disturb drawing elsewhere.
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = NSGraphicsContext(cgContext: context, flipped: false)
