@@ -17,8 +17,7 @@
 		<a class="link" href={tool.repo}>View on GitHub ›</a>
 	</div>
 	<p class="fine">
-		{#if release}Version {release.version} · {megabytes(release.size)} ·
-		{/if}{promise.short} · {tool.requires}
+		{#if release}Version {release.version} · {megabytes(release.size)} ·{' '}{/if}{promise.short} · {tool.requires}
 	</p>
 </header>
 

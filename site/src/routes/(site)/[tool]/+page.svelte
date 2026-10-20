@@ -1,59 +1,39 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
+	import DemoVideo from '#lib/DemoVideo.svelte';
+	import GetStarted from '#lib/GetStarted.svelte';
+	import Keys from '#lib/Keys.svelte';
 	import Meta from '#lib/Meta.svelte';
 	import MoreTools from '#lib/MoreTools.svelte';
+	import ToolHero from '#lib/ToolHero.svelte';
+	import WhatsNew from '#lib/WhatsNew.svelte';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
-	const app = $derived(data.app);
+	const tool = $derived(data.tool);
+	const release = $derived(data.releases[tool.slug]);
 </script>
 
 <Meta
-	title="{app.name} — {app.tagline.replace(/\.$/, '')}"
-	description="{app.name}: {app.summary} In development."
-	path="{app.slug}/"
-	image="stats/poster.jpg"
+	title="{tool.name} — {tool.tagline.replace(/\.$/, '')}"
+	description="{tool.name}: {tool.summary} Free and open source."
+	path="{tool.slug}/"
+	image="{tool.slug}/poster.jpg"
 />
 
 <main>
-	<header>
-		<img src={asset(app.icon)} alt="" width="112" height="112" />
-		<span class="soon">In development</span>
-		<h1>{app.name}</h1>
-		<p class="lede">{app.tagline}</p>
-		<p class="summary">{app.summary}</p>
-		<p class="fine">
-			Not released yet. Like every Common Tools app it will be free forever and open source, and nothing
-			you do in it will ever be reported. <a href={app.repo}>Follow it on GitHub ›</a>
-		</p>
-		{#if app.access}
-			<p class="fine">{app.access}</p>
-		{/if}
-	</header>
-	<MoreTools slug={app.slug} />
-</main>
+	<ToolHero {tool} {release} docs={false} />
+	<DemoVideo {tool} />
 
-<style>
-	header {
-		text-align: center;
-	}
-	img {
-		display: block;
-		margin: 0 auto;
-	}
-	.soon {
-		display: inline-block;
-		margin-top: 18px;
-		padding: 4px 12px;
-		border-radius: 999px;
-		background: var(--surface-card);
-		color: var(--text-secondary);
-		font-size: 13px;
-		font-weight: 600;
-	}
-	.summary {
-		max-width: 560px;
-		margin: 18px auto 0;
-		color: var(--text-secondary);
-	}
-</style>
+	<section class="features ruled">
+		{#each tool.features ?? [] as [title, text] (title)}
+			<div>
+				<h2>{title}</h2>
+				<p><Keys {text} /></p>
+			</div>
+		{/each}
+	</section>
+
+	{#if release}<WhatsNew {tool} {release} />{/if}
+	<GetStarted {tool} />
+	<MoreTools slug={tool.slug} />
+</main>

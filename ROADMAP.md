@@ -150,7 +150,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`#######···` 64% · 14 of 22 done
+`#######···` 65% · 15 of 23 done
 
 ### backlog
 
@@ -178,5 +178,6 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0064`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0064-a-demo-film-of-common-bar-s-new-folder-dropdown.md) A demo film of Common Bar's new folder dropdown <sup>feature · p2</sup>
 - [x] [`0065`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0065-never-convert-a-correctly-typed-name-the-system-lexicon-knows.md) Never convert a correctly typed name the system lexicon knows <sup>bug · p0</sup>
 - [x] [`0066`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0066-give-every-app-its-own-colour-and-the-family-a-mark.md) Give every app its own colour, and the family a mark <sup>feature · p2</sup>
+- [x] [`0067`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0067-every-app-on-the-home-page-in-apple-s-product-page-style.md) Every app on the home page, in Apple's product-page style <sup>feature · p2</sup>
 - [x] [`0068`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0068-keep-the-network-card-s-title-whole-when-its-rates-are-wide.md) Keep the Network card's title whole when its rates are wide <sup>bug · p2</sup>
 

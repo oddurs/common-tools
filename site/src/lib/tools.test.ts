@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { brewLine, cask, curlLine, download, github, releasesOf, tool, tools, upcoming } from './tools';
+import { brewLine, cask, curlLine, download, github, releasesOf, showcase, tool, tools } from './tools';
 
 describe('tools', () => {
 	it('links each download to the latest release, falling back to the old repository', () => {
@@ -18,8 +18,7 @@ describe('tools', () => {
 		expect(releasesOf(stats)).toBe(`${github}/releases?q=stats-v`);
 	});
 	it('names every app in the family exactly once, where it lives in the monorepo', () => {
-		const all = [...tools, ...upcoming];
-		expect(all.map((t) => t.slug)).toEqual([
+		expect(tools.map((t) => t.slug)).toEqual([
 			'stats',
 			'keys',
 			'bar',
@@ -29,13 +28,13 @@ describe('tools', () => {
 			'battery',
 			'color'
 		]);
-		for (const t of all) expect(t.repo).toBe(`${github}/tree/main/apps/${t.slug}`);
+		for (const t of tools) expect(t.repo).toBe(`${github}/tree/main/apps/${t.slug}`);
 	});
 	it('has a page for every app the apps list in their Settings, in the same order', () => {
 		// Each app's "Get…" button opens common-tools/<id>/, so a missing page is a broken button.
 		const swift = readFileSync('../packages/CommonKit/Sources/CommonKit/CommonTool.swift', 'utf8');
 		const ids = [...swift.matchAll(/id: "(\w+)"/g)].map((m) => m[1]);
-		expect(ids).toEqual([...tools, ...upcoming].map((t) => t.slug));
+		expect(ids).toEqual(tools.map((t) => t.slug));
 	});
 	it('agrees with apps.json on names and assets', () => {
 		const apps = JSON.parse(readFileSync('../apps.json', 'utf8')) as Record<
@@ -46,7 +45,6 @@ describe('tools', () => {
 			expect(apps[t.slug].NAME).toBe(t.name);
 			expect(apps[t.slug].ASSET).toBe(t.asset.replace(/\.zip$/, ''));
 		}
-		for (const u of upcoming) expect(apps[u.slug].NAME).toBe(u.name);
 	});
 	it('writes the terminal install lines', () => {
 		const bar = tool('bar');
@@ -75,6 +73,16 @@ describe('tools', () => {
 				].join('|')
 			)
 		);
+	});
+	it('shows every app on the home page exactly once', () => {
+		expect([...showcase].sort()).toEqual(tools.map((t) => t.slug).sort());
+	});
+	it('gives every app without a page of its own what the shared page shows', () => {
+		const ownPages = ['stats', 'keys', 'bar'];
+		for (const t of tools) expect(!!t.features?.length, t.slug).toBe(!ownPages.includes(t.slug));
+	});
+	it('says which apps have docs pages, so no page links to one that is missing', () => {
+		expect(tools.filter((t) => t.docs).map((t) => t.slug)).toEqual(['stats', 'keys', 'bar']);
 	});
 	it('looks tools up by slug and refuses unknown ones', () => {
 		expect(tool('keys').name).toBe('Common Keys');

@@ -21,7 +21,12 @@ dir="${COMMON_TOOLS_DIR:-/Applications}"
 # slug | name | release asset | repository the app was released from before the monorepo | permission
 apps='stats|Common Stats|CommonStats|common-stats|
 keys|Common Keys|CommonKeys|common-keys|Accessibility
-bar|Common Bar|CommonBar|common-bar|'
+bar|Common Bar|CommonBar|common-bar|
+glyph|Common Glyph|CommonGlyph||
+command|Common Command|CommonCommand||
+shot|Common Shot|CommonShot||Screen Recording
+battery|Common Battery|CommonBattery||
+color|Common Color|CommonColor||'
 
 die() {
     echo "install: $*" >&2

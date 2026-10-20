@@ -5,6 +5,7 @@
  * ruled section, callout, badge, table. A page's own <style> may lay things out, but it takes its
  * values from the tokens too.
  */
+@import '@fontsource-variable/inter/opsz.css';
 @import './lib/common-ui/tokens.css';
 
 * {
@@ -12,6 +13,8 @@
 }
 html {
 	-webkit-text-size-adjust: 100%;
+	/* In-page links land below the floating navigation. */
+	scroll-padding-top: var(--space-section);
 }
 body {
 	margin: 0;
@@ -19,6 +22,8 @@ body {
 	color: var(--text-primary);
 	font: var(--type-body);
 	letter-spacing: var(--type-body-tracking);
+	/* Inter's optical size follows the type size: its display cut at headline sizes. */
+	font-optical-sizing: auto;
 	-webkit-font-smoothing: antialiased;
 }
 a {
@@ -37,7 +42,8 @@ a:hover {
 main {
 	max-width: var(--layout-content);
 	margin: 0 auto;
-	padding: var(--space-section) var(--layout-gutter) var(--space-xxl);
+	/* The floating navigation takes no room, so the page leaves room under it. */
+	padding: calc(var(--space-section) + var(--space-xxl)) var(--layout-gutter) var(--space-xxl);
 }
 h1 {
 	margin: var(--space-sm) 0 0;
@@ -49,10 +55,26 @@ h2 {
 	font: var(--type-headline);
 	letter-spacing: var(--type-headline-tracking);
 }
-kbd,
 code {
 	font-family: var(--font-mono);
 	font-size: 0.87em;
+}
+/* A key cap, as macOS draws a shortcut in a menu: the system face, raised a little off the line. */
+kbd {
+	display: inline-block;
+	min-width: 1.7em;
+	padding: 0 0.42em;
+	border: 1px solid var(--color-border-card);
+	border-radius: var(--radius-xs);
+	background: var(--surface-card);
+	box-shadow: inset 0 -1px 0 var(--color-border);
+	font: inherit;
+	font-size: 0.84em;
+	line-height: 1.55;
+	letter-spacing: 0.01em;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: 0.06em;
 }
 
 /* Text */
@@ -107,6 +129,27 @@ section.ruled {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
 	gap: var(--space-xxl);
+}
+
+/* Band: a full-width stretch of the page, its content kept to the column. Alternate bands take the
+   card surface, as Apple's product pages alternate white and grey. */
+.band {
+	margin-inline: calc(50% - 50vw);
+	padding: var(--space-section) max(var(--layout-gutter), calc(50vw - var(--layout-content) / 2));
+}
+.band.tinted {
+	background: var(--surface-card);
+}
+.band.tinted kbd {
+	background: var(--surface-base);
+}
+.eyebrow {
+	display: flex;
+	align-items: center;
+	gap: var(--space-xs);
+	margin: 0;
+	font: var(--type-headline);
+	letter-spacing: var(--type-headline-tracking);
 }
 
 /* Card: something that stands apart from the page, flat, on the card surface. */
@@ -178,8 +221,9 @@ td {
 
 /* layout.breakpoint-narrow in tokens.json; a media query can't read a custom property. */
 @media (max-width: 760px) {
+	/* Clear of the floating navigation, which takes no room of its own. */
 	main {
-		padding: var(--space-xxl) var(--layout-gutter-narrow) var(--space-xl);
+		padding: calc(var(--space-section) + var(--space-sm)) var(--layout-gutter-narrow) var(--space-xl);
 	}
 	h1 {
 		font: var(--type-title);
@@ -193,6 +237,9 @@ td {
 	.features {
 		grid-template-columns: 1fr;
 		gap: var(--space-lg);
+	}
+	.band {
+		padding: var(--space-xxxl) var(--layout-gutter-narrow);
 	}
 	table {
 		font: var(--type-caption);
