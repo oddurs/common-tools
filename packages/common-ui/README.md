@@ -30,18 +30,23 @@ swift run --package-path packages/CommonKit DesignRender   # after changing a Co
 
 ## App colours
 
-`brand` gives each app its own colour: its icon's body, and its accent on the site. Every app sits on one ramp of OKLCH lightness and chroma (`brand.ramp`: `top`, `mid`, `deep`) and differs only in hue (`brand.apps`), so the family reads as a set while each app is easy to tell apart. Common Color takes the whole spectrum. Hues stay clear of yellow, where white marks don't read.
+`brand` gives each app its colour, which is its icon's body and nothing else: text on the site stays in the text colours, and only icons carry an app's colour. The system mirrors Apple's own icons:
 
-| App | Hue | | App | Hue |
-| --- | --- | --- | --- | --- |
-| Glyph | 350° pink | | Shot | 200° teal |
-| Bar | 18° coral | | Stats | 250° blue |
-| Keys | 46° orange | | Command | 292° violet |
-| Battery | 148° green | | Color | the spectrum |
+- **Body.** Each app takes one of macOS's system colours (`brand.system`, the light-appearance `NSColor.systemRed` and the rest). The body is that colour lit from above: `brand.ramp` sets how much lighter the top runs and how much deeper the bottom, the same steps for every app, in OKLCH, with no turn of hue. Common Color's body is the spectrum of system colours round the wheel.
+- **Glyph.** One SF Symbol per app (`apps/<app>/icon.swift`), drawn by `symbol()` in `shared/icon-lib.swift`: every symbol covers the same area inside Apple's keyline, in white glass that lets a breath of the body through at the bottom, on one soft shadow in the body's deepest tone.
 
-`build.mjs` turns a hue into sRGB stops, lowering chroma where a colour falls outside sRGB rather than shifting its hue. The site gets `--brand-<app>`, `--brand-<app>-top`, `--brand-<app>-deep` and `--brand-<app>-gradient`. `scripts/make-icon <app>` reads `node packages/common-ui/build.mjs --brand <app>` for the icon's body and the tint of its glass shadows. The apps' own interfaces keep the system accent: this is the icon's colour, not the app's.
+| App | System colour | Symbol |
+| --- | --- | --- |
+| Command | indigo | `command` |
+| Shot | teal | `camera.viewfinder` |
+| Stats | blue | `chart.xyaxis.line` |
+| Bar | red | `menubar.rectangle` |
+| Keys | orange | `keyboard` |
+| Color | the spectrum | `eyedropper.halffull` |
+| Battery | green | `battery.100percent.bolt` |
+| Glyph | pink | `sparkle` |
 
-The Common Tools mark is the same system in one picture: a "C" of seven arcs, one per app, sorted round the wheel, on an ink squircle (Common Color is the wheel itself). `node packages/common-ui/logo.mjs > site/static/icon.svg` draws it from the tokens.
+`build.mjs` writes `--brand-<app>`, `-top`, `-deep` and `-gradient` for the site, and `node packages/common-ui/build.mjs --brand <app>` prints them for `scripts/make-icon`. The family mark is the same system in one picture: a "C" of the seven system colours round the wheel on an ink squircle, drawn by `node packages/common-ui/logo.mjs > site/static/icon.svg`.
 
 ## What is the system's and what is ours
 

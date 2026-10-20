@@ -1,11 +1,11 @@
-// The Common Tools icon body: Apple's 824 pt squircle on a 1024 canvas, a gradient in the app's own
-// colour, and a frosted glass glyph. scripts/make-icon <app> joins this with apps/<app>/icon.swift,
-// which draws the glyph, and shared/icon-main.swift, which writes the files.
+// The Common Tools icon: Apple's 824 pt squircle on a 1024 canvas, a body in the app's macOS system
+// colour, and one SF Symbol in bright glass. scripts/make-icon <app> joins this with
+// apps/<app>/icon.swift, which names the symbol, and shared/icon-main.swift, which writes the files.
 import AppKit
 
-// Shared look: Apple's 824 pt squircle on a 1024 canvas, a body in the app's colour, and a frosted
-// glass glyph with a bright top edge, floating on a soft shadow. Every app's colour comes from the
-// brand tokens (packages/common-ui/tokens.json): the same ramp of lightness and chroma, its own hue.
+// The system, so every icon in the family reads as one set, as Apple's own do: every body is a macOS
+// system colour lit from above by the same steps (the brand tokens in packages/common-ui/tokens.json),
+// and every glyph is an SF Symbol at the same optical size, in the same white glass.
 
 /// The app's colours, top to bottom, and Common Color's spectrum; icon-main sets them before drawing.
 var brandTop = rgb(0x70bffe), brandMid = rgb(0x048ff4), brandDeep = rgb(0x005dca)
@@ -92,46 +92,28 @@ func background(_ ctx: CGContext) {
 /// The body's deepest colour at `alpha`, for shadows that take the app's hue rather than black.
 func shade(_ alpha: CGFloat) -> CGColor { brandDeep.copy(alpha: alpha)! }
 
-/// Fills `path` as frosted glass: translucent white, brighter at the top, with a lit top edge
-/// and a soft blue shadow under it.
-func glass(_ ctx: CGContext, _ path: CGPath, opacity: CGFloat = 1) {
-    let box = path.boundingBox
+/// The app's glyph: an SF Symbol in bright glass, centred, at one optical size for the whole family.
+/// Every symbol covers the same area, held inside Apple's keyline so a wide one (a battery) or a tall
+/// one doesn't crowd the body. White at the top, letting a breath of the body through at the bottom,
+/// on one soft shadow in the body's deepest tone.
+func symbol(_ ctx: CGContext, _ name: String, weight: NSFont.Weight = .semibold) {
+    guard
+        let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?
+            .withSymbolConfiguration(
+                NSImage.SymbolConfiguration(pointSize: 300, weight: weight)
+                    .applying(NSImage.SymbolConfiguration(paletteColors: [.white])))
+    else { fatalError("no SF Symbol named \(name)") }
+    let size = image.size
+    let k = min(410 / (size.width * size.height).squareRoot(), 540 / size.width, 470 / size.height)
+    let rect = CGRect(
+        x: 512 - size.width * k / 2, y: 512 - size.height * k / 2, width: size.width * k, height: size.height * k)
     ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -18), blur: 36, color: shade(0.6 * opacity))
-    ctx.addPath(path); ctx.setFillColor(rgb(0xffffff, 0.22 * opacity)); ctx.fillPath()
-    ctx.restoreGState()
-
-    ctx.saveGState()
-    ctx.addPath(path); ctx.clip()
-    linear(
-        ctx, [rgb(0xffffff, 0.50 * opacity), rgb(0xffffff, 0.16 * opacity)], CGPoint(x: box.midX, y: box.maxY),
-        CGPoint(x: box.midX, y: box.minY))
-    ctx.restoreGState()
-
-    // Liquid Glass catches light on two opposite edges: strong at the top left, softer at the bottom right.
-    ctx.saveGState()
-    ctx.setLineWidth(7)
-    ctx.addPath(path); ctx.replacePathWithStrokedPath(); ctx.clip()
-    linear(
-        ctx,
-        [
-            rgb(0xffffff, 1.0 * opacity), rgb(0xffffff, 0.18 * opacity), rgb(0xffffff, 0.18 * opacity),
-            rgb(0xffffff, 0.7 * opacity),
-        ], CGPoint(x: box.minX, y: box.maxY), CGPoint(x: box.maxX, y: box.minY), [0, 0.4, 0.6, 1])
-    ctx.restoreGState()
-}
-
-/// Solid white marks that sit on the glass, with a faint shadow so they read as raised.
-func ink(_ ctx: CGContext, _ draw: () -> Void) {
-    ctx.saveGState()
-    ctx.setShadow(offset: CGSize(width: 0, height: -4), blur: 10, color: shade(0.5))
+    ctx.setShadow(offset: CGSize(width: 0, height: -14), blur: 34, color: shade(0.5))
     ctx.beginTransparencyLayer(auxiliaryInfo: nil)
-    draw()
+    image.draw(in: rect)
+    ctx.setBlendMode(.destinationIn)
+    ctx.clip(to: rect)
+    linear(ctx, [rgb(0xffffff), rgb(0xffffff, 0.82)], CGPoint(x: 512, y: rect.maxY), CGPoint(x: 512, y: rect.minY))
     ctx.endTransparencyLayer()
     ctx.restoreGState()
 }
-
-func rounded(_ r: CGRect, _ radius: CGFloat) -> CGPath {
-    CGPath(roundedRect: r, cornerWidth: radius, cornerHeight: radius, transform: nil)
-}
-

@@ -45,8 +45,9 @@ export type Tokens = {
 	brand: {
 		about: string;
 		surfaces: string[];
-		ramp: Record<'top' | 'mid' | 'deep', { l: number; c: number; turn: number }> & { about?: string };
-		apps: Group<{ hue?: number; spectrum?: boolean }>;
+		system: Group<Hex>;
+		ramp: Record<'top' | 'deep', { l: number; c: number }> & { about?: string };
+		apps: Group<{ system?: string; spectrum?: boolean }>;
 	};
 };
 
@@ -66,4 +67,5 @@ export function renderCSS(src: { tokens: Tokens; hash: string }): string;
 export function renderSwift(src: { tokens: Tokens; hash: string }): string;
 export function render(): { swift: string; css: string };
 export function oklch(l: number, c: number, h: number): Hex;
+export function toOklch(hex: string): { l: number; c: number; h: number };
 export function brand(tokens: Tokens, slug: string): BrandColors;

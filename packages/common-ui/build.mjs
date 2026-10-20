@@ -113,29 +113,42 @@ export function oklch(l, c, h) {
 	throw new Error(`no sRGB colour for oklch(${l} ${c} ${h})`);
 }
 
-/** The spectrum Common Color's body runs through, in hue degrees: the wheel, every 30°, a little lighter than
- * the ramp's middle so its yellows stay clean rather than olive. */
-const spectrum = Array.from({ length: 12 }, (_, i) => i * 30);
+/** An sRGB hex as OKLCH lightness, chroma, and hue in degrees. */
+export function toOklch(hex) {
+	const decode = (i) => {
+		const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+		return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	};
+	const [r, g, b] = [decode(1), decode(3), decode(5)];
+	// Ottosson's linear sRGB to OKLab.
+	const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+	const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+	const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+	const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+	const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+	const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+	return { l: L, c: Math.hypot(A, B), h: ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360 };
+}
+
+/** The system colours Common Color's body runs through, round the wheel. */
+const spectrum = ['red', 'orange', 'yellow', 'green', 'mint', 'teal', 'blue', 'indigo', 'purple', 'pink'];
 
 /**
- * An app's colours: its body's stops top to bottom, the solid that stands for it, and for Common
- * Color the spectrum's stops as well.
+ * An app's colours: its system colour, and its icon body's stops top to bottom, the same steps from
+ * the system colour for every app. Common Color's are the spectrum, with pink as the colour that
+ * stands for it.
  */
 export function brand(tokens, slug) {
-	const { ramp, apps } = tokens.brand;
+	const { system, ramp, apps } = tokens.brand;
 	const app = apps[slug];
 	if (!app || typeof app !== 'object') throw new Error(`no brand colour for '${slug}'`);
-	const stop = (name, hue) => oklch(ramp[name].l, ramp[name].c, (hue + ramp[name].turn + 360) % 360);
-	if (app.spectrum) {
-		// The solid is the spectrum's own pink, where a white mark reads best.
-		return {
-			top: stop('top', 330),
-			mid: stop('mid', 330),
-			deep: stop('deep', 330),
-			spectrum: spectrum.map((hue) => oklch(0.72, 0.17, hue))
-		};
-	}
-	return { top: stop('top', app.hue), mid: stop('mid', app.hue), deep: stop('deep', app.hue) };
+	const name = app.spectrum ? 'pink' : app.system;
+	const mid = system[name];
+	if (!mid) throw new Error(`no system colour '${name}' for '${slug}'`);
+	const { l, c, h } = toOklch(mid);
+	const step = (s) => oklch(Math.min(l + s.l, 0.97), Math.max(c + s.c, 0), h);
+	const colors = { top: step(ramp.top), mid, deep: step(ramp.deep) };
+	return app.spectrum ? { ...colors, spectrum: spectrum.map((n) => system[n]) } : colors;
 }
 
 const camel = (name) => name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
@@ -209,8 +222,6 @@ export function renderCSS({ tokens, hash }) {
 					declare(cssName('brand', slug), colors.mid);
 					declare(cssName('brand', slug, 'top'), colors.top);
 					declare(cssName('brand', slug, 'deep'), colors.deep);
-					// For text on the page: the deep stop on light, the top stop on dark.
-					appearance(cssName('brand', slug, 'text'), colors.deep, colors.top);
 					const stops = colors.spectrum ?? [colors.top, colors.mid, colors.deep];
 					const args = ['170deg', ...stops];
 					const flat = `linear-gradient(${args.join(', ')})`;
