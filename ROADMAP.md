@@ -150,9 +150,10 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`##########` 100% · 1 of 1 done
+`##########` 100% · 2 of 2 done
 
 ### done
 
+- [x] [`0063`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0063-group-the-cpu-card-s-cores-on-chips-with-super-cores.md) Group the CPU card's cores on chips with Super cores <sup>bug · p1</sup>
 - [x] [`0065`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0065-never-convert-a-correctly-typed-name-the-system-lexicon-knows.md) Never convert a correctly typed name the system lexicon knows <sup>bug · p0</sup>
 

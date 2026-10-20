@@ -172,24 +172,83 @@ struct MemoryFormatTests {
 }
 
 struct CPUTopologyTests {
-    typealias Kind = CPUTopology.Kind
+    typealias Level = CPUTopology.Level
+    typealias Core = CPUTopology.Core
 
-    @Test func groupsCoresByKindInCoreOrder() {
-        var kinds: [Int: Kind] = [:]
-        for i in 0..<4 { kinds[i] = .efficiency }
-        for i in 4..<14 { kinds[i] = .performance }
-        let t = CPUTopology(kinds: kinds, coreCount: 14)
-        #expect(t.clusters.map(\.kind) == [.efficiency, .performance])
-        #expect(t.clusters[0].cores == [0, 1, 2, 3])
-        #expect(t.clusters[1].cores == Array(4..<14))
+    static let mb = 1024 * 1024
+
+    /// A Mac as the kernel and its device tree describe it: `hw.perflevelN`, then
+    /// the device tree's cores in logical order, as runs of one `cluster-type`.
+    struct Fixture: Sendable, CustomTestStringConvertible {
+        let chip: String
+        let levels: [Level]
+        let runs: [(type: String, count: Int, l2: Int)]
+        let expected: [(name: String, cores: Range<Int>)]
+
+        var testDescription: String { chip }
+
+        var cores: [Core] {
+            var id = 0
+            return runs.flatMap { run in
+                (0..<run.count).map { _ in
+                    defer { id += 1 }
+                    return Core(id: id, clusterType: run.type, l2CacheSize: run.l2)
+                }
+            }
+        }
     }
 
-    @Test func incompleteOrMismatchedTopologyIsNotGuessed() {
+    // M1–M4: published core counts and L2 sizes, in the order their device trees list them.
+    // The M5 Pro is recorded from `sysctl hw.perflevel*` and `ioreg -p IODeviceTree` on one.
+    static let fixtures: [Fixture] = [
+        Fixture(
+            chip: "M1",
+            levels: [Level(name: "Performance", logicalCPUs: 4, l2CacheSize: 12 * mb), Level(name: "Efficiency", logicalCPUs: 4, l2CacheSize: 4 * mb)],
+            runs: [("E", 4, 4 * mb), ("P", 4, 12 * mb)],
+            expected: [("Efficiency", 0..<4), ("Performance", 4..<8)]),
+        Fixture(
+            chip: "M2",
+            levels: [Level(name: "Performance", logicalCPUs: 4, l2CacheSize: 16 * mb), Level(name: "Efficiency", logicalCPUs: 4, l2CacheSize: 4 * mb)],
+            runs: [("E", 4, 4 * mb), ("P", 4, 16 * mb)],
+            expected: [("Efficiency", 0..<4), ("Performance", 4..<8)]),
+        Fixture(
+            chip: "M3 Pro",
+            levels: [Level(name: "Performance", logicalCPUs: 6, l2CacheSize: 16 * mb), Level(name: "Efficiency", logicalCPUs: 6, l2CacheSize: 4 * mb)],
+            runs: [("E", 6, 4 * mb), ("P", 6, 16 * mb)],
+            expected: [("Efficiency", 0..<6), ("Performance", 6..<12)]),
+        Fixture(
+            chip: "M4 Pro",
+            levels: [Level(name: "Performance", logicalCPUs: 10, l2CacheSize: 16 * mb), Level(name: "Efficiency", logicalCPUs: 4, l2CacheSize: 4 * mb)],
+            runs: [("E", 4, 4 * mb), ("P", 10, 16 * mb)],
+            expected: [("Efficiency", 0..<4), ("Performance", 4..<14)]),
+        Fixture(
+            chip: "M5 Pro",
+            levels: [Level(name: "Super", logicalCPUs: 5, l2CacheSize: 16 * mb), Level(name: "Performance", logicalCPUs: 10, l2CacheSize: 8 * mb)],
+            runs: [("M", 10, 8 * mb), ("P", 5, 16 * mb)],
+            expected: [("Performance", 0..<10), ("Super", 10..<15)]),
+    ]
+
+    @Test(arguments: fixtures) func namesClustersAsTheKernelNamesItsPerformanceLevels(_ mac: Fixture) {
+        let t = CPUTopology(levels: mac.levels, cores: mac.cores, coreCount: mac.cores.count)
+        #expect(t.clusters.map(\.name) == mac.expected.map(\.name))
+        #expect(t.clusters.map(\.cores) == mac.expected.map { Array($0.cores) })
+    }
+
+    @Test func incompleteOrMismatchedTopologyIsNotGuessed() throws {
+        let m5 = try #require(Self.fixtures.last)
+        let cores = m5.cores
         // A core missing from the device tree, or a kernel count that disagrees.
-        #expect(CPUTopology(kinds: [0: .efficiency, 2: .performance], coreCount: 3).clusters.isEmpty)
-        #expect(CPUTopology(kinds: [0: .efficiency, 1: .performance], coreCount: 4).clusters.isEmpty)
-        // A single kind (Intel-like) has nothing to group.
-        #expect(CPUTopology(kinds: [0: .performance, 1: .performance], coreCount: 2).clusters.isEmpty)
+        #expect(CPUTopology(levels: m5.levels, cores: cores.filter { $0.id != 3 }, coreCount: 15).clusters.isEmpty)
+        #expect(CPUTopology(levels: m5.levels, cores: cores, coreCount: 16).clusters.isEmpty)
+        // A cluster type that no performance level accounts for.
+        #expect(CPUTopology(levels: m5.levels, cores: cores.map { Core(id: $0.id, clusterType: $0.id == 0 ? "X" : $0.clusterType, l2CacheSize: $0.l2CacheSize) }, coreCount: 15).clusters.isEmpty)
+        // Two levels the device tree can't tell apart.
+        let twins = [Level(name: "Performance", logicalCPUs: 2, l2CacheSize: Self.mb), Level(name: "Efficiency", logicalCPUs: 2, l2CacheSize: Self.mb)]
+        let even = (0..<4).map { Core(id: $0, clusterType: $0 < 2 ? "E" : "P", l2CacheSize: Self.mb) }
+        #expect(CPUTopology(levels: twins, cores: even, coreCount: 4).clusters.isEmpty)
+        // A single level (Intel-like) has nothing to group.
+        let one = [Level(name: "Performance", logicalCPUs: 2, l2CacheSize: Self.mb)]
+        #expect(CPUTopology(levels: one, cores: (0..<2).map { Core(id: $0, clusterType: "P", l2CacheSize: Self.mb) }, coreCount: 2).clusters.isEmpty)
     }
 
     @Test func currentMachineIsConsistentWithSysctl() throws {
@@ -199,12 +258,14 @@ struct CPUTopologyTests {
             #expect(t.clusters.isEmpty)
             return
         }
-        // perflevel0 is performance, perflevel1 efficiency, per the kernel.
-        let p: Int32 = try #require(sysctlValue("hw.perflevel0.logicalcpu"))
-        let e: Int32 = try #require(sysctlValue("hw.perflevel1.logicalcpu"))
-        let counts = Dictionary(uniqueKeysWithValues: t.clusters.map { ($0.kind, $0.cores.count) })
-        #expect(counts[.performance] == Int(p))
-        #expect(counts[.efficiency] == Int(e))
+        // Every performance level is one cluster, under the kernel's name, with the kernel's count.
+        let counts = Dictionary(uniqueKeysWithValues: t.clusters.map { ($0.name, $0.cores.count) })
+        #expect(counts.count == Int(levels))
+        for level in 0..<levels {
+            let name = try #require(sysctlString("hw.perflevel\(level).name"))
+            let cpus: Int32 = try #require(sysctlValue("hw.perflevel\(level).logicalcpu"))
+            #expect(counts[name] == Int(cpus))
+        }
     }
 }
 
