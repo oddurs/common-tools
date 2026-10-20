@@ -87,7 +87,7 @@
 		text-align: center;
 	}
 	.hero h1 {
-		margin-top: var(--space-lg);
+		margin-top: var(--space-xl);
 		font: var(--type-hero);
 		letter-spacing: var(--type-hero-tracking);
 	}
@@ -139,12 +139,16 @@
 	.app h2 a:hover {
 		text-decoration: none;
 	}
+	/* A step below the headline, on a measure narrow enough to read in two or three even lines. */
 	.summary {
 		margin: var(--space-md) auto 0;
-		max-width: var(--layout-lede);
-		font: var(--type-title3);
-		letter-spacing: var(--type-title3-tracking);
+		max-width: 34em;
+		font: var(--type-headline);
+		font-weight: var(--weight-regular);
+		line-height: 1.4;
+		letter-spacing: var(--type-headline-tracking);
 		color: var(--text-secondary);
+		text-wrap: balance;
 	}
 	.actions {
 		margin-top: var(--space-lg);
@@ -160,12 +164,17 @@
 		margin-top: var(--space-xxxl);
 	}
 
+	/* The promise in two columns, so each paragraph runs at a readable length. */
 	.principles {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: var(--space-xl);
+		grid-template-columns: repeat(2, 1fr);
+		gap: var(--space-xxl) var(--space-xxxl);
+	}
+	.principles p {
+		max-width: 30em;
 	}
 	.principles h2 {
+		margin-bottom: var(--space-xs);
 		font: var(--type-headline);
 		letter-spacing: var(--type-headline-tracking);
 	}
@@ -194,7 +203,7 @@
 			margin-top: var(--space-xl);
 		}
 		.principles {
-			grid-template-columns: 1fr 1fr;
+			grid-template-columns: 1fr;
 			gap: var(--space-lg);
 		}
 	}
