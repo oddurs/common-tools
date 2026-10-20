@@ -209,6 +209,8 @@ export function renderCSS({ tokens, hash }) {
 					declare(cssName('brand', slug), colors.mid);
 					declare(cssName('brand', slug, 'top'), colors.top);
 					declare(cssName('brand', slug, 'deep'), colors.deep);
+					// For text on the page: the deep stop on light, the top stop on dark.
+					appearance(cssName('brand', slug, 'text'), colors.deep, colors.top);
 					const stops = colors.spectrum ?? [colors.top, colors.mid, colors.deep];
 					const args = ['170deg', ...stops];
 					const flat = `linear-gradient(${args.join(', ')})`;

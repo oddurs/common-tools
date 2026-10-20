@@ -1,41 +1,49 @@
 /*
  * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
  * change the source and run `node packages/common-ui/build.mjs`.
- * source sha256: 3835d01f86534d656cff197b88e8e277f1e34b22bb84c3ddd4927723ec121f0b
+ * source sha256: c25e452a45881025e237f0dd1e300a44b6d3ebd32f28571e6dca5a0435854eec
  */
 :root {
 	color-scheme: light dark;
 	--brand-glyph: #db509c;
 	--brand-glyph-top: #f195cc;
 	--brand-glyph-deep: #af1863;
+	--brand-glyph-text: #af1863;
 	--brand-glyph-gradient: linear-gradient(170deg, #f195cc, #db509c, #af1863);
 	--brand-bar: #e84e5f;
 	--brand-bar-top: #fe93a1;
 	--brand-bar-deep: #b71920;
+	--brand-bar-text: #b71920;
 	--brand-bar-gradient: linear-gradient(170deg, #fe93a1, #e84e5f, #b71920);
 	--brand-keys: #e05f00;
 	--brand-keys-top: #fd9976;
 	--brand-keys-deep: #984b00;
+	--brand-keys-text: #984b00;
 	--brand-keys-gradient: linear-gradient(170deg, #fd9976, #e05f00, #984b00);
 	--brand-battery: #05a944;
 	--brand-battery-top: #85cc7e;
 	--brand-battery-deep: #047745;
+	--brand-battery-text: #047745;
 	--brand-battery-gradient: linear-gradient(170deg, #85cc7e, #05a944, #047745);
 	--brand-shot: #069fa6;
 	--brand-shot-top: #1bd1d0;
 	--brand-shot-deep: #00707d;
+	--brand-shot-text: #00707d;
 	--brand-shot-gradient: linear-gradient(170deg, #1bd1d0, #069fa6, #00707d);
 	--brand-stats: #048ff4;
 	--brand-stats-top: #70bffe;
 	--brand-stats-deep: #005dca;
+	--brand-stats-text: #005dca;
 	--brand-stats-gradient: linear-gradient(170deg, #70bffe, #048ff4, #005dca);
 	--brand-command: #9270f4;
 	--brand-command-top: #b1acfe;
 	--brand-command-deep: #763ebd;
+	--brand-command-text: #763ebd;
 	--brand-command-gradient: linear-gradient(170deg, #b1acfe, #9270f4, #763ebd);
 	--brand-color: #c958c2;
 	--brand-color-top: #e09ae6;
 	--brand-color-deep: #a22488;
+	--brand-color-text: #a22488;
 	--brand-color-gradient: linear-gradient(
 		170deg,
 		#f771a0,
@@ -73,6 +81,8 @@
 	--weight-regular: 400;
 	--weight-semibold: 600;
 	--weight-bold: 700;
+	--type-hero: var(--weight-semibold) 80px/1.05 var(--font-display);
+	--type-hero-tracking: -0.015em;
 	--type-display: var(--weight-semibold) 56px/1.07 var(--font-display);
 	--type-display-tracking: -0.005em;
 	--type-title: var(--weight-semibold) 40px/1.1 var(--font-display);
@@ -130,6 +140,14 @@
 }
 [data-theme='light'] {
 	color-scheme: light;
+	--brand-glyph-text: #af1863;
+	--brand-bar-text: #b71920;
+	--brand-keys-text: #984b00;
+	--brand-battery-text: #047745;
+	--brand-shot-text: #00707d;
+	--brand-stats-text: #005dca;
+	--brand-command-text: #763ebd;
+	--brand-color-text: #a22488;
 	--text-primary: #1d1d1f;
 	--text-secondary: #6e6e73;
 	--text-inverse: #ffffff;
@@ -152,6 +170,14 @@
 }
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
+		--brand-glyph-text: #f195cc;
+		--brand-bar-text: #fe93a1;
+		--brand-keys-text: #fd9976;
+		--brand-battery-text: #85cc7e;
+		--brand-shot-text: #1bd1d0;
+		--brand-stats-text: #70bffe;
+		--brand-command-text: #b1acfe;
+		--brand-color-text: #e09ae6;
 		--text-primary: #f5f5f7;
 		--text-secondary: #86868b;
 		--text-inverse: #ffffff;
@@ -175,6 +201,14 @@
 }
 [data-theme='dark'] {
 	color-scheme: dark;
+	--brand-glyph-text: #f195cc;
+	--brand-bar-text: #fe93a1;
+	--brand-keys-text: #fd9976;
+	--brand-battery-text: #85cc7e;
+	--brand-shot-text: #1bd1d0;
+	--brand-stats-text: #70bffe;
+	--brand-command-text: #b1acfe;
+	--brand-color-text: #e09ae6;
 	--text-primary: #f5f5f7;
 	--text-secondary: #86868b;
 	--text-inverse: #ffffff;

@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { colors, entries, outputs, render, source } from '../../../../packages/common-ui/build.mjs';
+import { brand, colors, entries, outputs, render, source } from '../../../../packages/common-ui/build.mjs';
 import { contrast } from './contrast.ts';
 
 const { tokens } = source();
@@ -52,6 +52,14 @@ describe('colour', () => {
 				expect(b, bg).toHaveLength(7);
 				expect(contrast(f, b), `${fg} on ${bg}, ${mode}`).toBeGreaterThanOrEqual(4.5);
 			}
+		}
+	});
+	it("holds each app's text colour to AA on the page, light and dark", () => {
+		const base = all['surface.base'];
+		for (const [slug] of entries(tokens.brand.apps)) {
+			const { top, deep } = brand(tokens, slug);
+			expect(contrast(deep, base.light), `${slug}, light`).toBeGreaterThanOrEqual(4.5);
+			expect(contrast(top, base.dark), `${slug}, dark`).toBeGreaterThanOrEqual(4.5);
 		}
 	});
 	it('lists every opaque text colour against every opaque surface it could sit on', () => {
