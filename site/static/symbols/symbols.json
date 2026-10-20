@@ -85,6 +85,14 @@
     "height" : 16,
     "width" : 16
   },
+  "gauge.with.dots.needle.67percent" : {
+    "height" : 15,
+    "width" : 15
+  },
+  "gear" : {
+    "height" : 16,
+    "width" : 17
+  },
   "gearshape" : {
     "height" : 16,
     "width" : 16
@@ -144,6 +152,10 @@
   "power" : {
     "height" : 16,
     "width" : 15
+  },
+  "Quit_app" : {
+    "height" : 14,
+    "width" : 18
   },
   "shippingbox.fill" : {
     "height" : 17,
