@@ -54,3 +54,11 @@ func sysctlValue<T: FixedWidthInteger>(_ name: String) -> T? {
     var size = MemoryLayout<T>.size
     return sysctlbyname(name, &value, &size, nil, 0) == 0 ? value : nil
 }
+
+func sysctlString(_ name: String) -> String? {
+    var size = 0
+    guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 0 else { return nil }
+    var bytes = [UInt8](repeating: 0, count: size)
+    guard sysctlbyname(name, &bytes, &size, nil, 0) == 0 else { return nil }
+    return String(decoding: bytes.prefix { $0 != 0 }, as: UTF8.self)
+}

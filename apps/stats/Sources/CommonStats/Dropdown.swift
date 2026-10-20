@@ -428,8 +428,8 @@ private struct Segments: View {
     }
 }
 
-/// Core bars grouped into efficiency and performance clusters, each captioned
-/// with its average load. Bars keep one width across groups so they compare.
+/// Core bars grouped by the kernel's performance levels, each captioned with
+/// the kernel's name for it and its average load. Bars keep one width across groups so they compare.
 /// Without a known topology, all cores show as one ungrouped row.
 private struct CoreClusters: View {
     let cores: [Double]
@@ -448,12 +448,12 @@ private struct CoreClusters: View {
             let gaps = gap * CGFloat(clusters.count - 1) + spacing * CGFloat(cores.count - clusters.count)
             let bar = (width - gaps) / CGFloat(cores.count)
             HStack(alignment: .top, spacing: gap) {
-                ForEach(clusters, id: \.kind) { cluster in
+                ForEach(clusters, id: \.name) { cluster in
                     let load = cluster.cores.map { cores[$0] }
                     VStack(alignment: .leading, spacing: Tokens.Space.xxs) {
                         CoreBars(cores: load, ink: ink)
                         HStack(spacing: Tokens.Space.xxs) {
-                            Text(cluster.kind.rawValue).foregroundStyle(.secondary)
+                            Text(cluster.name).foregroundStyle(.secondary)
                             Text(Format.percent(load.reduce(0, +) / Double(load.count))).monospacedDigit()
                         }
                         .font(.footnote)

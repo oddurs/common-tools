@@ -227,7 +227,9 @@ public final class SystemLexicon: Lexicon {
         if completing {
             // Some dictionaries, Hebrew and Greek among them, pass any string of their letters, and a
             // short string usually starts some real word. A real word is listed among its own completions.
-            verdict = spelling.accepts(word, dictionary: dictionary) && listed(word, dictionary)
+            verdict =
+                spelling.accepts(word, dictionary: dictionary)
+                && (listed(word, dictionary) || knownName(word, dictionary, language: language))
         } else if dictionaryAcceptsNonsense(dictionary, language: language) {
             // Without completions there is no telling a lenient dictionary's yes from a real word.
             verdict = nil
@@ -353,6 +355,16 @@ public final class SystemLexicon: Lexicon {
     }
 
     public func hasDictionary(_ language: String) -> Bool { dictionary(for: language) != nil }
+
+    /// A name the dictionary knows, which macOS 26's English accepts but never lists among its own
+    /// completions ("David" completes to nothing). Only a dictionary that refuses nonsense is trusted
+    /// with this, and only for a capitalised word it refuses in lower case: "David" but not "david".
+    private func knownName(_ word: String, _ dictionary: String, language: String) -> Bool {
+        guard let first = word.first, first.isUppercase, word.dropFirst() == word.dropFirst().lowercased(),
+            !dictionaryAcceptsNonsense(dictionary, language: language)
+        else { return false }
+        return !spelling.accepts(word.lowercased(), dictionary: dictionary)
+    }
 
     private func listed(_ word: String, _ dictionary: String) -> Bool {
         spelling.completions(word, dictionary: dictionary).contains {
