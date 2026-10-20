@@ -5,6 +5,7 @@
 //
 //   node packages/common-ui/build.mjs          write both
 //   node packages/common-ui/build.mjs --check  exit 1 if either is out of date
+//   node packages/common-ui/build.mjs --brand <app>   the app's colours as JSON, for scripts/make-icon
 //
 // No dependencies: Node's standard library only, so it runs wherever the tests run. Tests on both
 // surfaces fail when an output is older than the source (see README.md).
@@ -85,6 +86,71 @@ function wrap(text, prefix, width = 118) {
 	return lines;
 }
 
+// MARK: - Brand colours
+
+/** OKLCH to an sRGB hex, lowering chroma until the colour fits sRGB rather than clipping its hue. */
+export function oklch(l, c, h) {
+	for (let chroma = c; chroma >= 0; chroma -= 0.002) {
+		const a = chroma * Math.cos((h * Math.PI) / 180);
+		const b = chroma * Math.sin((h * Math.PI) / 180);
+		// Ottosson's OKLab to linear sRGB.
+		const l_ = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+		const m_ = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+		const s_ = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
+		const linear = [
+			4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+			-1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+			-0.0041960863 * l_ - 0.7034186147 * m_ + 1.707614701 * s_
+		];
+		if (linear.every((v) => v >= -0.0005 && v <= 1.0005)) {
+			const encode = (v) => {
+				const x = Math.min(Math.max(v, 0), 1);
+				return Math.round(255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055));
+			};
+			return `#${linear.map((v) => encode(v).toString(16).padStart(2, '0')).join('')}`;
+		}
+	}
+	throw new Error(`no sRGB colour for oklch(${l} ${c} ${h})`);
+}
+
+/** An sRGB hex as OKLCH lightness, chroma, and hue in degrees. */
+export function toOklch(hex) {
+	const decode = (i) => {
+		const v = parseInt(hex.slice(i, i + 2), 16) / 255;
+		return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+	};
+	const [r, g, b] = [decode(1), decode(3), decode(5)];
+	// Ottosson's linear sRGB to OKLab.
+	const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+	const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+	const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+	const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s;
+	const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s;
+	const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s;
+	return { l: L, c: Math.hypot(A, B), h: ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360 };
+}
+
+/** The system colours Common Color's body runs through, round the wheel. */
+const spectrum = ['red', 'orange', 'yellow', 'green', 'mint', 'teal', 'blue', 'indigo', 'purple', 'pink'];
+
+/**
+ * An app's colours: its system colour, and its icon body's stops top to bottom, the same steps from
+ * the system colour for every app. Common Color's are the spectrum, with pink as the colour that
+ * stands for it.
+ */
+export function brand(tokens, slug) {
+	const { system, ramp, apps } = tokens.brand;
+	const app = apps[slug];
+	if (!app || typeof app !== 'object') throw new Error(`no brand colour for '${slug}'`);
+	const name = app.spectrum ? 'pink' : app.system;
+	const mid = system[name];
+	if (!mid) throw new Error(`no system colour '${name}' for '${slug}'`);
+	const { l, c, h } = toOklch(mid);
+	const step = (s) => oklch(Math.min(l + s.l, 0.97), Math.max(c + s.c, 0), h);
+	const colors = { top: step(ramp.top), mid, deep: step(ramp.deep) };
+	return app.spectrum ? { ...colors, spectrum: spectrum.map((n) => system[n]) } : colors;
+}
+
 const camel = (name) => name.replace(/-(\w)/g, (_, c) => c.toUpperCase());
 const cssName = (...parts) => `--${parts.join('-')}`;
 const cubic = ([a, b, c, d]) => `cubic-bezier(${a}, ${b}, ${c}, ${d})`;
@@ -148,6 +214,27 @@ export function renderCSS({ tokens, hash }) {
 				break;
 			case 'layer':
 				for (const [name, value] of entries(group)) declare(cssName('layer', name), value);
+				break;
+			case 'brand':
+				// The same in both appearances: an icon's body doesn't change with the theme.
+				for (const [slug] of entries(group.apps)) {
+					const colors = brand(tokens, slug);
+					declare(cssName('brand', slug), colors.mid);
+					declare(cssName('brand', slug, 'top'), colors.top);
+					declare(cssName('brand', slug, 'deep'), colors.deep);
+					const stops = colors.spectrum ?? [colors.top, colors.mid, colors.deep];
+					const args = ['170deg', ...stops];
+					const flat = `linear-gradient(${args.join(', ')})`;
+					const name = cssName('brand', slug, 'gradient');
+					// Laid out as Prettier lays out a value too long for one line, so formatting the site
+					// leaves the generated file as it is.
+					declare(
+						name,
+						`\t${name}: ${flat};`.length <= 100
+							? flat
+							: `linear-gradient(\n${args.map((a) => `\t\t${a}`).join(',\n')}\n\t)`
+					);
+				}
 				break;
 			case 'layout':
 				// Media queries can't read a custom property, so the breakpoint stays in each @media by
@@ -278,7 +365,10 @@ export function render() {
 	return { swift: renderSwift(src), css: renderCSS(src) };
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1] && process.argv.includes('--brand')) {
+	const slug = process.argv[process.argv.indexOf('--brand') + 1];
+	console.log(JSON.stringify(brand(source().tokens, slug)));
+} else if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
 	const rendered = render();
 	let stale = 0;
 	for (const [name, path] of Object.entries(outputs)) {

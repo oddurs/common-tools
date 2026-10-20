@@ -28,6 +28,26 @@ swift run --package-path packages/CommonKit DesignRender   # after changing a Co
 3. **Primitives**: the few reusable pieces built from tokens. In the `CommonUI` product of CommonKit (`import CommonUI`): `Card`, `IconBadge`, `LabeledRow`, `SettingsWindowHost`, `.settingsForm()`, `SettingsFootnote`, `OpenAtLoginToggle`, `OpenAtLoginFootnote`, and for a menu bar panel `MenuPanelHost`, `MenuPanelSurface`, `MenuRow`, `SectionHeader`, `ThumbnailTile`; in CommonKit, `CommonToolsSection`, which carries the family list and the promise every app makes. On the site: `.button`, `.link`, `.card`, `section.ruled`, `.callout`, `.badge`, and the `table` and `pre` styles in `site/src/app.css`.
 4. **Pages and views** compose primitives. They may lay things out, but take every colour, size, and duration from a token.
 
+## App colours
+
+`brand` gives each app its colour, which is its icon's body and nothing else: text on the site stays in the text colours, and only icons carry an app's colour. The system mirrors Apple's own icons:
+
+- **Body.** Each app takes one of macOS's system colours (`brand.system`, the light-appearance `NSColor.systemRed` and the rest). The body is that colour lit from above: `brand.ramp` sets how much lighter the top runs and how much deeper the bottom, the same steps for every app, in OKLCH, with no turn of hue. Common Color's body is the spectrum of system colours round the wheel.
+- **Glyph.** One SF Symbol per app (`apps/<app>/icon.swift`), drawn by `symbol()` in `shared/icon-lib.swift`: every symbol covers the same area inside Apple's keyline, in white glass that lets a breath of the body through at the bottom, on one soft shadow in the body's deepest tone.
+
+| App | System colour | Symbol |
+| --- | --- | --- |
+| Command | indigo | `command` |
+| Shot | teal | `camera.viewfinder` |
+| Stats | blue | `chart.xyaxis.line` |
+| Bar | red | `menubar.rectangle` |
+| Keys | orange | `keyboard` |
+| Color | the spectrum | `eyedropper.halffull` |
+| Battery | green | `battery.100percent.bolt` |
+| Glyph | pink | `sparkle` |
+
+`build.mjs` writes `--brand-<app>`, `-top`, `-deep` and `-gradient` for the site, and `node packages/common-ui/build.mjs --brand <app>` prints them for `scripts/make-icon`. The family mark is the same system in one picture: a "C" of the seven system colours round the wheel on an ink squircle, drawn by `node packages/common-ui/logo.mjs > site/static/icon.svg`.
+
 ## What is the system's and what is ours
 
 The apps must look like macOS, so a token maps to a system colour wherever one exists and defines a value only where macOS has none:

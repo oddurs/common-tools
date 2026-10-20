@@ -42,7 +42,17 @@ export type Tokens = {
 	motion: { about: string; duration: Record<string, number>; easing: Record<string, number[]> };
 	layer: Group<number>;
 	layout: Group<number>;
+	brand: {
+		about: string;
+		surfaces: string[];
+		system: Group<Hex>;
+		ramp: Record<'top' | 'deep', { l: number; c: number }> & { about?: string };
+		apps: Group<{ system?: string; spectrum?: boolean }>;
+	};
 };
+
+/** An app's colours: its icon body's stops, and Common Color's spectrum. */
+export type BrandColors = { top: Hex; mid: Hex; deep: Hex; spectrum?: Hex[] };
 
 export type ResolvedColor = ColorToken & { light: Hex; dark: Hex };
 
@@ -56,3 +66,6 @@ export function colors(tokens: Tokens): Record<string, ResolvedColor>;
 export function renderCSS(src: { tokens: Tokens; hash: string }): string;
 export function renderSwift(src: { tokens: Tokens; hash: string }): string;
 export function render(): { swift: string; css: string };
+export function oklch(l: number, c: number, h: number): Hex;
+export function toOklch(hex: string): { l: number; c: number; h: number };
+export function brand(tokens: Tokens, slug: string): BrandColors;

@@ -1,7 +1,8 @@
 #!/bin/sh
 set -eu
-# Renders an app's icon: apps/<app>/Resources/AppIcon.icns, apps/<app>/docs/icon.png, and the
-# 128 px family icon in shared/CommonTools/. The body is shared; the glyph is apps/<app>/icon.swift.
+# Renders an app's icon: apps/<app>/Resources/AppIcon.icns, apps/<app>/docs/icon.png, the 128 px
+# family icon in shared/CommonTools/, and the site's site/static/<app>/icon.png. The body is shared,
+# in the app's colour from the brand tokens; the glyph is apps/<app>/icon.swift.
 #
 #   scripts/make-icon <app>
 
@@ -11,5 +12,6 @@ slug="${1:-}"
 script="$(mktemp -t make-icon).swift"
 trap 'rm -f "$script"' EXIT
 cat shared/icon-lib.swift "apps/$slug/icon.swift" shared/icon-main.swift >"$script"
-swift "$script" "apps/$slug" shared/CommonTools
-echo "==> rendered apps/$slug/Resources/AppIcon.icns, apps/$slug/docs/icon.png, shared/CommonTools/$slug.png"
+colors="$(node packages/common-ui/build.mjs --brand "$slug")"
+swift "$script" "apps/$slug" shared/CommonTools "$colors" "site/static/$slug/icon.png"
+echo "==> rendered apps/$slug/Resources/AppIcon.icns, apps/$slug/docs/icon.png, shared/CommonTools/$slug.png, site/static/$slug/icon.png"

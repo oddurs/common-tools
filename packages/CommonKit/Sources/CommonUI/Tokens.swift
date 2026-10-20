@@ -1,6 +1,6 @@
 // Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
 // change the source and run `node packages/common-ui/build.mjs`.
-// source sha256: fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9
+// source sha256: 3b92c9d2825c6070611fd6f91311cb928dd1386026eb2573ec1f97847d095559
 
 import AppKit
 import SwiftUI
@@ -9,7 +9,7 @@ import SwiftUI
 /// motion, and the layout widths. Type comes from the system text styles, not from here.
 public enum Tokens {
     /// SHA-256 of tokens.json when this file was generated. A test compares it to the file.
-    public static let sourceHash = "fd8b94cc340fb1b41e527b5babc0f1fc0c9abdb5b1b6199aac8ecb6c2f138bb9"
+    public static let sourceHash = "3b92c9d2825c6070611fd6f91311cb928dd1386026eb2573ec1f97847d095559"
 
     public enum Text {
         /// Body text and headings. macOS: `labelColor`. Site: #1d1d1f / #f5f5f7.
