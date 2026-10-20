@@ -1,15 +1,11 @@
 <script lang="ts">
 	import { asset, resolve } from '$app/paths';
-	import { tools, upcoming } from './tools';
+	import { showcase, tool } from './tools';
 
 	/** The page's own app, left out of the list. */
 	let { slug }: { slug: string } = $props();
 
-	const others = $derived(
-		[...tools.map((t) => ({ ...t, soon: false })), ...upcoming.map((u) => ({ ...u, soon: true }))].filter(
-			(t) => t.slug !== slug
-		)
-	);
+	const others = $derived(showcase.filter((s) => s !== slug).map(tool));
 </script>
 
 <section class="ruled">
@@ -19,9 +15,7 @@
 			<a class="card" href={resolve(`${t.slug}/`)}>
 				<img src={asset(t.icon)} alt="" width="56" height="56" />
 				<span>
-					<b
-						>{t.name}{#if t.soon}<em class="badge">Soon</em>{/if}</b
-					>
+					<b>{t.name}</b>
 					<span class="muted">{t.summary}</span>
 				</span>
 			</a>
@@ -45,9 +39,6 @@
 	}
 	.card:hover {
 		transform: translateY(-2px);
-	}
-	.badge {
-		margin-left: var(--space-xs);
 	}
 	.card > span {
 		display: flex;

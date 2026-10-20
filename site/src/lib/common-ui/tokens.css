@@ -1,7 +1,7 @@
 /*
  * Generated from packages/common-ui/tokens.json by packages/common-ui/build.mjs. Do not edit;
  * change the source and run `node packages/common-ui/build.mjs`.
- * source sha256: 3b92c9d2825c6070611fd6f91311cb928dd1386026eb2573ec1f97847d095559
+ * source sha256: c5d29da7dd133b3e043ec92b3624bb2624e0730e7e96198a1efed94c1b90bbba
  */
 :root {
 	color-scheme: light dark;
@@ -65,34 +65,34 @@
 	--color-danger: #d70015;
 	--color-warning: #c93400;
 	--color-success: #1e7a35;
-	--font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
-	--font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+	--font-sans: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+	--font-display: 'Inter Variable', Inter, -apple-system, BlinkMacSystemFont, sans-serif;
 	--font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
 	--weight-regular: 400;
 	--weight-semibold: 600;
 	--weight-bold: 700;
 	--type-hero: var(--weight-semibold) 80px/1.05 var(--font-display);
-	--type-hero-tracking: -0.015em;
+	--type-hero-tracking: -0.022em;
 	--type-display: var(--weight-semibold) 56px/1.07 var(--font-display);
-	--type-display-tracking: -0.005em;
+	--type-display-tracking: -0.022em;
 	--type-title: var(--weight-semibold) 40px/1.1 var(--font-display);
-	--type-title-tracking: 0em;
+	--type-title-tracking: -0.022em;
 	--type-title2: var(--weight-semibold) 28px/1.14 var(--font-display);
-	--type-title2-tracking: 0.007em;
+	--type-title2-tracking: -0.021em;
 	--type-title3: var(--weight-regular) 24px/1.33 var(--font-sans);
-	--type-title3-tracking: 0.009em;
+	--type-title3-tracking: -0.019em;
 	--type-headline: var(--weight-semibold) 21px/1.19 var(--font-sans);
-	--type-headline-tracking: 0.011em;
+	--type-headline-tracking: -0.018em;
 	--type-body: var(--weight-regular) 17px/1.47 var(--font-sans);
-	--type-body-tracking: -0.022em;
+	--type-body-tracking: -0.013em;
 	--type-callout: var(--weight-regular) 15px/1.47 var(--font-sans);
-	--type-callout-tracking: -0.016em;
+	--type-callout-tracking: -0.009em;
 	--type-footnote: var(--weight-regular) 14px/1.43 var(--font-sans);
-	--type-footnote-tracking: -0.016em;
+	--type-footnote-tracking: -0.006em;
 	--type-caption: var(--weight-regular) 13px/1.38 var(--font-sans);
-	--type-caption-tracking: -0.01em;
+	--type-caption-tracking: -0.003em;
 	--type-caption2: var(--weight-semibold) 11px/1.36 var(--font-sans);
-	--type-caption2-tracking: 0em;
+	--type-caption2-tracking: 0.005em;
 	--space-xxs: 4px;
 	--space-xs: 8px;
 	--space-sm: 12px;
@@ -107,6 +107,7 @@
 	--radius-md: 12px;
 	--radius-lg: 16px;
 	--radius-full: 9999px;
+	--shadow-chrome: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
 	--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.18);
 	--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.16);
 	--shadow-icon: 0 8px 18px rgba(0, 40, 120, 0.22);
@@ -146,6 +147,7 @@
 	--color-danger: #d70015;
 	--color-warning: #c93400;
 	--color-success: #1e7a35;
+	--shadow-chrome: 0 8px 32px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.08);
 	--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.18);
 	--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.16);
 	--shadow-icon: 0 8px 18px rgba(0, 40, 120, 0.22);
@@ -168,6 +170,7 @@
 		--color-danger: #ff453a;
 		--color-warning: #ff9f0a;
 		--color-success: #30d158;
+		--shadow-chrome: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
 		--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 		--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
 		--shadow-icon: 0 8px 18px rgba(0, 0, 0, 0.5);
@@ -191,6 +194,7 @@
 	--color-danger: #ff453a;
 	--color-warning: #ff9f0a;
 	--color-success: #30d158;
+	--shadow-chrome: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.1);
 	--shadow-media: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08);
 	--shadow-media-compact: 0 14px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
 	--shadow-icon: 0 8px 18px rgba(0, 0, 0, 0.5);

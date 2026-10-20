@@ -12,11 +12,11 @@ export const promise = {
 		],
 		[
 			'Free.',
-			'Completely free, forever. No trial, no subscription, no paid tier, no upgrade to nag you about. Every app is for everyone.'
+			'Completely free, forever. No trial, no subscription, no paid tier, no upgrade prompts. Every app is for everyone.'
 		],
 		[
 			'Open.',
-			'Every line is public on GitHub under the MIT licence. Read it, build it yourself, change it. Every change is checked by its tests before it merges.'
+			'Every line is public on GitHub under the MIT license. Read it, build it yourself, change it. Every change is checked by its tests before it merges.'
 		],
 		[
 			'Native.',

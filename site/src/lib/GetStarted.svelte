@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import Keys from './Keys.svelte';
 	import OpenAnyway from './OpenAnyway.svelte';
-	import { brewLine, curlLine, download, type Tool } from './tools';
+	import { brewLine, curlLine, download, installGuide, type Tool } from './tools';
 
 	let { tool }: { tool: Tool } = $props();
 
@@ -31,14 +32,16 @@
 		{/if}
 		<li>
 			<b>Set it up</b>
-			<span>{tool.firstRun}</span>
+			<span><Keys text={tool.firstRun} /></span>
 		</li>
 	</ol>
 	<p class="muted">
 		Or, from a terminal, with no Open Anyway step:
 		{#if release?.cask}<code>{brewLine(tool)}</code> or{/if}
 		<code>{curlLine(tool)}</code>. Every step, with checksums, is in the
-		<a href={resolve(`${tool.slug}/docs/`)}>docs</a>.
+		<a href={tool.docs ? resolve(`${tool.slug}/docs/`) : installGuide}
+			>{tool.docs ? 'docs' : 'install guide'}</a
+		>.
 	</p>
 </section>
 

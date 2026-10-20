@@ -2,7 +2,7 @@
 	import { asset, resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { promise } from '#lib/promise.ts';
-	import { tools } from '#lib/tools.ts';
+	import { showcase, tool, tools } from '#lib/tools.ts';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();
@@ -14,20 +14,21 @@
 	<link rel="icon" href={asset(current?.icon ?? 'icon.svg')} />
 </svelte:head>
 
-<nav>
-	<div class="inner">
+<!-- A glass capsule floating over the page, as macOS 26 floats its toolbars. -->
+<header class="chrome">
+	<nav aria-label="Common Tools">
 		<a class="home" href={resolve('/(site)')}
 			><img src={asset('icon.svg')} alt="" width="22" height="22" />Common Tools</a
 		>
 		<span class="tools">
-			{#each tools as t (t.slug)}
+			{#each showcase.map(tool) as t (t.slug)}
 				<a href={resolve(`${t.slug}/`)} aria-current={current === t ? 'page' : undefined}>
 					{t.name.replace('Common ', '')}
 				</a>
 			{/each}
 		</span>
-	</div>
-</nav>
+	</nav>
+</header>
 
 {@render children()}
 
@@ -40,22 +41,33 @@
 </footer>
 
 <style>
-	nav {
-		position: sticky;
-		top: 0;
+	/* Fixed, so it takes no room: the page runs under the glass from the top. */
+	.chrome {
+		position: fixed;
+		top: var(--space-sm);
+		left: 0;
+		right: 0;
 		z-index: var(--layer-sticky);
-		background: var(--surface-chrome);
-		backdrop-filter: saturate(180%) blur(20px);
-		border-bottom: 1px solid var(--color-border);
-	}
-	.inner {
-		max-width: var(--layout-content);
-		margin: 0 auto;
+		display: flex;
+		justify-content: center;
 		padding: 0 var(--layout-gutter);
+		pointer-events: none;
+	}
+	nav {
+		pointer-events: auto;
+		width: 100%;
+		max-width: var(--layout-content);
 		height: 48px;
+		padding: 0 var(--space-xxs) 0 var(--space-md);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: var(--space-md);
+		border-radius: var(--radius-full);
+		background: var(--surface-chrome);
+		backdrop-filter: saturate(180%) blur(24px);
+		-webkit-backdrop-filter: saturate(180%) blur(24px);
+		box-shadow: var(--shadow-chrome);
 		font: var(--type-footnote);
 		letter-spacing: var(--type-footnote-tracking);
 	}
@@ -69,17 +81,28 @@
 	.home:hover {
 		text-decoration: none;
 	}
+	.home {
+		white-space: nowrap;
+	}
 	.tools {
 		display: flex;
-		gap: var(--layout-gutter);
+		gap: var(--space-xxs);
 	}
 	.tools a {
+		padding: 6px var(--space-sm);
+		border-radius: var(--radius-full);
 		color: var(--text-secondary);
+		transition:
+			background var(--duration-fast) var(--easing-standard),
+			color var(--duration-fast) var(--easing-standard);
 	}
-	.tools a:hover,
-	.tools a[aria-current='page'] {
+	.tools a:hover {
 		color: var(--text-primary);
 		text-decoration: none;
+	}
+	.tools a[aria-current='page'] {
+		background: var(--surface-card);
+		color: var(--text-primary);
 	}
 	footer {
 		max-width: var(--layout-content);
@@ -98,11 +121,12 @@
 		gap: var(--space-md);
 	}
 	@media (max-width: 760px) {
-		.inner {
-			padding: 0 var(--layout-gutter-narrow);
-		}
+		/* Eight names don't fit a phone; the home page's icons link to every app instead. */
 		.tools {
-			gap: var(--space-md);
+			display: none;
+		}
+		.chrome {
+			padding: 0 var(--layout-gutter-narrow);
 		}
 		footer {
 			margin: 0 var(--layout-gutter-narrow);
