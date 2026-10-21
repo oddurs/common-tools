@@ -2,6 +2,7 @@
 import type { Page } from '../pages';
 
 export const page: Page = {
+	card: 2,
 	features: [
 		{
 			title: 'No permission.',

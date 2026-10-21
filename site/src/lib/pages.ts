@@ -21,7 +21,11 @@ export type Feature = {
 	stack?: (number | string)[];
 };
 
-export type Page = { features: Feature[] };
+export type Page = {
+	features: Feature[];
+	/** Which feature's still (from 1) the card shows when the page is shared; the first when left out. */
+	card?: number;
+};
 
 const modules = import.meta.glob<{ page: Page }>('./*/page.ts', { eager: true });
 

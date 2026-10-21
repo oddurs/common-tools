@@ -4,6 +4,7 @@
 //   pnpm film shot <tool> [moment ...] [--dark]      stills into shots/; a moment is ms, a mark, or "poster"
 //   pnpm film record [tool ...] [--light | --dark]   videos and posters into static/<tool>/
 //   pnpm film stills [tool ...]                      each page feature's still into static/<tool>/features/
+//   pnpm film cards                                  the cards shown when a page is shared, into static/
 //   pnpm film glyphs                                 SF Symbols and the cursor into static/symbols/
 //
 // shot and record run their own dev server with file watching off, so editing the site while a
@@ -32,7 +33,7 @@ function run(command, args) {
 function usage(message) {
 	if (message) console.error(`film: ${message}`);
 	console.error(
-		'usage: pnpm film list | shot <tool> [moment ...] [--dark] | record [tool ...] [--light|--dark] | stills [tool ...] | glyphs'
+		'usage: pnpm film list | shot <tool> [moment ...] [--dark] | record [tool ...] [--light|--dark] | stills [tool ...] | cards | glyphs'
 	);
 	process.exit(2);
 }
@@ -234,6 +235,28 @@ switch (command) {
 						}
 						await page.close();
 					}
+				}
+			} finally {
+				await browser.close();
+			}
+		});
+		break;
+
+	case 'cards':
+		// The home page's card, then one per app, each beside the files it shares: card.jpg.
+		await serve(async (base, films) => {
+			const browser = await chromium.launch({ channel: 'chrome' });
+			try {
+				const page = await browser.newPage({
+					viewport: { width: 1200, height: 630 },
+					deviceScaleFactor: 2
+				});
+				for (const name of ['home', ...Object.keys(films)]) {
+					await page.goto(`${base}/card/${name}/`, { waitUntil: 'networkidle' });
+					await page.evaluate(() => document.fonts.ready);
+					const path = join(root, 'static', ...(name === 'home' ? [] : [name]), 'card.jpg');
+					await page.locator('#card').screenshot({ path, type: 'jpeg', quality: 88 });
+					console.log(path);
 				}
 			} finally {
 				await browser.close();

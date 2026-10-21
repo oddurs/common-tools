@@ -8,6 +8,7 @@
 	import MoreTools from '#lib/MoreTools.svelte';
 	import ToolHero from '#lib/ToolHero.svelte';
 	import { pages } from '#lib/pages.ts';
+	import { appSchema, description, title } from '#lib/seo.ts';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -17,10 +18,11 @@
 </script>
 
 <Meta
-	title="{tool.name} — {tool.tagline.replace(/\.$/, '')}"
-	description="{tool.name}: {tool.summary} Free and open source."
+	title={title(tool)}
+	description={description(tool)}
 	path="{tool.slug}/"
-	image="{tool.slug}/poster.jpg"
+	{tool}
+	schema={appSchema(tool, release)}
 />
 
 <main>

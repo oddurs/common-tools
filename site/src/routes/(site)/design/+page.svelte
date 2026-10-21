@@ -119,7 +119,6 @@
 	title="Common UI — the Common Tools design system"
 	description="The tokens, scales, type, and primitives the Common Tools apps and this site share, drawn from the source they are made from."
 	path="design/"
-	image="stats/poster.jpg"
 />
 
 <main>

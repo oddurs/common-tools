@@ -5,6 +5,8 @@ export type Tool = {
 	name: string;
 	/** One line under the name. */
 	tagline: string;
+	/** What it is, in the words someone searching for it would use: the page's title. */
+	kind: string;
 	/** What it does, in a sentence, for the home page and meta description. */
 	summary: string;
 	/** The app's folder in the monorepo. */
@@ -49,6 +51,7 @@ export const tools: Tool[] = [
 		slug: 'stats',
 		name: 'Common Stats',
 		tagline: 'Small type. Small graphs. Nothing else.',
+		kind: 'System monitor in the Mac menu bar',
 		summary:
 			'CPU, GPU, memory, network, disk, storage, and battery in the menu bar, with a real menu of graphs under it.',
 		repo: `${github}/tree/main/apps/stats`,
@@ -64,6 +67,7 @@ export const tools: Tool[] = [
 		slug: 'keys',
 		name: 'Common Keys',
 		tagline: 'Typed on the wrong keyboard? Already fixed.',
+		kind: 'Keyboard layout fixer for Mac',
 		summary:
 			'Fixes words typed on the wrong keyboard layout, for every keyboard macOS has, and keeps each app on the language you write there.',
 		repo: `${github}/tree/main/apps/keys`,
@@ -80,6 +84,7 @@ export const tools: Tool[] = [
 		slug: 'bar',
 		name: 'Common Bar',
 		tagline: 'A tidy menu bar.',
+		kind: 'Menu bar organizer for Mac',
 		summary:
 			'Moves the menu bar icons you rarely use into folders, clear of the notch, and opens any one of them right where its folder is.',
 		repo: `${github}/tree/main/apps/bar`,
@@ -95,6 +100,7 @@ export const tools: Tool[] = [
 		slug: 'glyph',
 		name: 'Common Glyph',
 		tagline: 'Your own images in the menu bar.',
+		kind: 'Custom menu bar icons for Mac',
 		summary:
 			'A character, a sticker, an emoji, an animated GIF, or a word: as many as you like, each its own menu bar item.',
 		repo: `${github}/tree/main/apps/glyph`,
@@ -108,6 +114,7 @@ export const tools: Tool[] = [
 		slug: 'command',
 		name: 'Common Command',
 		tagline: 'A small, fast launcher.',
+		kind: 'Keyboard launcher for Mac',
 		summary:
 			'Press ⌥Space, type a few letters, press Return: apps, System Settings panes, files, sums, and web searches in one quiet panel.',
 		repo: `${github}/tree/main/apps/command`,
@@ -122,6 +129,7 @@ export const tools: Tool[] = [
 		slug: 'shot',
 		name: 'Common Shot',
 		tagline: 'Screenshots straight to the clipboard.',
+		kind: 'Screenshot to clipboard for Mac',
 		summary:
 			'Press ⇧⌘2, drag over what you want, and paste it: into a chat, a terminal, a pull request, or a document.',
 		repo: `${github}/tree/main/apps/shot`,
@@ -137,6 +145,7 @@ export const tools: Tool[] = [
 		slug: 'battery',
 		name: 'Common Battery',
 		tagline: 'The menu bar battery, done properly.',
+		kind: 'Menu bar battery monitor for Mac',
 		summary:
 			'The level, the time left, what the battery is doing, and alerts when it runs low or reaches your charge level.',
 		repo: `${github}/tree/main/apps/battery`,
@@ -151,8 +160,9 @@ export const tools: Tool[] = [
 		slug: 'color',
 		name: 'Common Color',
 		tagline: 'Pick any color. Paste it as code.',
+		kind: 'Color picker for Mac',
 		summary:
-			'Press ⌃⇧⌘C, click any pixel on any screen, and the color is on the clipboard as hex, CSS, SwiftUI, or AppKit, converted correctly from the display’s color space.',
+			'Press ⌃⇧⌘C, click any pixel, and the color is on the clipboard as hex, CSS, SwiftUI, or AppKit, converted correctly from the display’s color space.',
 		repo: `${github}/tree/main/apps/color`,
 		asset: 'CommonColor.zip',
 		requires: anyMac,
