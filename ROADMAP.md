@@ -150,7 +150,7 @@ Type a calculation with real-world units, a conversion, or a factual question in
 
 ## Unscheduled
 
-`########··` 76% · 25 of 33 done
+`########··` 76% · 26 of 34 done
 
 ### backlog
 
@@ -190,4 +190,5 @@ Type a calculation with real-world units, a conversion, or a factual question in
 - [x] [`0084`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0084-common-bar-product-page-features.md) Common Bar product page features <sup>feature · p2</sup>
 - [x] [`0085`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0085-common-glyph-s-product-page-features.md) Common Glyph's product page features <sup>feature · p2</sup>
 - [x] [`0086`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0086-draw-the-stats-film-s-busy-stretch-as-a-plateau-and-keep-key-caps-out-of-the-films.md) Draw the Stats film's busy stretch as a plateau, and keep key caps out of the films <sup>bug · p1</sup>
+- [x] [`0087`](https://github.com/oddurs/common-tools/blob/main/cairn/items/0087-social-sharing-cards-and-an-seo-pass-for-the-site.md) Social sharing cards and an SEO pass for the site <sup>feature · p2</sup>
 

@@ -4,6 +4,7 @@
 	import Keys from '#lib/Keys.svelte';
 	import Meta from '#lib/Meta.svelte';
 	import { promise } from '#lib/promise.ts';
+	import { homeDescription, homeTitle, siteSchema } from '#lib/seo.ts';
 	import { megabytes, shortDate } from '#lib/releases.ts';
 	import { download, showcase, tool } from '#lib/tools.ts';
 	import type { PageProps } from './$types';
@@ -21,12 +22,7 @@
 	};
 </script>
 
-<Meta
-	title="Common Tools — small, native utilities for the Mac"
-	description="Eight small, native macOS utilities: a launcher, screenshots to the clipboard, system stats, a tidy menu bar, keyboard layout fixes, a color picker, the battery, and your own menu bar images. Free forever, open source, and nothing you do is ever reported."
-	path=""
-	image="command/poster.jpg"
-/>
+<Meta title={homeTitle} description={homeDescription} path="" schema={siteSchema} />
 
 <main>
 	<header class="hero">

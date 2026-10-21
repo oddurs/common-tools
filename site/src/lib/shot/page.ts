@@ -2,6 +2,7 @@
 import type { Page } from '../pages';
 
 export const page: Page = {
+	card: 3,
 	features: [
 		{
 			title: 'Drag, click, or Return.',

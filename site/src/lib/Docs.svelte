@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 	import Meta from './Meta.svelte';
+	import { docsDescription } from './seo';
 	import { page } from '$app/state';
 	import { download, type Tool } from './tools';
 
@@ -14,12 +15,7 @@
 	const release = $derived(page.data.releases?.[tool.slug]);
 </script>
 
-<Meta
-	title="{tool.name} documentation"
-	description="How to install and use {tool.name}. {tool.summary}"
-	path="{tool.slug}/docs/"
-	image="{tool.slug}/poster.jpg"
-/>
+<Meta title="{tool.name} documentation" description={docsDescription(tool)} path="{tool.slug}/docs/" {tool} />
 
 <main>
 	<p class="crumb"><a href={resolve(`${tool.slug}/`)}>{tool.name}</a> › Documentation</p>

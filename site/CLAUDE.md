@@ -15,4 +15,5 @@ The Common Tools website: a prerendered SvelteKit site, deployed to GitHub Pages
 - Each app's film lives in `src/lib/<app>/` (`demo.ts` exporting `film` and `frameAt`, `Demo.svelte`, and `demo.test.ts` for what its captions promise); the films, the demo route and `src/lib/demos.test.ts` find it there, so nothing shared needs editing.
 - Every film takes `dark`; check both with `pnpm shot <tool> <moment> [--dark]`. Camera shots must stay inside the screen (`clampCamera`); the tests check this.
 - After changing a film, `pnpm record <tool>` (light and dark) and look at both posters before committing the videos.
+- Titles, descriptions, the cards a shared link shows, the JSON-LD, and `sitemap.xml` come from `src/lib/seo.ts`; `seo.test.ts` keeps titles to 60 characters and descriptions to 160. A card is `(demo)/card/<page>/` photographed by `pnpm film cards` into `static/card.jpg` and `static/<app>/card.jpg`; an app's card shows the still its `page.ts` names in `card`. Run it again after changing a tagline, an icon, or that still.
 - The dev server runs on port 5371 (`--strictPort`), so it never collides with other projects.
